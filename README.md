@@ -1,1 +1,1 @@
-CD LLM
+comfyui-llm-toolkit
