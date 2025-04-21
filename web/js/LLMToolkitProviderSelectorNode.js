@@ -16,20 +16,62 @@ app.registerExtension({
                 const llmProviderWidget = this.widgets.find((w) => w.name === "llm_provider");
                 const baseIpWidget = this.widgets.find((w) => w.name === "base_ip");
                 const portWidget = this.widgets.find((w) => w.name === "port");
-                const llmModelWidget = this.widgets.find((w) => w.name === "llm_model");
                 const externalApiKeyWidget = this.widgets.find((w) => w.name === "external_api_key");
 
+                const targetModelIndex = 1; // Desired index (0=provider, 1=model)
+
+                // 1. Find and remove the original string widget
+                const originalLlmModelWidget = this.widgets.find((w) => w.name === "llm_model");
+                const originalIndex = this.widgets.findIndex((w) => w === originalLlmModelWidget);
+                if (originalIndex !== -1) {
+                    this.widgets.splice(originalIndex, 1);
+                    console.log("LLM Toolkit Provider Node: Removed original llm_model string widget.");
+                } else {
+                    console.warn("LLM Toolkit Provider Node: Original llm_model widget not found for removal.");
+                }
+
+                // 2. Create the new COMBO widget using addWidget (this appends it)
+                const llmModelCombo = this.addWidget(
+                    "COMBO",
+                    "llm_model",
+                    "Provider not selected or models not fetched",
+                    (value) => { this.properties['llm_model'] = value; },
+                    { values: ["Provider not selected or models not fetched"] }
+                );
+                if (!this.properties) { this.properties = {}; }
+                this.properties['llm_model'] = llmModelCombo.value; // Initialize property
+
+                // 3. Move the newly added widget (currently last) to the target index
+                const currentIndex = this.widgets.indexOf(llmModelCombo); // Find where addWidget put it
+                if (currentIndex !== -1 && currentIndex !== targetModelIndex) {
+                    // Remove from current position
+                    this.widgets.splice(currentIndex, 1);
+                    // Insert at target position (ensure index is valid)
+                    const insertionIndex = Math.min(targetModelIndex, this.widgets.length);
+                    this.widgets.splice(insertionIndex, 0, llmModelCombo);
+                    console.log(`LLM Toolkit Provider Node: Moved llm_model combo widget to index ${insertionIndex}.`);
+                } else if (currentIndex === -1) {
+                    console.warn("LLM Toolkit Provider Node: Added llm_model combo widget not found for move.");
+                }
+
+                // Ensure property link is updated after potential reordering/widget recreation
+                 const originalCallback = llmModelCombo.callback;
+                 llmModelCombo.callback = (value) => {
+                    if(originalCallback) originalCallback.call(this, value);
+                    this.properties['llm_model'] = value;
+                 }
+
                 const updateLLMModels = async () => {
-                    if (!llmProviderWidget || !baseIpWidget || !portWidget || !llmModelWidget) {
-                        console.warn("LLM Toolkit Provider Node: Required widgets not found.");
+                    // Use the llmModelCombo reference (which should now be correctly placed)
+                    if (!llmProviderWidget || !baseIpWidget || !portWidget || !llmModelCombo) {
+                        console.warn("LLM Toolkit Provider Node: Required widgets not found (using new combo).");
                         return;
                     }
 
-                    const currentModelValue = llmModelWidget.value; // Store current value
+                    const currentModelValue = llmModelCombo.value;
 
-                    // Show fetching status
-                    llmModelWidget.options.values = ["Fetching models..."];
-                    llmModelWidget.value = "Fetching models...";
+                    llmModelCombo.options.values = ["Fetching models..."];
+                    llmModelCombo.value = "Fetching models...";
                     this.setDirtyCanvas(true, true);
 
                     try {
@@ -53,42 +95,45 @@ app.registerExtension({
                         console.log("Fetched models:", models);
 
                         if (Array.isArray(models) && models.length > 0 && models[0] !== "Error fetching models" && models[0] !== "No models found") {
-                            llmModelWidget.options.values = models;
-                            // Try to restore previous value if it exists in the new list, otherwise set to the first model
+                            llmModelCombo.options.values = models;
                             if (models.includes(currentModelValue)) {
-                                llmModelWidget.value = currentModelValue;
+                                llmModelCombo.value = currentModelValue;
                             } else {
-                                llmModelWidget.value = models[0];
+                                llmModelCombo.value = models[0];
                             }
                         } else {
-                            llmModelWidget.options.values = ["No models found or Error"];
-                            llmModelWidget.value = "No models found or Error";
+                            llmModelCombo.options.values = ["No models found or Error"];
+                            llmModelCombo.value = "No models found or Error";
                             console.warn("No valid models received or error fetching.");
                         }
+                        this.properties['llm_model'] = llmModelCombo.value;
+
                     } catch (error) {
                         console.error("Error updating LLM models:", error);
-                        llmModelWidget.options.values = ["Error fetching models"];
-                        llmModelWidget.value = "Error fetching models";
+                        llmModelCombo.options.values = ["Error fetching models"];
+                        llmModelCombo.value = "Error fetching models";
+                        this.properties['llm_model'] = llmModelCombo.value;
                     } finally {
-                        this.setDirtyCanvas(true, true); // Ensure UI update
+                        this.setDirtyCanvas(true, true);
                     }
                 };
 
-                // Add callbacks to update models when provider, IP, port, or key changes
                 [llmProviderWidget, baseIpWidget, portWidget, externalApiKeyWidget].forEach(widget => {
                     if (widget) {
                         const originalCallback = widget.callback;
                         widget.callback = async (value) => {
                             if (originalCallback) {
-                                originalCallback.call(this, value); // Call original callback if exists
+                                originalCallback.call(this, value);
                             }
-                            await updateLLMModels(); // Then update models
+                            if (widget.name && this.properties && widget.name in this.properties) {
+                                this.properties[widget.name] = value;
+                            }
+                            await updateLLMModels();
                         };
                     }
                 });
 
-                // Initial model fetch when the node is created or loaded
-                setTimeout(updateLLMModels, 100); // Delay slightly to ensure widgets are ready
+                setTimeout(updateLLMModels, 100);
             };
         }
     }

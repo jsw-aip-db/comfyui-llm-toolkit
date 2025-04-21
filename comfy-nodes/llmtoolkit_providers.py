@@ -161,7 +161,7 @@ class LLMToolkitProviderSelector:
         return {
             "required": {
                 "llm_provider": (cls.SUPPORTED_PROVIDERS, {"default": "transformers"}),
-                "llm_model": ("STRING", {"default": "Provider not selected or models not fetched", "tooltip": "Select the model. Updates when provider changes."}),
+                "llm_model": ("STRING", {"default": "Provider not selected or models not fetched", "tooltip": "Select the model. Updates when provider/connection changes."}),
             },
             "optional": {
                 "base_ip": ("STRING", {"default": "localhost", "tooltip": "IP address for local providers"}),
