@@ -167,20 +167,20 @@ class LLMToolkitProviderSelector:
                 "base_ip": ("STRING", {"default": "localhost", "tooltip": "IP address for local providers"}),
                 "port": ("STRING", {"default": "11434", "tooltip": "Port for local providers"}),
                 "external_api_key": ("STRING", {"default": "", "multiline": False, "tooltip": "Optional: Provide API key directly to override environment/ .env file."}),
-                "any": ("*", {}),  # Accept any input type for maximum flexibility
+                "context": ("*", {}),  # Accept context input type for maximum flexibility
             }
         }
 
     # Define the output type as a generic wildcard that will contain provider config
     RETURN_TYPES = ("*",)
     # Define the output name
-    RETURN_NAMES = ("any",)
+    RETURN_NAMES = ("context",)
 
     FUNCTION = "select_provider"
     CATEGORY = "llm_toolkit"
 
     @classmethod
-    def IS_CHANGED(cls, llm_provider, llm_model, base_ip="localhost", port="11434", external_api_key="", any=None):
+    def IS_CHANGED(cls, llm_provider, llm_model, base_ip="localhost", port="11434", external_api_key="", context=None):
         """Check if inputs that affect model list or validity have changed."""
         import hashlib
         
@@ -212,9 +212,9 @@ class LLMToolkitProviderSelector:
         logger.debug(f"IS_CHANGED hash: {state_hash}")
         return state_hash
 
-    def select_provider(self, llm_provider: str, llm_model: str, base_ip: str, port: str, external_api_key: str = "", any=None) -> Tuple[Any]:
+    def select_provider(self, llm_provider: str, llm_model: str, base_ip: str, port: str, external_api_key: str = "", context=None) -> Tuple[Any]:
         """
-        Validates provider/model, determines API key, and outputs provider config within the any parameter.
+        Validates provider/model, determines API key, and outputs provider config within the context parameter.
         """
         logger.info(f"ProviderNode executing for: {llm_provider} / {llm_model}")
         
@@ -277,22 +277,22 @@ class LLMToolkitProviderSelector:
         }
 
         # 5. Prepare output
-        # If we have an incoming "any" with data, merge the provider config into it
-        if any is not None:
-            # If any is a dict, add provider_config as a key
-            if isinstance(any, dict):
-                any["provider_config"] = provider_config
-                result = any
+        # If we have an incoming "context" with data, merge the provider config into it
+        if context is not None:
+            # If context is a dict, add provider_config as a key
+            if isinstance(context, dict):
+                context["provider_config"] = provider_config
+                result = context
                 logger.info(f"Merged provider_config into existing dict")
             else:
-                # For non-dict inputs, create a new dict containing both the original any and provider_config
+                # For non-dict inputs, create a new dict containing both the original context and provider_config
                 result = {
                     "provider_config": provider_config,
-                    "passthrough_data": any
+                    "passthrough_data": context
                 }
-                logger.info(f"Wrapped non-dict 'any' input with provider_config")
+                logger.info(f"Wrapped non-dict 'context' input with provider_config")
         else:
-            # If any is None, just use the provider_config directly
+            # If context is None, just use the provider_config directly
             result = provider_config
             logger.info(f"Using provider_config directly as output")
         

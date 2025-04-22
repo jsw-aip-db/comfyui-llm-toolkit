@@ -108,7 +108,6 @@ async def send_openai_request(api_url, base64_images, model, system_message, use
             "messages": openai_messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "presence_penalty": repeat_penalty,
             "top_p": top_p,
         }
 

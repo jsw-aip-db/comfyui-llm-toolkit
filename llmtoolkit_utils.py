@@ -1718,7 +1718,7 @@ EnhancedYAMLDumper.add_representer(np.int64, numpy_int64_presenter)
 def dump_yaml(data, file_path):
     """
     Safely dumps a dictionary to a YAML file with custom formatting.
-    Converts any numpy.int64 values to int to avoid YAML serialization errors.
+    Converts context numpy.int64 values to int to avoid YAML serialization errors.
     Uses multi-line string representation for better readability.
     """
     def convert_numpy_types(obj):
@@ -2063,7 +2063,7 @@ def validate_gemini_key(api_key):
         logger.debug("Validating Gemini API key...")
         genai.configure(api_key=api_key)
         models = genai.list_models()
-        has_models = any(True for _ in models)
+        has_models = context(True for _ in models)
         logger.debug(f"Gemini key validation successful: {has_models}")
         return has_models
     except ImportError:

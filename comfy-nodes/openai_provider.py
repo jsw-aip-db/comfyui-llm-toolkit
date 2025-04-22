@@ -69,7 +69,7 @@ class OpenAIProviderNode:
     PROVIDER_NAME = "openai"
 
     # Dummy placeholder value – JS will replace this with a dynamic combo‑box.
-    PLACEHOLDER_MODEL = "Select OpenAI model…"
+    PLACEHOLDER_MODEL = "gpt-4o-mini"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -86,26 +86,26 @@ class OpenAIProviderNode:
             },
             "optional": {
                 # Pass through pipeline data
-                "any": ("*", {}),
+                "context": ("*", {}),
             },
         }
 
     RETURN_TYPES = ("*",)
-    RETURN_NAMES = ("any",)
+    RETURN_NAMES = ("context",)
     FUNCTION = "configure_openai"
     CATEGORY = "llm_toolkit"
 
     # This allows ComfyUI to invalidate the node if inputs that matter change.
     @classmethod
-    def IS_CHANGED(cls, llm_model: str, any: Any = None):
+    def IS_CHANGED(cls, llm_model: str, context: Any = None):
         # Model name is the only changing factor that should trigger a recompute.
         return llm_model
 
     # ---------------------------------------------------------------------
     # Main execution
     # ---------------------------------------------------------------------
-    def configure_openai(self, llm_model: str, any: Any = None) -> Tuple[Any]:
-        """Build a provider‑config dictionary for OpenAI and merge with `any`."""
+    def configure_openai(self, llm_model: str, context: Any = None) -> Tuple[Any]:
+        """Build a provider‑config dictionary for OpenAI and merge with `context`."""
         logger.info("OpenAIProviderNode: configuring model '%s'", llm_model)
 
         # ------------------------------------------------------------------
@@ -132,14 +132,14 @@ class OpenAIProviderNode:
         }
 
         # ------------------------------------------------------------------
-        # Merge with incoming `any` object to preserve pipeline data
+        # Merge with incoming `context` object to preserve pipeline data
         # ------------------------------------------------------------------
-        if any is not None:
-            if isinstance(any, dict):
-                any["provider_config"] = provider_config
-                output = any
+        if context is not None:
+            if isinstance(context, dict):
+                context["provider_config"] = provider_config
+                output = context
             else:
-                output = {"provider_config": provider_config, "passthrough_data": any}
+                output = {"provider_config": provider_config, "passthrough_data": context}
         else:
             output = provider_config
 

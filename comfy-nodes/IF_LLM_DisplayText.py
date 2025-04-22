@@ -18,7 +18,7 @@ class IF_LLM_DisplayText:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "any": ("*", {}), # Accept wildcard input
+                "context": ("*", {}), # Accept wildcard input
                 "select": ("STRING", {
                     "default": "0",
                     "tooltip": "Select which line to output (cycles through available lines)"
@@ -28,15 +28,15 @@ class IF_LLM_DisplayText:
             "hidden": {},
         }
 
-    # Output the original 'any' data first, then the processed text outputs
+    # Output the original 'context' data first, then the processed text outputs
     RETURN_TYPES = ("*", "STRING", "INT", "STRING", "STRING")
-    RETURN_NAMES = ("any", "text_list", "count", "selected", "text_full")
+    RETURN_NAMES = ("context", "text_list", "count", "selected", "text_full")
     OUTPUT_IS_LIST = (False, True, False, False, False) # text_list is the only list output
     FUNCTION = "display_llm_text"
     OUTPUT_NODE = True
     CATEGORY = "llm_toolkit" # Changed category to llm_toolkit
 
-    def display_llm_text(self, any: Any, select: str):
+    def display_llm_text(self, context: Any, select: str):
         # --- Safe conversion for 'select' input string ---
         select_int = 0 # Default value
         try:
@@ -55,43 +55,43 @@ class IF_LLM_DisplayText:
         text_to_display = "" # Default to empty string
         
         # --- Text Extraction Logic ---
-        if isinstance(any, dict):
-            if "llm_response" in any and isinstance(any["llm_response"], str):
-                text_to_display = any["llm_response"]
+        if isinstance(context, dict):
+            if "llm_response" in context and isinstance(context["llm_response"], str):
+                text_to_display = context["llm_response"]
                 logger.info("Extracted text from 'llm_response' key.")
             # Add fallbacks for other common keys if needed
-            elif "response" in any and isinstance(any["response"], str):
-                text_to_display = any["response"]
+            elif "response" in context and isinstance(context["response"], str):
+                text_to_display = context["response"]
                 logger.info("Extracted text from 'response' key.")
-            elif "text" in any and isinstance(any["text"], str):
-                text_to_display = any["text"]
+            elif "text" in context and isinstance(context["text"], str):
+                text_to_display = context["text"]
                 logger.info("Extracted text from 'text' key.")
-            elif "content" in any and isinstance(any["content"], str):
-                text_to_display = any["content"]
+            elif "content" in context and isinstance(context["content"], str):
+                text_to_display = context["content"]
                 logger.info("Extracted text from 'content' key.")
             else:
                 logger.warning(f"Could not find a standard text key ('llm_response', 'response', 'text', 'content') in input dict. Stringifying the dict for display.")
                 try:
                     # Pretty print the dict if possible
-                    text_to_display = json.dumps(any, indent=2)
+                    text_to_display = json.dumps(context, indent=2)
                 except TypeError:
-                    text_to_display = str(any) # Fallback stringification
-        elif isinstance(any, str):
-            text_to_display = any
+                    text_to_display = str(context) # Fallback stringification
+        elif isinstance(context, str):
+            text_to_display = context
             logger.info("Input is a string.")
-        elif isinstance(any, list):
+        elif isinstance(context, list):
             # Try to join if list of strings, otherwise stringify
-            if all(isinstance(item, str) for item in any):
-                text_to_display = "\n".join(any)
+            if all(isinstance(item, str) for item in context):
+                text_to_display = "\n".join(context)
                 logger.info("Input is a list of strings, joined with newline.")
             else:
                 logger.warning("Input is a list with non-string elements. Stringifying.")
-                text_to_display = str(any)
-        elif any is not None:
-            logger.warning(f"Input is of unexpected type {type(any)}. Stringifying.")
-            text_to_display = str(any)
-        else: # any is None
-             logger.warning("Input 'any' is None. Displaying empty string.")
+                text_to_display = str(context)
+        elif context is not None:
+            logger.warning(f"Input is of unexpected type {type(context)}. Stringifying.")
+            text_to_display = str(context)
+        else: # context is None
+             logger.warning("Input 'context' is None. Displaying empty string.")
              text_to_display = ""
         # --- End Text Extraction ---
 
@@ -130,11 +130,11 @@ class IF_LLM_DisplayText:
         # Prepare UI update - always use a list of strings for the UI text widget
         ui_text = [text_to_display]
 
-        # Return UI update and the multiple outputs, including the original 'any'
+        # Return UI update and the multiple outputs, including the original 'context'
         return {
             "ui": {"string": ui_text},
             "result": (
-                any,         # Pass through the original input data
+                context,         # Pass through the original input data
                 text_list,   # List of individual lines as separate string outputs
                 count,       # Number of lines
                 selected,    # Selected line based on select input

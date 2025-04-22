@@ -106,6 +106,10 @@ async def send_ollama_request(api_url, base64_images, model, system_message, use
 
         ollama_headers = {"Content-Type": "application/json"}
 
+        # Added logging for URL and payload
+        logger.info(f"Sending Ollama request to URL: {api_url}")
+        logger.debug(f"Ollama request payload: {json.dumps(data, indent=2)}") 
+
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(api_url, json=data, headers=ollama_headers) as response:
