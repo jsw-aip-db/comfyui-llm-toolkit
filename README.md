@@ -4,11 +4,11 @@ A custom node collection for integrating various LLM (Large Language Model) prov
 
 ## Features
 
-- Text generation using various LLM providers (OpenAI, Anthropic, Mistral, local models, etc.)
+- Text generation using various LLM providers (OpenAI and local models, etc.)
 - Provider selection and configuration with dynamic model fetching
 - API key management
 - Seamless integration with ComfyUI workflows
-- True Any-to-Any node connections with a unified wildcard interface
+- True Context-to-Context node connections with a unified wildcard interface
 
 ## Installation
 
@@ -39,8 +39,6 @@ The following Python packages are required:
 1. API keys for various providers can be stored in a `.env` file in the root directory:
    ```
    OPENAI_API_KEY=your_openai_key
-   ANTHROPIC_API_KEY=your_anthropic_key
-   MISTRAL_API_KEY=your_mistral_key
    # Add other provider keys as needed
    ```
 
@@ -49,35 +47,35 @@ The following Python packages are required:
 ## Usage
 
 ### LLM Provider Selector Node
-Use this node to select the LLM provider and model. It outputs provider configuration within the wildcard "any" output.
+Use this node to select the LLM provider and model. It outputs provider configuration within the wildcard "context" output.
 
 - When you change the provider, the model dropdown updates dynamically with available models
 - IP and Port fields appear/disappear based on whether the provider needs them
-- The output is a single "any" type that contains the provider configuration
+- The output is a single "context" type that contains the provider configuration
 
-### Text Generator Node
+### Generate Text Node
 Basic text generation with the selected provider and model.
 
-- Connect it to the LLM Provider Selector by connecting their "any" ports
+- Connect it to the LLM Provider Selector by connecting their "context" ports
 - The node automatically detects if provider config is present in the input
 - You can override the model with the dropdown
-- The "any" output contains both the original input data and the LLM response
+- The "context" output contains both the original input data and the LLM response
 
 ## Unified Any-to-Any Architecture
 
-The LLM Toolkit uses a single "any" input/output approach for maximum flexibility:
+The LLM Toolkit uses a single "context" input/output approach for maximum flexibility:
 
-1. **Single Connection Point**: Each node has just one wildcard input and one wildcard output named "any"
+1. **Single Connection Point**: Each node has just one wildcard input and one wildcard output named "context"
 2. **Smart Data Handling**: 
-   - Provider config is embedded within the "any" data structure
-   - Each node intelligently extracts the data it needs from the "any" input
-   - Nodes preserve all input data and add their own data to the "any" output
-3. **Cascading Data Flow**: As data flows through nodes, it accumulates in the "any" structure
+   - Provider config is embedded within the "context" data structure
+   - Each node intelligently extracts the data it needs from the "context" input
+   - Nodes preserve all input data and add their own data to the "context" output
+3. **Cascading Data Flow**: As data flows through nodes, it accumulates in the "context" structure
 
 For example, with nodes A → B → C:
-- Node A creates an "any" with provider config
-- Node B receives A's "any", extracts the provider config, and adds LLM response to the "any"
-- Node C receives B's "any" which now contains both provider config and LLM response
+- Node A creates an "context" with provider config
+- Node B receives A's "context", extracts the provider config, and adds LLM response to the "context"
+- Node C receives B's "context" which now contains both provider config and LLM response
 
 This allows you to:
 - Chain multiple LLM operations with a single connection
@@ -87,12 +85,8 @@ This allows you to:
 ## Supported Providers
 
 - OpenAI (Default: gpt-4o-mini)
-- Anthropic
-- Mistral
 - Ollama (local)
-- LlamaCPP (local)
-- Transformers (local)
-- And more...
+- And more... (Comming Soon)
 
 ## Troubleshooting
 
