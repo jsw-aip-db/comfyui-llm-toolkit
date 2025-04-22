@@ -6,7 +6,7 @@ from typing import Optional, Union, List, Any
 # Initialize logger
 logger = logging.getLogger(__name__)
 
-class IF_LLM_DisplayText:
+class Display_Text:
     """
     Displays text extracted from a wildcard input type, typically containing LLM responses.
     Allows selecting specific lines for output while passing through the original data structure.
@@ -101,7 +101,7 @@ class IF_LLM_DisplayText:
              text_to_display = ""
 
         print("======================")
-        print("IF_LLM_DisplayText Output:")
+        print("Display_Text Output:")
         print("----------------------")
         print(text_to_display)
         print("======================")
@@ -144,10 +144,10 @@ class IF_LLM_DisplayText:
 
 # --- Node Mappings for ComfyUI ---
 NODE_CLASS_MAPPINGS = {
-    "IF_LLM_DisplayText": IF_LLM_DisplayText # Renamed class
+    "Display_Text": Display_Text # Renamed class
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "IF_LLM_DisplayText": "LLM Display Text (LLMToolkit)" # Renamed display name
+    "Display_Text": "Display Text (LLMToolkit)" # Renamed display name
 }
 # --- End Node Mappings --- 
