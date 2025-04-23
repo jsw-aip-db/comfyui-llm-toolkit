@@ -64,7 +64,7 @@ class LLMToolkitTextGenerator:
         return {
             "required": {
                 "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
-                "prompt": ("STRING", {"multiline": True, "default": "Write a short story about a robot learning to paint."})
+                "prompt": ("STRING", {"multiline": False, "default": "Write a short story about a robot learning to paint."})
             },
             "optional": {
                 "context": ("*", {})  # Accept context input for maximum flexibility
