@@ -75,6 +75,8 @@ class LLMToolkitTextGenerator:
     RETURN_NAMES = ("context",)
     FUNCTION = "generate"
     CATEGORY = "llm_toolkit"
+    OUTPUT_NODE = True
+
 
     def generate(self, llm_model, prompt, context=None):
         """
