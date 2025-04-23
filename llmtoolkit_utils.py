@@ -2075,3 +2075,56 @@ def validate_gemini_key(api_key):
     except Exception as e:
         logger.error(f"Error validating Gemini API key: {str(e)}")
         return False
+
+# -----------------------------------------------------------------------------
+# Utility helpers: Local provider discovery
+# -----------------------------------------------------------------------------
+
+def query_local_ollama_models(base_ip: str = "localhost", port: Union[str, int] = 11434) -> List[str]:
+    """Return a list of model names installed in the local Ollama daemon.
+
+    This helper centralises the logic that inspects a running Ollama instance
+    (typically at ``localhost:11434``) for installed models and returns their
+    names.  Placing this function in *llmtoolkit_utils* allows all nodes to
+    share the same implementation instead of duplicating the code in every
+    file.
+
+    Parameters
+    ----------
+    base_ip : str
+        The IP address where the Ollama daemon is listening (default
+        ``"localhost"``).
+    port : str | int
+        The port of the Ollama daemon (default ``11434``).
+
+    Returns
+    -------
+    List[str]
+        Alphabetically‑sorted list of model names.  Returns an empty list on
+        error (e.g. daemon not reachable).
+    """
+
+    try:
+        url = f"http://{base_ip}:{port}/api/tags"
+        logger.debug(f"Querying Ollama models via {url}")
+        resp = requests.get(url, timeout=2)
+        resp.raise_for_status()
+
+        data = resp.json()
+        # Two possible shapes have been observed in the wild:
+        # 1. {"models": [{"name": "llama3"}, {...}, ...]}
+        # 2. [ {"name": "llama3"}, {...} ]
+        if isinstance(data, dict) and "models" in data:
+            data = data["models"]
+
+        if isinstance(data, list):
+            models = [m.get("name") if isinstance(m, dict) else m for m in data]
+            # Remove empty / None entries but keep version tags (e.g. ":latest")
+            cleaned: List[str] = [entry for entry in models if entry]
+            cleaned.sort()  # Sort alphabetically for deterministic UI order
+            return cleaned
+    except Exception as exc:
+        logger.warning(f"Unable to query local Ollama models: {exc}")
+
+    # On error return empty list so callers can fall back to defaults
+    return []

@@ -36,6 +36,7 @@ if missing_deps:
 
 # Import the send_request function for making API calls to different providers
 from send_request import send_request, run_async
+from llmtoolkit_utils import query_local_ollama_models
 
 class LLMToolkitTextGenerator:
     """
@@ -47,58 +48,8 @@ class LLMToolkitTextGenerator:
 
     DEFAULT_PROVIDER = "ollama"
 
-    # ------------------------------------------------------------------
-    # Dynamically query the local Ollama daemon for installed models.
-    # ------------------------------------------------------------------
-    @staticmethod
-    def _query_local_ollama_models(base_ip: str = "localhost", port: Union[str, int] = 11434) -> List[str]:
-        """Return a list of model names installed in the local Ollama daemon.
-
-        Parameters
-        ----------
-        base_ip : str
-            IP address where the Ollama daemon is listening (default ``localhost``).
-        port : str | int
-            Port of the Ollama daemon (default ``11434``).
-
-        Returns
-        -------
-        List[str]
-            The list of model names or an empty list if an error occurs.
-        """
-        try:
-            import requests  # local import to avoid dependency when unused
-            url = f"http://{base_ip}:{port}/api/tags"
-            logger.debug(f"Querying Ollama models via {url}")
-            resp = requests.get(url, timeout=2)
-            resp.raise_for_status()
-
-            data = resp.json()
-            # Two possible shapes have been observed in the wild:
-            # 1. {"models": [{"name": "llama3"}, {...}, ...]}
-            # 2. [ {"name": "llama3"}, {...} ]
-            if isinstance(data, dict) and "models" in data:
-                data = data["models"]
-
-            if isinstance(data, list):
-                models = [m.get("name") or m for m in data]
-                # Filter out context ``None`` or empty names and keep tags
-                cleaned: List[str] = []
-                for entry in models:
-                    if not entry:
-                        continue
-                    # Keep the full entry, including tag (e.g., "llama3:latest")
-                    cleaned.append(entry)
-                # Sort models alphabetically for consistency
-                cleaned.sort()
-                return cleaned
-        except Exception as exc:
-            logger.warning(f"Unable to query local Ollama models: {exc}")
-        # On error return empty list so the caller can fall back
-        return []
-
     # Fetch models once at class‑definition time
-    _INSTALLED_OLLAMA_MODELS: List[str] = _query_local_ollama_models.__func__()  # type: ignore[misc]
+    _INSTALLED_OLLAMA_MODELS: List[str] = query_local_ollama_models()
 
     # Fallback model list if the daemon could not be reached
     _FALLBACK_MODELS: List[str] = ["gemma3:1b"]
@@ -112,7 +63,7 @@ class LLMToolkitTextGenerator:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
+                "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
                 "prompt": ("STRING", {"multiline": True, "default": "Write a short story about a robot learning to paint."})
             },
             "optional": {
@@ -125,7 +76,7 @@ class LLMToolkitTextGenerator:
     FUNCTION = "generate"
     CATEGORY = "llm_toolkit"
 
-    def generate(self, model, prompt, context=None):
+    def generate(self, llm_model, prompt, context=None):
         """
         Generate text using OpenAI by default or another provider if specified in provider_config.
         Only uses the prompt and model from UI unless overridden by provider_config.
@@ -136,7 +87,7 @@ class LLMToolkitTextGenerator:
             # Initialize with defaults
             params = {
                 "llm_provider": self.DEFAULT_PROVIDER,
-                "llm_model": model,
+                "llm_model": llm_model,
                 "system_message": "You are a helpful, creative, and concise assistant.",
                 "user_message": prompt,
                 "base_ip": "localhost",  # default Ollama daemon
@@ -164,30 +115,65 @@ class LLMToolkitTextGenerator:
                     provider_config = context["provider_config"]
                     logger.info("Found provider_config inside 'context' dictionary")
             
-            # Override with provider_config if available
+            # --------------------------------------------------------------
+            # Override with provider_config if available – provider_config
+            # always wins over the UI dropdown.  If the provider_config has
+            # an *empty* llm_model, we will later assign a sensible default
+            # for the chosen provider instead of falling back to the UI.
+            # --------------------------------------------------------------
             if provider_config and isinstance(provider_config, dict):
-                # Extract and map provider config parameters
+                # Extract and map provider config parameters (highest priority)
                 if "provider_name" in provider_config:
                     params["llm_provider"] = provider_config["provider_name"]
-                if "model_name" in provider_config and provider_config["model_name"]:
-                    params["llm_model"] = provider_config["model_name"]
+
                 if "api_key" in provider_config:
                     params["llm_api_key"] = provider_config["api_key"]
                 if "base_ip" in provider_config:
                     params["base_ip"] = provider_config["base_ip"]
                 if "port" in provider_config:
                     params["port"] = provider_config["port"]
-                # Extract context additional parameters that might be in the config
+
+                # Merge any additional custom keys
                 for key in provider_config:
-                    if key not in ["provider_name", "model_name", "api_key", "base_ip", "port"]:
+                    if key not in ["provider_name", "llm_model", "api_key", "base_ip", "port", "user_prompt"]:
                         params[key] = provider_config[key]
-                        
-                # If user_prompt is in provider_config, override the prompt from UI
+
+                # Override prompt if provided
                 if "user_prompt" in provider_config:
                     params["user_message"] = provider_config["user_prompt"]
+
+                # Handle model name override (may be empty string)
+                provider_model = provider_config.get("llm_model", "")
+                if provider_model:
+                    # Non‑empty value from provider_config wins outright
+                    params["llm_model"] = provider_model
+                else:
+                    # Empty llm_model – we will choose a provider‑specific
+                    # default later, instead of using the UI selection.
+                    params["llm_model"] = ""
             elif provider_config:
-                logger.warning(f"provider_config is not a dictionary, it's a {type(provider_config)}. Using defaults.")
-            
+                logger.warning(
+                    f"provider_config is not a dictionary, it's a {type(provider_config)}. Using defaults.")
+                logger.info(f"provider_config extracted: {provider_config}")
+
+            # ------------------------------------------------------------------
+            # Finalise model name fallback logic
+            # ------------------------------------------------------------------
+            if params.get("llm_provider"):
+                provider = str(params["llm_provider"]).lower()
+
+                # If llm_model is empty at this point, pick a sensible default
+                if not params.get("llm_model"):
+                    PROVIDER_DEFAULTS = {
+                        "openai": "gpt-3.5-turbo-1106",
+                        "anthropic": "claude-3-opus-20240229",
+                    }
+                    fallback = PROVIDER_DEFAULTS.get(provider)
+                    if fallback:
+                        params["llm_model"] = fallback
+                        logger.info(
+                            f"No llm_model provided; falling back to provider default '{fallback}' for {provider}")
+
             # Log request details (hide API key)
             log_params = {**params}
             if "llm_api_key" in log_params:
@@ -259,8 +245,11 @@ class LLMToolkitTextGenerator:
                     "passthrough_data": context
                 }
             
-            # Return only the updated 'context' structure
-            return (context_out,)
+            # Provide UI update with generated content
+            return {
+                "ui": {"string": [content]},
+                "result": (context_out,)
+            }
             
         except Exception as e:
             error_message = f"Error generating text: {str(e)}"
@@ -271,7 +260,11 @@ class LLMToolkitTextGenerator:
                 "error": error_message,
                 "original_input": context
             }
-            return (error_output,)
+            # Provide UI update with error message
+            return {
+                "ui": {"string": [error_message]},
+                "result": (error_output,)
+            }
 
 
 # Node Mappings for ComfyUI

@@ -123,9 +123,12 @@ class OpenAIProviderNode:
         # ------------------------------------------------------------------
         # Prepare provider configuration dictionary
         # ------------------------------------------------------------------
+        # Forward the selected model name verbatim so downstream nodes receive it.
+        # If the user did not pick a model (empty string), we leave it empty and
+        # Generate_Text will choose a sensible default.
         provider_config = {
             "provider_name": self.PROVIDER_NAME,
-            "model_name": llm_model if llm_model != self.PLACEHOLDER_MODEL else "",
+            "llm_model": llm_model.strip(),  # pass through as‑is
             "api_key": api_key,
             "base_ip": None,
             "port": None,

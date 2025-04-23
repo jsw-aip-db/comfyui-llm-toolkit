@@ -270,7 +270,7 @@ class LLMToolkitProviderSelector:
         # 4. Create the provider config dictionary
         provider_config = {
             "provider_name": llm_provider,
-            "model_name": llm_model_out,
+            "llm_model": llm_model_out,
             "api_key": final_api_key if final_api_key is not None else "1234", # Ensure string
             "base_ip": final_base_ip, # Can be None
             "port": final_port      # Can be None
