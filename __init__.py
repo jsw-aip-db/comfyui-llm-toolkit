@@ -9,6 +9,7 @@ import sys
 import inspect
 import importlib
 import re
+import importlib.util
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
@@ -71,5 +72,8 @@ for file in files:
                 # print(display_name, name)
                 NODE_DISPLAY_NAME_MAPPINGS[name] = display_name
 
-WEB_DIRECTORY = "web-plugin"
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+# WEB_DIRECTORY points to the directory where your frontend files should be served from
+# WEB_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)), "js") # Old path
+WEB_DIRECTORY = "web/js" # Correct path
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
