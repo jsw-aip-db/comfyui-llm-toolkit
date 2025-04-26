@@ -1,0 +1,15 @@
+[project]
+name = "llm-toolkit"
+description = "A custom node collection for integrating various LLM (Large Language Model) providers with ComfyUI."
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["aiohttp>=3.8.0", "pyyaml>=6.0", "python-dotenv>=0.20.0", "requests>=2.27.0", "pillow>=9.0.0", "numpy>=1.24.0", "tqdm>=4.64.0"]
+
+[project.urls]
+Repository = "https://github.com/comfy-deploy/comfyui-llm-toolkit"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "comfyui-llm-toolkit"
+Icon = ""
