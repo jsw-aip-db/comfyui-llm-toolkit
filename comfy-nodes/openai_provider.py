@@ -48,8 +48,14 @@ try:
                 logger.warning("get_openai_models_endpoint: OPENAI_API_KEY not set; returning empty list")
 
             models = get_models(OpenAIProviderNode.PROVIDER_NAME, None, None, api_key)
+
+            # Ensure GPT-Image-1 is always present in the dropdown, even if the
+            # account list endpoint does not yet expose it (common while the
+            # model is still in limited beta).
             if not models:
-                models = ["No models found"]
+                models = ["gpt-image-1"]
+            elif "gpt-image-1" not in models:
+                models.insert(0, "gpt-image-1")  # prepend for visibility
 
             return web.json_response(models)
         except Exception as e:
@@ -144,7 +150,11 @@ class OpenAIProviderNode:
             else:
                 output = {"provider_config": provider_config, "passthrough_data": context}
         else:
-            output = provider_config
+            # When no incoming context, start a new one and attach provider_config under the
+            # well-known key expected by downstream nodes (e.g. GenerateImage, GenerateText).
+            # Previously we returned the provider_config dictionary directly which meant
+            # downstream nodes could not find it via context.get("provider_config", {}).
+            output = {"provider_config": provider_config}
 
         return (output,)
 

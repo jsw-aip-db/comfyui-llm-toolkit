@@ -811,50 +811,63 @@ def convert_mask_to_grayscale_alpha(mask_input):
             
     raise ValueError(f"Unsupported mask input type: {type(mask_input)}")
 
-def tensor_to_base64(tensor: torch.Tensor) -> str:
-    """Convert a tensor to a base64-encoded PNG image string."""
+def tensor_to_base64(tensor: torch.Tensor, image_format="PNG") -> Optional[str]:
+    """Convert a ComfyUI image tensor [B, H, W, C] or single [H, W, C] to a base64 PNG string."""
+    if not TENSOR_SUPPORT:
+        logger.warning("Tensor operations requested but torch/numpy/PIL not available.")
+        return None
+    if tensor is None:
+        return None
+
+    # Ensure tensor is on CPU
+    tensor = tensor.cpu()
+
+    # Handle potential batch dimension
+    if tensor.dim() == 4:
+        if tensor.shape[0] == 0: return None # Empty batch
+        if tensor.shape[0] > 1: logger.warning("Input tensor has batch > 1, only using the first image.")
+        tensor = tensor[0] # Take the first image from the batch
+
+    # Accept both NHWC and NCHW. If channel-first convert.
+    if tensor.dim() == 3 and tensor.shape[0] in [1, 3, 4] and tensor.shape[2] not in [1, 3, 4]:
+        # Assume [C,H,W] –> permute to [H,W,C]
+        tensor = tensor.permute(1, 2, 0)
+
+    if tensor.dim() != 3 or tensor.shape[2] not in [1, 3, 4]:  # After possible permute expect HWC
+        logger.error(f"Unsupported tensor shape for base64 conversion: {tensor.shape}")
+        return None
+
+    # Clamp and convert to numpy uint8
     try:
-        # Ensure the tensor is in [0, 1] range
+        # Ensure tensor is in [0, 1] range before scaling
         tensor = torch.clamp(tensor, 0, 1)
+        image_np = (tensor.numpy() * 255).astype(np.uint8)
+    except Exception as e:
+        logger.error(f"Error converting tensor to numpy: {e}", exc_info=True)
+        return None
 
-        # Handle different tensor dimensions
-        if tensor.dim() == 3:
-            # [C, H, W]
-            if tensor.shape[0] == 1:
-                # Grayscale image, convert to RGB by repeating channels
-                image = tensor.squeeze(0).permute(1, 2, 0).cpu().numpy()  # [H, W, C]
-                image = np.repeat(image, 3, axis=2)
-            elif tensor.shape[0] == 3:
-                # RGB image
-                image = tensor.permute(1, 2, 0).cpu().numpy()
-            else:
-                # Handle tensors with more than 3 channels: select the first 3 channels
-                logger.warning(f"Unsupported number of channels: {tensor.shape[0]}. Selecting first 3 channels.")
-                if tensor.shape[0] >= 3:
-                    image = tensor[:3, :, :].permute(1, 2, 0).cpu().numpy()
-                else:
-                    raise ValueError(f"Unsupported number of channels: {tensor.shape[0]}")
-        elif tensor.dim() == 2:
-            # [H, W] Grayscale image
-            image = tensor.unsqueeze(-1).cpu().numpy()
-            image = np.repeat(image, 3, axis=2)
-        else:
-            raise ValueError(f"Unsupported tensor shape for conversion: {tensor.shape}")
-
-        # Convert to uint8
-        image = (image * 255).astype(np.uint8)
-
-        # Create PIL Image
-        pil_image = Image.fromarray(image)
+    # Create PIL Image
+    try:
+        if image_np.shape[2] == 1: # Grayscale
+             pil_image = Image.fromarray(image_np.squeeze(-1), mode='L')
+        elif image_np.shape[2] == 3: # RGB
+             pil_image = Image.fromarray(image_np, mode='RGB')
+        elif image_np.shape[2] == 4: # RGBA
+             pil_image = Image.fromarray(image_np, mode='RGBA')
+        else: # Should not happen based on earlier check
+             logger.error(f"Unexpected numpy array shape: {image_np.shape}")
+             return None
 
         # Save image to buffer
         buffered = BytesIO()
-        pil_image.save(buffered, format="PNG")
+        valid_formats = ["PNG", "JPEG", "WEBP"]
+        save_format = image_format.upper() if image_format.upper() in valid_formats else "PNG"
+        pil_image.save(buffered, format=save_format)
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return img_str
+        return img_str # Return just the base64 string, not the data URI
     except Exception as e:
-        logger.error(f"Error converting tensor to base64: {str(e)}", exc_info=True)
-        raise
+        logger.error(f"Error converting numpy to PIL/base64: {e}", exc_info=True)
+        return None
 
 def tensor_to_pil(tensor):
     """
@@ -1367,9 +1380,11 @@ def get_models(engine, base_ip, port, api_key):
             return combined_models
         except Exception as e:
             print(f"Failed to fetch models from OpenAI: {e}")
-            if isinstance(e, requests.exceptions.RequestException) and hasattr(e, "response"):
-                print(f"Response status code: {e.response.status_code}")
-                print(f"Response content: {e.response.text}")
+            if isinstance(e, requests.exceptions.RequestException):
+                resp = getattr(e, "response", None)
+                if resp is not None:
+                    print(f"Response status code: {resp.status_code}")
+                    print(f"Response content: {resp.text}")
             print(f"Returning fallback list of {len(fallback_models)} OpenAI models")
             return fallback_models
     
@@ -1406,9 +1421,11 @@ def get_models(engine, base_ip, port, api_key):
             return combined_models
         except Exception as e:
             print(f"Failed to fetch models from XAI: {e}")
-            if isinstance(e, requests.exceptions.RequestException) and hasattr(e, "response"):
-                print(f"Response status code: {e.response.status_code}")
-                print(f"Response content: {e.response.text}")
+            if isinstance(e, requests.exceptions.RequestException):
+                resp = getattr(e, "response", None)
+                if resp is not None:
+                    print(f"Response status code: {resp.status_code}")
+                    print(f"Response content: {resp.text}")
             print(f"Returning fallback list of {len(fallback_models)} XAI models")
             return fallback_models
 
@@ -2128,3 +2145,245 @@ def query_local_ollama_models(base_ip: str = "localhost", port: Union[str, int] 
 
     # On error return empty list so callers can fall back to defaults
     return []
+
+def process_images_for_comfy(api_response: Optional[Dict[str, Any]]) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+    """
+    Process image data from API responses (OpenAI, etc.) into ComfyUI tensors.
+    
+    Args:
+        api_response: API response dictionary containing image data
+                      (typically with a 'data' list of images with 'b64_json' or 'url' fields)
+    
+    Returns:
+        Tuple of (image_tensor, mask_tensor) where:
+        - image_tensor: [B, H, W, C] tensor with batch of images, or None
+        - mask_tensor: [B, H, W, 1] tensor with batch of masks (if available), or None
+    """
+    if not TENSOR_SUPPORT:
+        logger.warning("Image tensor processing requested but dependencies not available.")
+        # Return a tiny black image as placeholder
+        placeholder = torch.zeros(1, 64, 64, 3)
+        return placeholder, None
+    
+    if api_response is None:
+        # Return placeholder image for error states
+        placeholder = torch.zeros(1, 64, 64, 3)
+        return placeholder, None
+        
+    # Initialize lists to collect tensors for batching
+    image_tensors = []
+    mask_tensors = []
+    
+    try:
+        # Handle common API response structures
+        if isinstance(api_response, dict) and "data" in api_response:
+            # Standard OpenAI format with 'data' list
+            image_data_list = api_response["data"]
+            
+            for item in image_data_list:
+                # Extract image data - prefer b64_json over url
+                if "b64_json" in item:
+                    # Decode base64 data
+                    img_data = base64.b64decode(item["b64_json"])
+                    with BytesIO(img_data) as buffer:
+                        img = Image.open(buffer)
+                        img = img.convert("RGB") # Ensure consistent format
+                        img_np = np.array(img) / 255.0 # Scale to [0,1]
+                        img_tensor = torch.from_numpy(img_np.astype(np.float32))
+                        image_tensors.append(img_tensor)
+                elif "url" in item:
+                    # URL-based images would require download
+                    # Not implementing here to avoid external dependencies
+                    logger.warning("URL-based images not supported. Use b64_json response format.")
+                    continue
+        
+        # Handle OpenAI image response with 'revised_prompt' (DALL-E 3)
+        elif isinstance(api_response, dict) and "revised_prompt" in api_response and "data" in api_response:
+            # Process same as above
+            for item in api_response["data"]:
+                if "b64_json" in item:
+                    img_data = base64.b64decode(item["b64_json"])
+                    with BytesIO(img_data) as buffer:
+                        img = Image.open(buffer)
+                        img = img.convert("RGB")
+                        img_np = np.array(img) / 255.0
+                        img_tensor = torch.from_numpy(img_np.astype(np.float32))
+                        image_tensors.append(img_tensor)
+    
+    except Exception as e:
+        logger.error(f"Error processing API response images: {str(e)}", exc_info=True)
+        # Return placeholder in case of error
+        placeholder = torch.zeros(1, 64, 64, 3)
+        return placeholder, None
+    
+    # Combine tensors into batches if we got any
+    if image_tensors:
+        # Stack into batch dimension
+        batched_images = torch.stack(image_tensors, dim=0)
+        
+        # Return masks too if available (empty for now)
+        mask_batch = None
+        if mask_tensors:
+            mask_batch = torch.stack(mask_tensors, dim=0)
+            
+        return batched_images, mask_batch
+    else:
+        # No images processed - return placeholder
+        placeholder = torch.zeros(1, 64, 64, 3)
+        return placeholder, None
+
+# -----------------------------------------------------------------------------
+# Image mask helpers
+# -----------------------------------------------------------------------------
+
+import torch
+
+
+def ensure_rgba_mask(mask_tensor: torch.Tensor) -> torch.Tensor:
+    """Return an RGBA tensor where the alpha channel comes from *mask_tensor*.
+
+    Parameters
+    ----------
+    mask_tensor : torch.Tensor
+        Mask in NHWC format with **one** channel (values 0..1).  The tensor can
+        be 3-dimensional `[H,W,1]` or batched `[B,H,W,1]`.
+
+    Returns
+    -------
+    torch.Tensor
+        Tensor with shape `[B,H,W,4]` (or `[1,H,W,4]` if input was 3-D).  The
+        R,G,B channels are set to zero while the A channel is the original
+        mask.
+    """
+    if mask_tensor is None:
+        raise ValueError("mask_tensor is None")
+
+    if mask_tensor.dim() == 3:  # [H,W,1]
+        mask_tensor = mask_tensor.unsqueeze(0)  # → [1,H,W,1]
+    if mask_tensor.dim() != 4 or mask_tensor.shape[-1] != 1:
+        raise ValueError(f"ensure_rgba_mask expects NHWC mask with 1 channel; got shape {mask_tensor.shape}")
+
+    batch, h, w, _ = mask_tensor.shape
+    zeros_rgb = torch.zeros((batch, h, w, 3), dtype=mask_tensor.dtype, device=mask_tensor.device)
+    rgba = torch.cat([zeros_rgb, mask_tensor], dim=-1)
+    return rgba
+
+# -----------------------------------------------------------------------------
+# Mask helpers: Resize mask to match image dimensions
+# -----------------------------------------------------------------------------
+
+def resize_mask_to_match_image(mask_tensor: torch.Tensor, image_tensor: torch.Tensor) -> torch.Tensor:
+    """Return *mask_tensor* resized so its spatial dimensions match *image_tensor*.
+
+    The function supports both NHWC and HWC masks (with 1 or 4 channels)
+    and NHWC/HWC images.  When a size mismatch is detected the mask is
+    resized using nearest-neighbour interpolation, which preserves the
+    hard edges required by the OpenAI edit endpoint.
+
+    Parameters
+    ----------
+    mask_tensor : torch.Tensor
+        Mask tensor in NHWC or HWC format.  It can have 1 (grayscale) or 4
+        channels.  Batch dimension is optional.
+    image_tensor : torch.Tensor
+        Reference image tensor in NHWC or HWC format whose height & width
+        will be used as the target size for *mask_tensor*.
+
+    Returns
+    -------
+    torch.Tensor
+        Resized mask with the same dtype/device/batch layout as the input.
+        If *mask_tensor* already matches the image dimensions it is
+        returned unmodified.
+    """
+
+    try:
+        import torch.nn.functional as F
+
+        if mask_tensor is None or image_tensor is None:
+            return mask_tensor
+
+        # ----- Determine target H, W from image -----
+        if image_tensor.dim() == 4:
+            target_h, target_w = int(image_tensor.shape[1]), int(image_tensor.shape[2])
+        elif image_tensor.dim() == 3:
+            target_h, target_w = int(image_tensor.shape[0]), int(image_tensor.shape[1])
+        else:
+            return mask_tensor  # Unsupported shape
+
+        # ----- Current H, W of mask -----
+        if mask_tensor.dim() == 4:
+            cur_h, cur_w = int(mask_tensor.shape[1]), int(mask_tensor.shape[2])
+        elif mask_tensor.dim() == 3:
+            cur_h, cur_w = int(mask_tensor.shape[0]), int(mask_tensor.shape[1])
+        else:
+            return mask_tensor
+
+        if cur_h == target_h and cur_w == target_w:
+            return mask_tensor  # Already matches
+
+        # ----- Resize -----
+        if mask_tensor.dim() == 4:
+            ch_first = mask_tensor.permute(0, 3, 1, 2)  # NHWC → NCHW
+            resized = F.interpolate(ch_first, size=(target_h, target_w), mode="nearest")
+            return resized.permute(0, 2, 3, 1)  # back to NHWC
+        else:  # HWC
+            ch_first = mask_tensor.permute(2, 0, 1).unsqueeze(0)
+            resized = F.interpolate(ch_first, size=(target_h, target_w), mode="nearest")
+            return resized.squeeze(0).permute(1, 2, 0)
+
+    except Exception as exc:
+        logger.error(f"resize_mask_to_match_image failed: {exc}")
+        return mask_tensor
+
+# -----------------------------------------------------------------------------
+# Image dimension helpers for OpenAI size selection
+# -----------------------------------------------------------------------------
+
+def _decode_first_base64(image_b64):
+    """Decode first base64 image (if list) and return PIL.Image or None on failure."""
+    try:
+        if isinstance(image_b64, list):
+            image_b64 = image_b64[0] if image_b64 else None
+        if not image_b64:
+            return None
+        return base64_to_pil(image_b64)
+    except Exception as exc:
+        logger.debug(f"_decode_first_base64 failed: {exc}")
+        return None
+
+
+def get_dims_from_base64(image_b64) -> Optional[Tuple[int, int]]:
+    """Return (width, height) of the first base64 image string."""
+    img = _decode_first_base64(image_b64)
+    if img is None:
+        return None
+    return img.size  # returns (width, height)
+
+
+def choose_openai_size(width: int, height: int, model: str = "gpt-image-1") -> str:
+    """Choose the closest allowed size string for OpenAI image endpoints.
+
+    For *gpt-image-1* and *dall-e-3* the allowed sizes are:
+       1024x1024, 1024x1536 (portrait), 1536x1024 (landscape), or "auto".
+
+    For *dall-e-2* the allowed sizes are:
+       256x256, 512x512, 1024x1024 (square only).
+
+    This helper picks a sensible default based on aspect ratio.
+    """
+
+    try:
+        model = (model or "").lower()
+        if model in {"gpt-image-1", "dall-e-3"}:
+            if abs(width - height) < 32:  # nearly square
+                return "1024x1024"
+            elif height > width:
+                return "1024x1536"  # portrait
+            else:
+                return "1536x1024"  # landscape
+        else:  # default for dall-e-2 or unknown
+            return "1024x1024"
+    except Exception as exc:
+        logger.debug(f"choose_openai_size error: {exc}")
+        return "1024x1024"
