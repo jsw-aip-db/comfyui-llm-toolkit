@@ -544,6 +544,11 @@ def process_images_for_comfy(images, placeholder_image_path=None, response_key='
                                             # Handle base64 directly
                                             image_data = base64.b64decode(image_data)
                                             image = Image.open(BytesIO(image_data))
+                                            # Preserve transparency if available
+                                            if image.mode in ("RGBA", "LA") or ("transparency" in image.info):
+                                                image = image.convert("RGBA")
+                                            else:
+                                                image = image.convert("RGB")  # Fallback when no alpha
                                             break
                     
                     if isinstance(image, dict):
@@ -2187,7 +2192,11 @@ def process_images_for_comfy(api_response: Optional[Dict[str, Any]]) -> Tuple[Op
                     img_data = base64.b64decode(item["b64_json"])
                     with BytesIO(img_data) as buffer:
                         img = Image.open(buffer)
-                        img = img.convert("RGB") # Ensure consistent format
+                        # Preserve transparency if available
+                        if img.mode in ("RGBA", "LA") or ("transparency" in img.info):
+                            img = img.convert("RGBA")
+                        else:
+                            img = img.convert("RGB")
                         img_np = np.array(img) / 255.0 # Scale to [0,1]
                         img_tensor = torch.from_numpy(img_np.astype(np.float32))
                         image_tensors.append(img_tensor)
