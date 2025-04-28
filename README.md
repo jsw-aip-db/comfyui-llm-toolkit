@@ -4,11 +4,29 @@ A custom node collection for integrating various LLM (Large Language Model) prov
 
 ## Features
 
+## Features
+- True Context-to-Context node connections one-input / one-output design
+
+- Generators run even if nothing is conected and they are the only node in the workflow 
+![imagerun](https://github.com/user-attachments/assets/bac9f8a0-6342-4000-b3ef-66fc45c1bdef)
+
+- Streaming Output directly on the node UI
+![stream](https://github.com/user-attachments/assets/eca923ae-f3f2-4014-8937-c8eda53eb680)
+
+- Runs openai latest image model GPT-image-1 and we include various templates 
+
 - Text generation using various LLM providers (OpenAI and local models, etc.)
 - Provider selection and configuration with dynamic model fetching
 - API key management
 - Seamless integration with ComfyUI workflows
-- True Context-to-Context node connections with a unified wildcard interface
+
+## Installation
+
+	@@ -33,6 +43,7 @@ The following Python packages are required:
+- pyyaml
+- python-dotenv
+- requests
+- openai
 
 ## Installation
 
