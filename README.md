@@ -61,7 +61,7 @@ Basic text generation with the selected provider and model.
 - You can override the model with the dropdown
 - The "context" output contains both the original input data and the LLM response
 
-## Unified Any-to-Any Architecture
+## Unified ONE-INPUT / ONE-OUTPUT Architecture
 
 The LLM Toolkit uses a single "context" input/output approach for maximum flexibility:
 
