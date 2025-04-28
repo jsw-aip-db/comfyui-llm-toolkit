@@ -1,11 +1,13 @@
 # ComfyUI LLM Toolkit
 
 A custom node collection for integrating various LLM (Large Language Model) providers with ComfyUI.
+![llmtoolkit_thum](https://github.com/user-attachments/assets/610a2135-3a03-4cc3-b75a-3ee44f70f0d8)
 
 ## Features
 
 ## Features
 - True Context-to-Context node connections one-input / one-output design
+<img width="1107" alt="Screenshot 2025-04-28 at 16 51 13" src="https://github.com/user-attachments/assets/6613b013-18c4-4a7d-b40e-6ae025ad21d0" />
 
 - Generators run even if nothing is conected and they are the only node in the workflow 
 ![imagerun](https://github.com/user-attachments/assets/bac9f8a0-6342-4000-b3ef-66fc45c1bdef)
