@@ -45,13 +45,24 @@ class GenerateImage:
 
     DEFAULT_PROVIDER = "openai"
     DEFAULT_MODEL = "gpt-image-1" # Favors the newer model
+    # Default prompt shown in the node UI when no context is provided
+    DEFAULT_PROMPT = (
+        """
+A children's book drawing of a veterinarian using a stethoscope to 
+listen to the heartbeat of a baby otter.
+"""
+    )
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "context": ("*", {}), # Combined config and prompt info
+                # Direct prompt input (overridden if context provides one)
+                "prompt": ("STRING", {"multiline": True, "default": cls.DEFAULT_PROMPT}),
                 "mode": (["generate", "edit", "variation"], {"default": "generate", "tooltip": "Choose the type of image request."}),
+            },
+            "optional": {
+                "context": ("*", {}),  # Combined config and prompt info (optional)
             }
         }
 
@@ -59,27 +70,17 @@ class GenerateImage:
     RETURN_NAMES = ("context", "image",)
     FUNCTION = "generate"
     CATEGORY = "llm_toolkit"
+    OUTPUT_NODE = True
 
-    def generate(self, context: Dict[str, Any], mode: str = "generate") -> Tuple[Dict[str, Any], Any]:
+    def generate(self, prompt: str, mode: str = "generate", context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], Any]:
         """
         Extracts config, calls the appropriate API, processes the response.
         """
         logger.info("GenerateImage node executing...")
 
-        if not isinstance(context, dict):
-            logger.error("GenerateImage: Input 'context' must be a dictionary.")
-            placeholder_img, _ = process_images_for_comfy(None)
-
-            ui_dict = {}
-            if PreviewImage is not None:
-                try:
-                    preview_node = PreviewImage()
-                    preview_res = preview_node.save_images(placeholder_img, filename_prefix="GenerateImageError")
-                    ui_dict = preview_res.get("ui", {})
-                except Exception:
-                    pass
-
-            return {"ui": ui_dict, "result": (context, placeholder_img,)}
+        # Allow context to be optional; use empty dict if not provided or invalid
+        if context is None or not isinstance(context, dict):
+            context = {}
 
         # --- Extract Configurations ---
         provider_config = context.get("provider_config", {})
@@ -121,7 +122,8 @@ class GenerateImage:
             return {"ui": ui_dict, "result": (context, placeholder_img,)}
 
         # --- Get Prompt Details ---
-        prompt_text = prompt_config.get("text", "")
+        # Choose the prompt text: prefer context's prompt_config if present, otherwise use the direct node input
+        prompt_text = prompt_config.get("text") or prompt
         image_b64 = prompt_config.get("image_base64", None) # From PromptManager
         mask_b64 = prompt_config.get("mask_base64", None)   # From PromptManager
 
