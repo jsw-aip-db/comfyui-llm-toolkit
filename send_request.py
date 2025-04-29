@@ -16,6 +16,13 @@ from openai_api import (
 )
 from llmtoolkit_utils import convert_images_for_api
 
+# Gemini helpers (OpenAI-compat layer)
+from gemini_api import (
+    send_gemini_request,
+    send_gemini_image_generation_request,
+    create_gemini_compatible_embedding,
+)
+
 # Optional: folder_paths may be used elsewhere but isn't necessary here —
 # leave a harmless import to keep previous behaviour for callers that expect
 # it to exist.
@@ -161,6 +168,46 @@ async def send_request(
             return await send_ollama_request(api_url, **kwargs)
 
         # ------------------------------------------------------------------
+        #  Gemini (OpenAI-compat) – chat & Imagen 3 image generation
+        # ------------------------------------------------------------------
+        if llm_provider == "gemini":
+            # Distinguish image requests (Imagen-3) versus text chat
+            if llm_model.startswith("imagen") or llm_model.startswith("image"):
+                # For now use same aspect ratio → size mapping as DALL·E
+                size = aspect_ratio_mapping.get("1:1")
+                try:
+                    response = await send_gemini_image_generation_request(
+                        api_key=llm_api_key,
+                        model=llm_model,
+                        prompt=user_message,
+                        n=batch_count,
+                        size=size,
+                        response_format="b64_json",
+                    )
+                    return response  # structure matches OpenAI image response
+                except Exception as exc:
+                    logger.error(f"Gemini image generation error: {exc}", exc_info=True)
+                    return {"error": str(exc)}
+            else:
+                # Text chat/completions path
+                return await send_gemini_request(
+                    api_url=None,
+                    base64_images=formatted_images,
+                    model=llm_model,
+                    system_message=system_message,
+                    user_message=user_message,
+                    messages=messages or [],
+                    api_key=llm_api_key or "",
+                    seed=seed if random else None,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                    repeat_penalty=repeat_penalty,
+                    tools=None,
+                    tool_choice=None,
+                )
+
+        # ------------------------------------------------------------------
         #  OpenAI (chat + DALL·E)
         # ------------------------------------------------------------------
         if llm_provider == "openai":
@@ -245,10 +292,17 @@ async def create_embedding(embedding_provider: str, api_base: str, embedding_mod
     
     elif embedding_provider in ["openai", "lmstudio", "llamacpp", "textgen", "mistral", "xai"]:
         try:
-            return await create_openai_compatible_embedding(api_base, embedding_model, input, embedding_api_key) # Try block for more precise error handling
+            return await create_openai_compatible_embedding(api_base, embedding_model, input, embedding_api_key)
         except ValueError as e:
-            print(f"Error creating embedding: {e}")  
-            return None # Return None on error
+            print(f"Error creating embedding: {e}")
+            return None
+    
+    elif embedding_provider == "gemini":
+        try:
+            return await create_gemini_compatible_embedding(api_base, embedding_model, input, embedding_api_key)
+        except ValueError as e:
+            print(f"Error creating embedding: {e}")
+            return None
     
     else:
         raise ValueError(f"Unsupported embedding_provider: {embedding_provider}")
