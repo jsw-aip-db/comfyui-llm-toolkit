@@ -60,17 +60,29 @@ def _discover_models() -> List[str]:
         # stored as `<parent>/<repo-name>/*` with the `config.json` at the root
         # of the repo directory.
         for child in parent.iterdir():
-            if (child / "config.json").exists():
-                if child.name not in seen:
-                    out.append(child.as_posix())
-                    seen.add(child.name)
-            # Some users keep an extra nesting level, e.g. `models/LLM/<group>/<repo>`.
-            # Check one more level deep for such cases.
-            elif child.is_dir():
-                for grand in child.iterdir():
-                    if (grand / "config.json").exists() and grand.name not in seen:
-                        out.append(grand.as_posix())
-                        seen.add(grand.name)
+            try:
+                if not child.is_dir():
+                    continue
+
+                # Case 1: <parent>/<repo-name>/config.json
+                if (child / "config.json").exists():
+                    if child.name not in seen:
+                        out.append(child.as_posix())
+                        seen.add(child.name)
+                # Case 2: <parent>/<group>/<repo-name>/config.json
+                else:
+                    for grand in child.iterdir():
+                        try:
+                            if grand.is_dir() and (grand / "config.json").exists():
+                                if grand.name not in seen:
+                                    out.append(grand.as_posix())
+                                    seen.add(grand.name)
+                        except OSError:
+                            # Skip grandchildren that can't be stat'd (e.g. symlinks, special files)
+                            pass
+            except OSError:
+                # Skip children that can't be stat'd
+                pass
     return sorted(out)
 
 
