@@ -2,6 +2,12 @@ import sys
 import logging
 from typing import Any, Tuple
 
+class AnyType(str):
+    def __ne__(self, __value: object) -> bool:
+        return False
+
+WILDCARD = AnyType("*")
+
 # Initialize logger
 logger = logging.getLogger(__name__)
 
@@ -27,7 +33,7 @@ class SwitchAny:
             "hidden": {},
         }
 
-    RETURN_TYPES = ("*",)
+    RETURN_TYPES = (WILDCARD,)
     RETURN_NAMES = ("output",)
     FUNCTION = "switch"
     OUTPUT_NODE = False  # This is a utility node, not an output node
