@@ -4,6 +4,8 @@ import sys
 import logging
 from typing import Any, Dict, Optional, Tuple
 
+from context_payload import extract_context
+
 # Ensure parent directory is in path if running standalone for testing
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -82,8 +84,15 @@ class ConfigGenerateImage:
             output_context = context.copy()
             logger.debug("ConfigGenerateImage: Copied input context.")
         else:
-            output_context = {"passthrough_data": context}
-            logger.warning("ConfigGenerateImage: Received non-dict context input. Wrapping it.")
+            # Try to unwrap ContextPayload
+            unwrapped = extract_context(context)
+            if isinstance(unwrapped, dict):
+                output_context = unwrapped.copy()
+                output_context.setdefault("passthrough_data", context)
+                logger.debug("ConfigGenerateImage: Unwrapped context from payload object.")
+            else:
+                output_context = {"passthrough_data": context}
+                logger.warning("ConfigGenerateImage: Received non-dict context input. Wrapping it.")
 
         # Initialize generation_config dictionary
         generation_config = output_context.get("generation_config", {})

@@ -3,8 +3,18 @@ import json
 import logging
 from typing import Optional, Union, List, Any
 
+# Ensure repository root is on sys.path for context_payload import
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 # Initialize logger
 logger = logging.getLogger(__name__)
+
+# Helper to extract context from payload objects
+from context_payload import extract_context
 
 class Display_Text:
     """
@@ -54,28 +64,39 @@ class Display_Text:
 
         text_to_display = "" # Default to empty string
         
+        # --- Extract dict from ContextPayload if necessary ---
+        if not isinstance(context, dict):
+            # Try to unwrap using helper (returns {} if nothing found)
+            unwrapped = extract_context(context)
+            if unwrapped:
+                context_dict = unwrapped
+            else:
+                context_dict = None
+        else:
+            context_dict = context
+
         # --- Text Extraction Logic ---
-        if isinstance(context, dict):
-            if "llm_response" in context and isinstance(context["llm_response"], str):
-                text_to_display = context["llm_response"]
+        if isinstance(context_dict, dict):
+            if "llm_response" in context_dict and isinstance(context_dict["llm_response"], str):
+                text_to_display = context_dict["llm_response"]
                 logger.info("Extracted text from 'llm_response' key.")
             # Add fallbacks for other common keys if needed
-            elif "response" in context and isinstance(context["response"], str):
-                text_to_display = context["response"]
+            elif "response" in context_dict and isinstance(context_dict["response"], str):
+                text_to_display = context_dict["response"]
                 logger.info("Extracted text from 'response' key.")
-            elif "text" in context and isinstance(context["text"], str):
-                text_to_display = context["text"]
+            elif "text" in context_dict and isinstance(context_dict["text"], str):
+                text_to_display = context_dict["text"]
                 logger.info("Extracted text from 'text' key.")
-            elif "content" in context and isinstance(context["content"], str):
-                text_to_display = context["content"]
+            elif "content" in context_dict and isinstance(context_dict["content"], str):
+                text_to_display = context_dict["content"]
                 logger.info("Extracted text from 'content' key.")
             else:
                 logger.warning(f"Could not find a standard text key ('llm_response', 'response', 'text', 'content') in input dict. Stringifying the dict for display.")
                 try:
                     # Pretty print the dict if possible
-                    text_to_display = json.dumps(context, indent=2)
+                    text_to_display = json.dumps(context_dict, indent=2)
                 except TypeError:
-                    text_to_display = str(context) # Fallback stringification
+                    text_to_display = str(context_dict) # Fallback stringification
         elif isinstance(context, str):
             text_to_display = context
             logger.info("Input is a string.")
@@ -134,7 +155,7 @@ class Display_Text:
         return {
             "ui": {"string": ui_text},
             "result": (
-                context,         # Pass through the original input data
+                context,         # Pass through the original input data (payload or dict)
                 text_list,   # List of individual lines as separate string outputs
                 count,       # Number of lines
                 selected,    # Selected line based on select input

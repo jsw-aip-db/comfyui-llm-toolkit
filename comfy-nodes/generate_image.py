@@ -36,6 +36,9 @@ try:
 except Exception:
     PreviewImage = None
 
+# Helper to extract dict from payload
+from context_payload import extract_context
+
 class GenerateImage:
     """
     Generates an image using configuration and prompt details from the context.
@@ -78,9 +81,13 @@ listen to the heartbeat of a baby otter.
         """
         logger.info("GenerateImage node executing...")
 
-        # Allow context to be optional; use empty dict if not provided or invalid
-        if context is None or not isinstance(context, dict):
+        # Allow context to be optional; unwrap from ContextPayload if provided
+        if context is None:
             context = {}
+        elif not isinstance(context, dict):
+            context = extract_context(context)
+            if not isinstance(context, dict):
+                context = {}
 
         # --- Extract Configurations ---
         provider_config = context.get("provider_config", {})
