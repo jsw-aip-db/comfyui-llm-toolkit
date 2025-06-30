@@ -96,23 +96,40 @@ listen to the heartbeat of a baby otter.
 
         # --- Determine Provider and Model ---
         llm_provider = provider_config.get("provider_name", self.DEFAULT_PROVIDER).lower()
-        # Default to gpt-image-1 if provider is openai and model is missing/empty
-        default_model_for_provider = self.DEFAULT_MODEL if llm_provider == "openai" else ""
-        llm_model = provider_config.get("llm_model") or generation_config.get("model") or default_model_for_provider
+
+        # Map provider-specific default models
+        if llm_provider == "openai":
+            default_model_for_provider = self.DEFAULT_MODEL  # gpt-image-1
+        elif llm_provider == "bfl":
+            default_model_for_provider = "flux-kontext-max"
+        else:
+            default_model_for_provider = ""
+
+        llm_model = (
+            provider_config.get("llm_model")
+            or generation_config.get("model")
+            or default_model_for_provider
+        )
 
         # --- Get API Key ---
         api_key = provider_config.get("api_key", "")
 
         # If API key is missing or placeholder, attempt automatic resolution via utils.get_api_key
-        if (not api_key or api_key in {"1234", "", None}) and llm_provider == "openai":
+        if (
+            not api_key or api_key in {"1234", "", None}
+        ) and llm_provider in {"openai", "bfl"}:
+            env_var_name = "OPENAI_API_KEY" if llm_provider == "openai" else "BFL_API_KEY"
             try:
-                api_key = get_api_key("OPENAI_API_KEY", llm_provider)
-                logger.info("GenerateImage: Retrieved API key via get_api_key helper.")
+                api_key = get_api_key(env_var_name, llm_provider)
+                logger.info(
+                    "GenerateImage: Retrieved API key for %s via get_api_key helper.",
+                    llm_provider,
+                )
             except ValueError as _e:
                 logger.warning("GenerateImage: get_api_key failed – %s", _e)
 
         # After retries, ensure we have a usable key for providers that need one
-        if llm_provider == "openai" and not api_key:
+        if llm_provider in {"openai", "bfl"} and not api_key:
             logger.error(f"GenerateImage: Missing API key for provider '{llm_provider}'.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = f"Missing API key for {llm_provider}"
@@ -277,8 +294,62 @@ listen to the heartbeat of a baby otter.
                     error_message = "API response did not contain expected image data."
                     logger.error(f"{error_message} Response: {raw_api_response}")
 
+            elif llm_provider == "bfl":
+                # ------------------------------------------------------------------
+                #  BFL (Flux Kontext MAX) provider
+                # ------------------------------------------------------------------
+                from bfl_api import send_bfl_image_generation_request
+
+                # Convert OpenAI-style size (e.g. "1024x1024") to aspect ratio "1:1"
+                def _size_to_aspect(sz: str) -> str:
+                    try:
+                        w, h = [int(x) for x in sz.lower().split("x")]
+                        # Reduce fraction to smallest integers (approx.)
+                        import math
+
+                        g = math.gcd(w, h)
+                        return f"{w//g}:{h//g}"
+                    except Exception:
+                        return "1:1"
+
+                # Allow explicit aspect_ratio override from generation_config
+                aspect_ratio = generation_config.get("aspect_ratio") or _size_to_aspect(size or "1024x1024")
+
+                # Optional advanced params
+                seed_bfl = generation_config.get("seed")
+                prompt_upsampling = generation_config.get("prompt_upsampling", False)
+                safety_tolerance = generation_config.get("safety_tolerance", 2)
+                output_format_bfl = generation_config.get("output_format")  # 'jpeg' or 'png'
+
+                logger.info(
+                    "Calling BFL Flux Kontext MAX (aspect_ratio=%s, edit=%s)",
+                    aspect_ratio,
+                    edit_mode,
+                )
+
+                raw_api_response = run_async(
+                    send_bfl_image_generation_request(
+                        api_key=api_key,
+                        prompt=prompt_text,
+                        aspect_ratio=aspect_ratio,
+                        input_image_base64=image_b64 if edit_mode else None,
+                        seed=seed_bfl,
+                        prompt_upsampling=prompt_upsampling,
+                        safety_tolerance=safety_tolerance,
+                        output_format=output_format_bfl,
+                    )
+                )
+
+                if raw_api_response and raw_api_response.get("data"):
+                    output_image_tensor, _ = process_images_for_comfy(raw_api_response)
+                else:
+                    error_message = "BFL API response did not contain expected image data."
+                    logger.error(f"{error_message} Response: {raw_api_response}")
+
             else:
-                error_message = f"Provider '{llm_provider}' not currently supported by GenerateImage node."
+                error_message = (
+                    f"Provider '{llm_provider}' not currently supported by GenerateImage node."
+                )
                 logger.error(error_message)
 
         except Exception as e:

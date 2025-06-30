@@ -151,7 +151,7 @@ class LLMToolkitProviderSelector:
     """
     SUPPORTED_PROVIDERS = [
         "transformers", "llamacpp", "ollama", "kobold", "lmstudio", "textgen",
-        "groq", "gemini", "openai", "anthropic", "mistral", "deepseek", "xai",
+        "groq", "gemini", "openai", "bfl", "anthropic", "mistral", "deepseek", "xai",
         "huggingface", "vllm"
     ]
     REQUIRES_IP_PORT = ["ollama", "llamacpp", "kobold", "lmstudio", "textgen", "vllm"]
