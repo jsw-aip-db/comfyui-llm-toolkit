@@ -1661,6 +1661,10 @@ def get_models(engine, base_ip, port, api_key):
             print("TransformersModelManager not available, using fallback models list")
             return fallback_models
 
+    elif engine == "bfl":
+        # BFL currently exposes a single public model via the Kontekst endpoint.
+        return ["flux-kontext-max"]
+
     else:
         print(f"Unsupported engine - {engine}")
         return []
