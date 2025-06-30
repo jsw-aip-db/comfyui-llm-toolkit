@@ -319,7 +319,7 @@ async def send_request_stream(
 class LLMToolkitTextGenerator:
     DEFAULT_PROVIDER = "openai"
     # For default OpenAI we will use GPT-4o mini (or 4o-mini) – alias may differ
-    DEFAULT_MODEL: str = "gpt-4o-mini"
+    DEFAULT_MODEL: str = "gpt-4.1-mini"
 
     MODEL_LIST: List[str] = [DEFAULT_MODEL]
 
