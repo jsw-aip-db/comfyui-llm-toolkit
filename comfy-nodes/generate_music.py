@@ -7,6 +7,13 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 import requests
 import torchaudio
+import json
+import urllib.parse
+from io import BytesIO
+import numpy as np
+from PIL import Image
+import folder_paths
+import time
 
 # Ensure parent directory (project root) is on sys.path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +24,7 @@ if parent_dir not in sys.path:
 from suno_api import (
     send_suno_music_generation_request,
     send_suno_lyrics_generation_request,
+    get_suno_remaining_credits,
 )
 from llmtoolkit_utils import get_api_key
 from context_payload import extract_context
@@ -42,12 +50,20 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
                 ),
             },
             "optional": {
+                "save_name": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "multiline": False,
+                        "tooltip": "Folder name inside ComfyUI/outputs where audio, image and metadata will be saved.",
+                    },
+                ),
                 "context": ("*", {}),
             },
         }
 
-    RETURN_TYPES = ("*", "AUDIO")
-    RETURN_NAMES = ("context", "audio")
+    RETURN_TYPES = ("*", "STRING")
+    RETURN_NAMES = ("context", "credits")
     FUNCTION = "generate"
     CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True
@@ -55,39 +71,86 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
     # ---------------------------------------------------------------------
     # Helper utilities
     # ---------------------------------------------------------------------
-    def _download_audio_to_tensor(self, audio_url: str) -> Dict[str, Any]:
-        """Download a remote audio file (MP3/OGG/WAV) and convert to ComfyUI audio tensor."""
+    def _download_audio_to_tensor(self, audio_url: str, dest_dir: Optional[str] = None, filename: Optional[str] = None) -> Dict[str, Any]:
+        """Download a remote audio file and convert to ComfyUI audio tensor.
+
+        If *dest_dir* is provided the file is saved there (using *filename* or the name parsed from the URL).
+        Otherwise a temporary file is used and deleted afterwards.
+        """
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
-                logger.info("Downloading generated audio from %s", audio_url)
-                with requests.get(audio_url, stream=True, timeout=60) as resp:
-                    resp.raise_for_status()
+            # Determine destination path (if requested)
+            save_path = None
+            if dest_dir:
+                os.makedirs(dest_dir, exist_ok=True)
+                if not filename:
+                    filename = os.path.basename(urllib.parse.urlparse(audio_url).path) or "audio.mp3"
+                save_path = os.path.join(dest_dir, filename)
+
+            # Stream-download the audio
+            logger.info("Downloading generated audio from %s", audio_url)
+            with requests.get(audio_url, stream=True, timeout=60) as resp:
+                resp.raise_for_status()
+
+                # Choose path – temp or final
+                if save_path:
+                    tmp_path = save_path
+                    f_handle = open(tmp_path, "wb")
+                else:
+                    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+                    tmp_path = tmp_file.name
+                    f_handle = tmp_file
+
+                with f_handle as out_f:
                     for chunk in resp.iter_content(chunk_size=8192):
                         if chunk:
-                            tmp.write(chunk)
-                tmp.flush()
-                temp_path = tmp.name
+                            out_f.write(chunk)
 
-            waveform, sample_rate = torchaudio.load(temp_path)
-            os.unlink(temp_path)
+            # Load waveform via torchaudio
+            waveform, sample_rate = torchaudio.load(tmp_path)
 
-            # Ensure batch dimension [B, C, T]
+            # Clean up temp file (when not persisting)
+            if not save_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
             if waveform.dim() == 2:
                 waveform = waveform.unsqueeze(0)
 
             return {"waveform": waveform, "sample_rate": sample_rate}
         except Exception as e:
             logger.error("Failed to download or decode audio: %s", e, exc_info=True)
-            # Return 1-second silent placeholder tensor on failure
-            return {
-                "waveform": torch.zeros((1, 1, 44100)),
-                "sample_rate": 44100,
-            }
+            return {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
+
+    def _download_image_to_tensor(self, image_url: str, dest_dir: Optional[str] = None, filename: Optional[str] = None):
+        """Download the cover image and return as ComfyUI IMAGE tensor (NHWC)."""
+        try:
+            logger.info("Downloading generated image from %s", image_url)
+            resp = requests.get(image_url, timeout=60)
+            resp.raise_for_status()
+            img_bytes = resp.content
+
+            # Persist if requested
+            if dest_dir:
+                os.makedirs(dest_dir, exist_ok=True)
+                if not filename:
+                    filename = os.path.basename(urllib.parse.urlparse(image_url).path) or "cover.jpg"
+                with open(os.path.join(dest_dir, filename), "wb") as f:
+                    f.write(img_bytes)
+
+            # Convert to tensor
+            img = Image.open(BytesIO(img_bytes)).convert("RGB")
+            img_np = np.array(img).astype(np.float32) / 255.0  # scale to 0-1
+            img_tensor = torch.from_numpy(img_np)
+            if img_tensor.dim() == 3:
+                img_tensor = img_tensor.unsqueeze(0)  # add batch dim
+            return img_tensor
+        except Exception as e:
+            logger.error("Failed to download or process image: %s", e, exc_info=True)
+            return torch.zeros((1, 64, 64, 3))  # placeholder small black image
 
     # ---------------------------------------------------------------------
     # Main generate() implementation
     # ---------------------------------------------------------------------
-    def generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], Any]:
+    def generate(self, prompt: str, save_name: str = "", context: Optional[Dict[str, Any]] = None):
         if context is None:
             context = {}
         elif not isinstance(context, dict):
@@ -101,7 +164,10 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             logger.error(err)
             context["error"] = err
             placeholder = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
-            return (context, placeholder)
+            credits_resp = run_async(get_suno_remaining_credits(api_key=api_key))
+            credits_str = str(credits_resp.get("data")) if isinstance(credits_resp, dict) else ""
+            context["suno_credits"] = credits_str
+            return (context, credits_str)
 
         # ------------------------------------------------------------------
         # API Key resolution
@@ -118,7 +184,10 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             logger.error(err)
             context["error"] = err
             placeholder = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
-            return (context, placeholder)
+            credits_resp = run_async(get_suno_remaining_credits(api_key=api_key))
+            credits_str = str(credits_resp.get("data")) if isinstance(credits_resp, dict) else ""
+            context["suno_credits"] = credits_str
+            return (context, credits_str)
 
         # ------------------------------------------------------------------
         # Read generation_config overrides from context (optional)
@@ -130,7 +199,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
         instrumental = gen_cfg.get("instrumental", False)
         model_name = provider_cfg.get("llm_model") or gen_cfg.get("model") or self.DEFAULT_MODEL
         negative_tags = gen_cfg.get("negative_tags")
-        callback_url = gen_cfg.get("callback_url", "https://example.com/callback")
+        callback_url = gen_cfg.get("callback_url") or "https://example.com/callback"
 
         # ------------------------------------------------------------------
         # Call Suno async helper via run_async
@@ -150,24 +219,68 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             )
         )
 
-        audio_tensor_dict: Optional[Dict[str, Any]] = None
+        audio_tensor_dict: Optional[Dict[str, Any]] = None  # no longer used for output
+        image_tensor = None  # not used for output
+        lyrics_text = ""
+        title = ""
         if isinstance(api_response, dict):
             data_block = api_response.get("data", {})
-            tracks = data_block.get("data", []) if isinstance(data_block, dict) else []
-            if tracks:
-                first_track = tracks[0]
-                audio_url = first_track.get("audio_url") or first_track.get("source_audio_url")
-                if audio_url:
-                    audio_tensor_dict = self._download_audio_to_tensor(audio_url)
+            # Attempt to gather tracks from multiple possible keys
+            tracks = []
+            if isinstance(data_block, dict):
+                if isinstance(data_block.get("data"), list):
+                    tracks = data_block.get("data", [])
+                elif isinstance(data_block.get("sunoData"), list):
+                    tracks = data_block.get("sunoData", [])
+                elif isinstance(data_block.get("response"), dict):
+                    resp_block = data_block["response"]
+                    if isinstance(resp_block.get("sunoData"), list):
+                        tracks = resp_block.get("sunoData", [])
+            # Fallback: search one level deeper for any list of dicts containing audioUrl
+            if not tracks:
+                for v in data_block.values():
+                    if isinstance(v, list):
+                        if all(isinstance(x, dict) for x in v):
+                            if any("audioUrl" in x or "audio_url" in x for x in v):
+                                tracks = v
+                                break
+
+            for tr in tracks:
+                audio_url = (
+                    tr.get("audio_url")
+                    or tr.get("audioUrl")
+                    or tr.get("source_audio_url")
+                    or tr.get("sourceAudioUrl")
+                )
+                image_url = (
+                    tr.get("image_url")
+                    or tr.get("imageUrl")
+                    or tr.get("sourceImageUrl")
+                    or tr.get("source_image_url")
+                )
+                title = tr.get("title", title)
+                lyrics_text = tr.get("prompt", lyrics_text)
+
+                if audio_url and "suno_audio_url" not in context:
                     context["suno_audio_url"] = audio_url
+                if image_url and "suno_image_url" not in context:
+                    context["suno_image_url"] = image_url
 
-        if audio_tensor_dict is None:
-            logger.warning("Audio not ready or failed to download. Returning silent placeholder.")
-            audio_tensor_dict = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
-            context["error"] = "Audio generation failed or timed out."
+            # store title & lyrics in context
+            if title:
+                context["suno_title"] = title
+            if lyrics_text:
+                context["suno_lyrics"] = lyrics_text
 
-        context["suno_raw_response"] = api_response
-        return (context, audio_tensor_dict)
+        # If Suno didn't give us URLs, note error
+        if "suno_audio_url" not in context:
+            context["warning"] = "Suno response did not include audio URL yet."
+
+        # Fetch remaining credits regardless of success or failure
+        credits_resp = run_async(get_suno_remaining_credits(api_key=api_key))
+        credits_str = str(credits_resp.get("data")) if isinstance(credits_resp, dict) else ""
+        context["suno_credits"] = credits_str
+        return (context, credits_str)
 
 
 class GenerateLyrics:  # noqa: N801

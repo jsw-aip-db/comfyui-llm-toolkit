@@ -61,10 +61,15 @@ async def send_suno_music_generation_request(
     init_resp = await _request("POST", initial_url, api_key, json_payload=payload)
     logger.info(f"Suno initial response: {init_resp}")
 
+    # Handle error codes or missing data early
+    if init_resp.get("code") != 200 or init_resp.get("data") is None:
+        return {"error": "Suno generation request failed", "initial_response": init_resp}
+
     if not poll:
         return init_resp
 
-    task_id = init_resp.get("data", {}).get("task_id") or init_resp.get("data", {}).get("taskId")
+    data_block = init_resp.get("data") or {}
+    task_id = data_block.get("task_id") or data_block.get("taskId")
     if not task_id:
         logger.warning("No task_id returned by Suno, cannot poll.")
         return init_resp
@@ -227,4 +232,24 @@ async def send_suno_upload_extend_request(
         model=model,
         poll=True,
         callback_url=callback_url,
-    ) 
+    )
+
+
+# -----------------------------------------------------------------------------
+# Account management helper
+# -----------------------------------------------------------------------------
+
+
+async def get_suno_remaining_credits(*, api_key: str, timeout: int = 30) -> Dict[str, Any]:
+    """Return the remaining credit balance for the given Suno account.
+
+    Response format (success): {"code": 200, "msg": "success", "data": <int>} where data is credits.
+    On error returns the raw JSON with non-200 code or {"error": ...} if unexpected exception.
+    """
+    try:
+        url = f"{BASE_URL}/api/v1/generate/credit"
+        resp = await _request("GET", url, api_key, timeout=timeout)
+        return resp
+    except Exception as exc:
+        logger.error("Error fetching Suno remaining credits: %s", exc, exc_info=True)
+        return {"error": str(exc)} 
