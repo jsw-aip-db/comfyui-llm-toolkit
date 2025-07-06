@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 # Helper to extract context from payload objects
 from context_payload import extract_context
 
+def _remove_thinking_tags(text: str) -> str:
+    """Remove <think>...</think> blocks from text, including the tags themselves."""
+    import re
+    # Pattern to match <think>...</think> blocks (including nested content and newlines)
+    pattern = r'<think>.*?</think>'
+    cleaned = re.sub(pattern, '', text, flags=re.DOTALL)
+    # Clean up any extra whitespace/newlines left behind
+    cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)  # Replace multiple newlines with double
+    return cleaned.strip()
+
 class Display_Text:
     """
     Displays text extracted from a wildcard input type, typically containing LLM responses.
@@ -33,6 +43,7 @@ class Display_Text:
                     "default": "0",
                     "tooltip": "Select which line to output (cycles through available lines)"
                 }),
+                "hide_thinking": ("BOOLEAN", {"default": True, "tooltip": "Hide model thinking process (content between <think> tags)"})
             },
             "optional": {},
             "hidden": {},
@@ -44,9 +55,9 @@ class Display_Text:
     OUTPUT_IS_LIST = (False, True, False, False, False) # text_list is the only list output
     FUNCTION = "display_llm_text"
     OUTPUT_NODE = True
-    CATEGORY = "llm_toolkit" # Changed category to llm_toolkit
+    CATEGORY = "llm_toolkit/utils" # Changed category to llm_toolkit
 
-    def display_llm_text(self, context: Any, select: str):
+    def display_llm_text(self, context: Any, select: str, hide_thinking: bool):
         # --- Safe conversion for 'select' input string ---
         select_int = 0 # Default value
         try:
@@ -115,6 +126,10 @@ class Display_Text:
              logger.warning("Input 'context' is None. Displaying empty string.")
              text_to_display = ""
         # --- End Text Extraction ---
+
+        # Apply thinking tag removal if requested
+        if hide_thinking and text_to_display:
+            text_to_display = _remove_thinking_tags(text_to_display)
 
         # Use the extracted text for display logic
         if text_to_display is None: # Should not happen with default ""

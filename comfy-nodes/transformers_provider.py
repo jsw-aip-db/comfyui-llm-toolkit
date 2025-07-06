@@ -223,7 +223,7 @@ class LocalTransformersProviderNode:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure_transformers"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/providers"
 
     @classmethod
     def IS_CHANGED(cls, llm_model: str, context=None):

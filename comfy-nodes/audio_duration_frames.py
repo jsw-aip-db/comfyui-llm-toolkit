@@ -42,7 +42,7 @@ class AudioDurationFrames:
         "end_time",
     )
     FUNCTION = "calculate"
-    CATEGORY = "llm-toolkit"
+    CATEGORY = "llm_toolkit/utils"
 
     # ---------------------------------------------------------------------
     # Core logic
@@ -117,5 +117,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AudioDurationFrames": "Audio Duration → Frames",
+    "AudioDurationFrames": "Audio Duration → Frames (LLMToolkit)",
 } 

@@ -315,6 +315,16 @@ async def send_request_stream(
             yield f"[Error: {e}]"
         return # Stop generation after yielding the fallback response
 
+def _remove_thinking_tags(text: str) -> str:
+    """Remove <think>...</think> blocks from text, including the tags themselves."""
+    import re
+    # Pattern to match <think>...</think> blocks (including nested content and newlines)
+    pattern = r'<think>.*?</think>'
+    cleaned = re.sub(pattern, '', text, flags=re.DOTALL)
+    # Clean up any extra whitespace/newlines left behind
+    cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)  # Replace multiple newlines with double
+    return cleaned.strip()
+
 # --- Original Node (for reference or non-streaming use) ---
 class LLMToolkitTextGenerator:
     DEFAULT_PROVIDER = "openai"
@@ -328,7 +338,8 @@ class LLMToolkitTextGenerator:
         return {
             "required": {
                 "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
-                "prompt": ("STRING", {"multiline": False, "default": "Write a short story about a robot learning to paint."})
+                "prompt": ("STRING", {"multiline": False, "default": "Write a short story about a robot learning to paint."}),
+                "hide_thinking": ("BOOLEAN", {"default": True, "tooltip": "Hide model thinking process (content between <think> tags)"})
             },
             "optional": {
                 "context": ("*", {})
@@ -338,10 +349,10 @@ class LLMToolkitTextGenerator:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "text")
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True # Keeps the text widget for non-streaming version
 
-    def generate(self, llm_model, prompt, context=None):
+    def generate(self, llm_model, prompt, hide_thinking, context=None):
         # ... (original generate logic using run_async(send_request(...))) ...
         # This function remains mostly the same as the user provided,
         # calling the original non-streaming send_request.
@@ -480,16 +491,26 @@ class LLMToolkitTextGenerator:
                  logger.error(f"Error in non-streaming send_request call: {e}", exc_info=True)
                  response_data = {"choices": [{"message": {"content": f"Error calling send_request: {str(e)}"}}]}
 
-            if response_data is None: content = "Error: Received None response"
+            if response_data is None: 
+                content = "Error: Received None response"
             elif isinstance(response_data, dict):
                 if "choices" in response_data and response_data["choices"]:
                     message = response_data["choices"][0].get("message", {})
                     content = message.get("content", "")
-                    if content is None: content = "Error: Null content in response"
-                elif "response" in response_data: content = response_data["response"]
-                else: content = f"Error: Unexpected format: {str(response_data)}"
-            elif isinstance(response_data, str): content = response_data
-            else: content = f"Error: Unexpected type: {type(response_data)}"
+                    if content is None: 
+                        content = "Error: Null content in response"
+                elif "response" in response_data: 
+                    content = response_data["response"]
+                else: 
+                    content = f"Error: Unexpected format: {str(response_data)}"
+            elif isinstance(response_data, str): 
+                content = response_data
+            else: 
+                content = f"Error: Unexpected type: {type(response_data)}"
+
+            # Apply thinking tag removal if requested
+            if hide_thinking and content:
+                content = _remove_thinking_tags(content)
 
             if context is not None and isinstance(context, dict):
                 context_out = context.copy()
@@ -529,7 +550,7 @@ def _sanitize_params_for_log(d: dict) -> dict:
 class LLMToolkitTextGeneratorStream:
     DEFAULT_PROVIDER = "openai"
     # For default OpenAI we will use GPT-4o mini (or 4o-mini) – alias may differ
-    DEFAULT_MODEL: str = "gpt-4.1-mini"
+    DEFAULT_MODEL: str = "gpt-4o-mini"
 
     MODEL_LIST: List[str] = [DEFAULT_MODEL]
 
@@ -538,7 +559,8 @@ class LLMToolkitTextGeneratorStream:
         return {
             "required": {
                 "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
-                "prompt": ("STRING", {"multiline": False, "default": "Write a detailed description of a futuristic city."})
+                "prompt": ("STRING", {"multiline": False, "default": "Write a detailed description of a futuristic city."}),
+                "hide_thinking": ("BOOLEAN", {"default": True, "tooltip": "Hide model thinking process (content between <think> tags)"})
             },
             "optional": {
                 "context": ("*", {})
@@ -551,10 +573,10 @@ class LLMToolkitTextGeneratorStream:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "text")
     FUNCTION = "generate_stream" # <-- Use new function name
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True # Keep the JS widget logic
 
-    def generate_stream(self, llm_model, prompt, unique_id, context=None, **kwargs):
+    def generate_stream(self, llm_model, prompt, hide_thinking, unique_id, context=None, **kwargs):
         """
         Generates text using the specified provider and streams the response back
         to the UI via websocket messages.  (synchronous wrapper)
@@ -571,6 +593,8 @@ class LLMToolkitTextGeneratorStream:
 
             server = PromptServer.instance
             full_response_text = ""
+            thinking_buffer = ""
+            inside_thinking = False
 
             try:
                 # --- Parameter processing logic (same as non-streaming) ---
@@ -728,43 +752,84 @@ class LLMToolkitTextGeneratorStream:
                 async for chunk in stream_generator:
                     if chunk:
                         full_response_text += chunk
-                        # Send chunk to frontend via websocket
-                        server.send_sync(
-                            "llmtoolkit.stream.chunk",
-                            {"node": unique_id, "text": chunk},
-                            sid=server.client_id,
-                        )
+                        
+                        # Handle thinking tag filtering for streaming
+                        if hide_thinking:
+                            # Track thinking state and buffer content
+                            chunk_to_send = ""
+                            i = 0
+                            while i < len(chunk):
+                                char = chunk[i]
+                                
+                                if not inside_thinking:
+                                    # Check for start of thinking tag
+                                    if char == '<' and chunk[i:i+7] == '<think>':
+                                        inside_thinking = True
+                                        thinking_buffer = '<think>'
+                                        i += 7
+                                        continue
+                                    else:
+                                        chunk_to_send += char
+                                else:
+                                    # Inside thinking block, buffer until we find closing tag
+                                    thinking_buffer += char
+                                    if thinking_buffer.endswith('</think>'):
+                                        inside_thinking = False
+                                        thinking_buffer = ""
+                                        i += 1
+                                        continue
+                                i += 1
+                            
+                            # Only send non-thinking content
+                            if chunk_to_send:
+                                server.send_sync(
+                                    "llmtoolkit.stream.chunk",
+                                    {"node": unique_id, "text": chunk_to_send},
+                                    sid=server.client_id,
+                                )
+                        else:
+                            # Send all content if not hiding thinking
+                            server.send_sync(
+                                "llmtoolkit.stream.chunk",
+                                {"node": unique_id, "text": chunk},
+                                sid=server.client_id,
+                            )
                     await asyncio.sleep(0.001)
 
+                # Apply thinking tag removal to final text if requested
+                final_text = full_response_text
+                if hide_thinking:
+                    final_text = _remove_thinking_tags(full_response_text)
+
                 logger.info(
-                    f"[Streaming] Finished for node {unique_id}. Total length: {len(full_response_text)}"
+                    f"[Streaming] Finished for node {unique_id}. Total length: {len(final_text)}"
                 )
                 server.send_sync(
                     "llmtoolkit.stream.end",
-                    {"node": unique_id, "final_text": full_response_text},
+                    {"node": unique_id, "final_text": final_text},
                     sid=server.client_id,
                 )
 
                 # --- Prepare final context output ---
                 if context is not None and isinstance(context, dict):
                     context_out = context.copy()
-                    context_out["llm_response"] = full_response_text
+                    context_out["llm_response"] = final_text
                     context_out["llm_raw_response"] = {
                         "status": "Streamed successfully",
-                        "final_length": len(full_response_text),
+                        "final_length": len(final_text),
                     }
                 else:
                     context_out = {
-                        "llm_response": full_response_text,
+                        "llm_response": final_text,
                         "llm_raw_response": {
                             "status": "Streamed successfully",
-                            "final_length": len(full_response_text),
+                            "final_length": len(final_text),
                         },
                         "passthrough_data": context,
                     }
 
-                payload = ContextPayload(full_response_text, context_out)
-                return {"ui": {"string": [full_response_text]}, "result": (payload, str(payload))}
+                payload = ContextPayload(final_text, context_out)
+                return {"ui": {"string": [final_text]}, "result": (payload, str(payload))}
 
             except Exception as e:
                 error_message = f"Error during streaming generation: {str(e)}"

@@ -28,7 +28,7 @@ class CheckImageEmpty:
     RETURN_NAMES = ("is_empty", "status_message")
     FUNCTION = "check_image_empty"
     OUTPUT_NODE = False  # This is a utility node, not an output node
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/utils"
 
     def check_image_empty(self, image: Optional[torch.Tensor] = None) -> Tuple[bool, str]:
         """

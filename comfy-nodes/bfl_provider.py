@@ -58,7 +58,7 @@ class BFLProviderNode:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure_bfl"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/providers"
 
     @classmethod
     def IS_CHANGED(cls, llm_model: str, context: Any = None):

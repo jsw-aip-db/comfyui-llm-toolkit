@@ -177,7 +177,7 @@ class LLMToolkitProviderSelector:
     RETURN_NAMES = ("context",)
 
     FUNCTION = "select_provider"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/providers"
 
     @classmethod
     def IS_CHANGED(cls, llm_provider, llm_model, base_ip="localhost", port="11434", external_api_key="", context=None):

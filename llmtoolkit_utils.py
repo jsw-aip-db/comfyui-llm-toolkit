@@ -1665,6 +1665,10 @@ def get_models(engine, base_ip, port, api_key):
         # BFL currently exposes a single public model via the Kontekst endpoint.
         return ["flux-kontext-max"]
 
+    elif engine == "suno":
+        # Suno offers three primary model versions
+        return ["V3_5", "V4", "V4_5"]
+
     else:
         print(f"Unsupported engine - {engine}")
         return []

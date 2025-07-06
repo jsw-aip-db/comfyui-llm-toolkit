@@ -72,7 +72,7 @@ listen to the heartbeat of a baby otter.
     RETURN_TYPES = ("*", "IMAGE",) # Keep IMAGE for direct use/preview
     RETURN_NAMES = ("context", "image",)
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True
 
     def generate(self, prompt: str, mode: str = "generate", context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], Any]:

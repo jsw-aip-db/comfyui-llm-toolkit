@@ -70,7 +70,7 @@ class PromptManager:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "manage_prompt"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/utils"
 
     def manage_prompt(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """

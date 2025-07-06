@@ -18,7 +18,7 @@ class SwitchAny:
     Useful for conditional logic in ComfyUI workflows.
     """
     def __init__(self):
-        self.type = "utility"
+        self.type = "llm_toolkit/utils"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -37,7 +37,7 @@ class SwitchAny:
     RETURN_NAMES = ("output",)
     FUNCTION = "switch"
     OUTPUT_NODE = False  # This is a utility node, not an output node
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/utils"
 
     def switch(self, selector: bool, input_a: Any = None, input_b: Any = None) -> Tuple[Any]:
         """

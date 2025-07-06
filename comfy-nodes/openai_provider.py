@@ -99,7 +99,7 @@ class OpenAIProviderNode:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure_openai"
-    CATEGORY = "llm_toolkit"
+    CATEGORY = "llm_toolkit/providers"
 
     # This allows ComfyUI to invalidate the node if inputs that matter change.
     @classmethod
