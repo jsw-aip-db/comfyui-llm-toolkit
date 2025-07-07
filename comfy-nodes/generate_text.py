@@ -183,40 +183,92 @@ async def send_request_stream(
         # Ensure requested model is present locally (will pull if missing)
         ensure_ollama_model(llm_model, base_ip, port)
 
-        url = f"http://{base_ip}:{port}/api/generate"
+        # Decide which Ollama endpoint to use:
+        #   • /api/generate  – fast text-only streaming (no image support)
+        #   • /api/chat      – full chat/completions with image support
+        # We switch to /api/chat automatically if the caller supplied base64-encoded images
+        # so that vision models (e.g. qwen-vl, llava) receive the image bytes.
+
+        use_chat_endpoint = bool(base64_images)  # True if we have images to send
+
+        url = (
+            f"http://{base_ip}:{port}/api/chat" if use_chat_endpoint else f"http://{base_ip}:{port}/api/generate"
+        )
+
         headers = {"Content-Type": "application/json"}
         if llm_api_key: # Ollama doesn't typically use API keys this way, but include for consistency
             headers["Authorization"] = f"Bearer {llm_api_key}"
 
-        # Construct messages list if not provided directly
-        if not messages:
-            messages = []
-            if system_message:
-                messages.append({"role": "system", "content": system_message})
-            if user_message:
-                messages.append({"role": "user", "content": user_message})
+        # ------------------------------------------------------------------
+        # Build request payloads
+        # ------------------------------------------------------------------
 
-        # Prepare payload for Ollama /api/generate
-        payload = {
-            "model": llm_model,
-            "prompt": user_message, # Ollama uses 'prompt' for the main user message
-            "system": system_message if system_message else None,
-            "stream": True, # Explicitly request streaming
-            "options": {
-                "seed": seed,
-                "temperature": temperature,
-                "num_predict": max_tokens, # Ollama uses num_predict for max_tokens
-                "top_k": top_k,
-                "top_p": top_p,
-                "repeat_penalty": repeat_penalty,
-                "stop": stop,
+        if use_chat_endpoint:
+            # --------------------------------------------------------------
+            #  /api/chat  (supports multimodal, messages array)
+            # --------------------------------------------------------------
+            if not messages:
+                messages = []
+                if system_message:
+                    messages.append({"role": "system", "content": system_message})
+
+            # Always append the user message at the end so that vision models
+            # get the most recent prompt + images in a single message.
+            user_msg: dict[str, Any] = {"role": "user", "content": user_message or ""}
+            if base64_images:
+                user_msg["images"] = base64_images  # Ollama expects a list key called "images"
+            messages.append(user_msg)
+
+            payload = {
+                "model": llm_model,
+                "messages": messages,
+                "stream": True,
+                "options": {
+                    "seed": seed,
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                    "top_k": top_k,
+                    "top_p": top_p,
+                    "repeat_penalty": repeat_penalty,
+                    "stop": stop,
+                },
             }
-        }
-        # Clean up None values Ollama might not like
-        if not system_message: del payload["system"]
-        payload["options"] = {k: v for k, v in payload["options"].items() if v is not None}
+        else:
+            # --------------------------------------------------------------
+            #  /api/generate  (text-only)
+            # --------------------------------------------------------------
+            # Construct messages list if not provided directly (for context)
+            if not messages:
+                messages = []
+                if system_message:
+                    messages.append({"role": "system", "content": system_message})
+                if user_message:
+                    messages.append({"role": "user", "content": user_message})
 
-        logger.info(f"Streaming request to Ollama: {url} with payload: { {**payload, 'options': {**payload.get('options', {}), 'api_key': '****' if llm_api_key else None} } }")
+            payload = {
+                "model": llm_model,
+                "prompt": user_message,
+                "system": system_message if system_message else None,
+                "stream": True,
+                "options": {
+                    "seed": seed,
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                    "top_k": top_k,
+                    "top_p": top_p,
+                    "repeat_penalty": repeat_penalty,
+                    "stop": stop,
+                },
+            }
+            # Clean up None values Ollama might not like
+            if not system_message:
+                del payload["system"]
+
+        # Remove None values from options dict
+        if "options" in payload:
+            payload["options"] = {k: v for k, v in payload["options"].items() if v is not None}
+
+        logger.info(f"Streaming request to Ollama: {url} with payload: {{'model': '{llm_model}', 'stream': True, 'use_chat': {use_chat_endpoint}}}")
 
         try:
             # Use a single session if possible, manage timeouts
@@ -224,26 +276,42 @@ async def send_request_stream(
                 async with session.post(url, headers=headers, json=payload) as response:
                     response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
-                    # Process the streaming response line by line
+                    # Process the streaming response line by line.  The JSON schema differs slightly
+                    # between /api/generate and /api/chat, so we branch inside the loop.
                     async for line in response.content:
-                        if line:
-                            try:
-                                decoded_line = line.decode('utf-8').strip()
-                                if decoded_line:
-                                    data = json.loads(decoded_line)
-                                    chunk = data.get("response", "")
-                                    if chunk:
-                                        yield chunk
-                                    # Check if generation is done (Ollama specific)
-                                    if data.get("done", False):
-                                        logger.info("Ollama stream finished.")
-                                        break
-                            except json.JSONDecodeError:
-                                logger.warning(f"Could not decode JSON line: {line.decode('utf-8', errors='ignore')}")
-                            except Exception as e:
-                                logger.error(f"Error processing stream line: {e}", exc_info=True)
-                                yield f"[Error processing stream: {e}]"
-                                break # Stop streaming on error
+                        if not line:
+                            continue
+                        try:
+                            decoded_line = line.decode("utf-8").strip()
+                            if not decoded_line:
+                                continue
+
+                            data = json.loads(decoded_line)
+
+                            if use_chat_endpoint:
+                                # Chat endpoint returns {"message": {"content": "..."}, "done": bool}
+                                msg = data.get("message", {})
+                                chunk = msg.get("content", "")
+                                is_done = data.get("done", False)
+                            else:
+                                # Generate endpoint returns {"response": "...", "done": bool}
+                                chunk = data.get("response", "")
+                                is_done = data.get("done", False)
+
+                            if chunk:
+                                yield chunk
+
+                            if is_done:
+                                logger.info("Ollama stream finished.")
+                                break
+                        except json.JSONDecodeError:
+                            logger.warning(
+                                f"Could not decode JSON line from Ollama stream: {line.decode('utf-8', errors='ignore')}"
+                            )
+                        except Exception as e:
+                            logger.error(f"Error processing Ollama stream line: {e}", exc_info=True)
+                            yield f"[Error processing stream: {e}]"
+                            break  # Stop streaming on error
 
         except aiohttp.ClientConnectorError as e:
             logger.error(f"Connection error to {url}: {e}")
