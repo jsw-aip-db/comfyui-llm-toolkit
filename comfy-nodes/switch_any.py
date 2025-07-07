@@ -72,11 +72,55 @@ class SwitchAny:
             # In case of error, return None
             return (None,)
 
+class SwitchAnyRoute:
+    """
+    A reverse switch node that takes a single input of any type and a boolean selector.
+    It diverts (routes) the input to one of two outputs depending on the selector.
+
+    If selector is True -> the value is emitted on output_true and output_false is None.
+    If selector is False -> the value is emitted on output_false and output_true is None.
+    """
+
+    def __init__(self):
+        self.type = "llm_toolkit/utils"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "selector": ("BOOLEAN", {"default": True, "tooltip": "True = route to output_true, False = route to output_false"}),
+                "input": ("*", {"tooltip": "Input to be routed"}),
+            },
+            "hidden": {},
+        }
+
+    RETURN_TYPES = (WILDCARD, WILDCARD)
+    RETURN_NAMES = ("output_true", "output_false")
+    FUNCTION = "route"
+    OUTPUT_NODE = False  # Utility node
+    CATEGORY = "llm_toolkit/utils"
+
+    def route(self, selector: bool, input: Any) -> Tuple[Any, Any]:
+        """Route the input to one of the outputs based on selector."""
+        logger.info(f"SwitchAnyRoute executing with selector={selector}")
+        try:
+            if selector:
+                logger.info("SwitchAnyRoute: Sending input to output_true (selector=True)")
+                return (input, None)
+            else:
+                logger.info("SwitchAnyRoute: Sending input to output_false (selector=False)")
+                return (None, input)
+        except Exception as e:
+            logger.error(f"Error in SwitchAnyRoute: {e}", exc_info=True)
+            return (None, None)
+
 # --- Node Mappings for ComfyUI ---
 NODE_CLASS_MAPPINGS = {
-    "SwitchAny": SwitchAny
+    "SwitchAny": SwitchAny,
+    "SwitchAnyRoute": SwitchAnyRoute
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SwitchAny": "Switch Any (LLMToolkit)"
+    "SwitchAny": "Switch Any (LLMToolkit)",
+    "SwitchAnyRoute": "Switch Any Route (LLMToolkit)"
 } 

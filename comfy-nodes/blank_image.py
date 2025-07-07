@@ -62,5 +62,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "BlankImage": "Blank Image (llm_toolkit)",
+    "BlankImage": "Blank Image (LLMToolkit)",
 } 
