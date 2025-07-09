@@ -12,3 +12,8 @@ accelerate>=0.28.0
 sentencepiece            
 safetensors              
 qwen-omni-utils 
+#playsound #install this if you have issues playingh the audio
+simpleaudio
+pydub
+google-genai
+opencv-python

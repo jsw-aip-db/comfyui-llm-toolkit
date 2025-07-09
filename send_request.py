@@ -186,11 +186,11 @@ async def send_request(
             return await send_ollama_request(api_url, **kwargs)
 
         # ------------------------------------------------------------------
-        #  Gemini (OpenAI-compat) – chat & Imagen 3 image generation
+        #  Gemini / Google (OpenAI-compat) – chat & Imagen 3 image generation
         # ------------------------------------------------------------------
-        if llm_provider == "gemini":
+        if llm_provider in {"gemini", "google"}:
             # Distinguish image requests (Imagen-3) versus text chat
-            if llm_model.startswith("imagen") or llm_model.startswith("image"):
+            if llm_model.startswith("imagen") or llm_model.startswith("image") or "image-generation" in llm_model:
                 # For now use same aspect ratio → size mapping as DALL·E
                 size = aspect_ratio_mapping.get("1:1")
                 try:

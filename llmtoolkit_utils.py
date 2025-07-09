@@ -1576,23 +1576,36 @@ def get_models(engine, base_ip, port, api_key):
         ]
 
     elif engine == "gemini":
-        return [
-            "learnlrn-1.5-pro-experimental",
-            "gemini-2.0-flash-thinking-exp-1219",
-            "gemini-2.0-flash-exp",
-            "gemini-exp-1206",
-            "gemini-exp-1121",
-            "gemini-exp-1114",
-            "gemini-1.5-pro-002",
-            "gemini-1.5-flash-002",
-            "gemini-1.5-flash-8b-exp-0924",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro-latest",
-            "gemini-1.5-latest",
-            "gemini-pro",
-            "gemini-pro-vision",
+        # Attempt live fetch via Google Gemini API; fallback to hard-coded list on error.
+        fallback_models = [
+            "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-pro", "gemini-2.0-flash",
+            "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro", "gemini-pro-vision",
+            "imagen-3-light-alpha",
         ]
+
+        try:
+            if not api_key or api_key == "1234":
+                logger.warning("No valid Gemini API key provided. Using fallback model list.")
+                return fallback_models
+
+            # Google exposes the Gemini model list via the same endpoint used for its OpenAI-compat layer.
+            list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+            resp = requests.get(list_url, timeout=10)
+
+            if resp.status_code != 200:
+                logger.warning(
+                    "Gemini list models failed %s: %s", resp.status_code, resp.text[:120]
+                )
+                return fallback_models
+
+            data = resp.json()
+            models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+            # Strip leading 'models/' if present
+            models = [m.split("/")[-1] for m in models]
+            return models if models else fallback_models
+        except Exception as exc:
+            logger.error("Error fetching Gemini models: %s", exc)
+            return fallback_models
 
     elif engine == "sentence_transformers":
         return [
@@ -1668,6 +1681,32 @@ def get_models(engine, base_ip, port, api_key):
     elif engine == "suno":
         # Suno offers three primary model versions
         return ["V3_5", "V4", "V4_5"]
+
+    elif engine == "google":
+        # Use Google Gemini API list models
+        fallback_models = [
+            "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-pro", "gemini-2.0-flash",
+            "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro", "gemini-pro-vision"
+        ]
+        try:
+            if not api_key or api_key == "1234":
+                logger.warning("No valid Google API key provided. Using fallback model list.")
+                return fallback_models
+
+            list_url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + api_key
+            resp = requests.get(list_url, timeout=10)
+            if resp.status_code != 200:
+                logger.warning(f"Google list models failed {resp.status_code}: {resp.text[:120]}")
+                return fallback_models
+
+            data = resp.json()
+            models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+            # Strip the leading 'models/' if present
+            models = [m.split("/")[-1] for m in models]
+            return models if models else fallback_models
+        except Exception as exc:
+            logger.error(f"Error fetching Google models: {exc}")
+            return fallback_models
 
     else:
         print(f"Unsupported engine - {engine}")
@@ -2091,10 +2130,14 @@ def validate_gemini_key(api_key):
              logger.warning("validate_gemini_key called with invalid key.")
              return False
         logger.debug("Validating Gemini API key...")
-        genai.configure(api_key=api_key)
-        models = genai.list_models()
-        has_models = context(True for _ in models)
-        logger.debug(f"Gemini key validation successful: {has_models}")
+        
+        # Create a client with the API key instead of using configure
+        client = genai.Client(api_key=api_key)
+        
+        # Try to list models to validate the key
+        models = list(client.models.list())
+        has_models = len(models) > 0
+        logger.debug(f"Gemini key validation successful: found {len(models)} models")
         return has_models
     except ImportError:
         logger.error("google-generativeai package not installed, cannot validate Gemini key.")
