@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class GenerateVideo:
-    DEFAULT_MODEL = "veo-2.0-generate-002"
+    DEFAULT_MODEL = "veo-2.0-generate-001"
 
     @classmethod
     def INPUT_TYPES(cls):
