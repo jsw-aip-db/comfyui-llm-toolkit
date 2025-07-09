@@ -42,7 +42,7 @@ class AudioDurationFrames:
         "end_time",
     )
     FUNCTION = "calculate"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "llm_toolkit/utils/audio"
 
     # ---------------------------------------------------------------------
     # Core logic

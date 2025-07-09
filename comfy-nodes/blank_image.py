@@ -25,7 +25,7 @@ class BlankImage:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "create"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "llm_toolkit/utils/image"
 
     # ------------------------------------------------------------------
     # Core logic

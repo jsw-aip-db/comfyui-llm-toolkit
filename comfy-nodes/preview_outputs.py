@@ -40,7 +40,7 @@ class PreviewOutputs:  # noqa: N801 – stay consistent with other nodes
     RETURN_TYPES = ("*", "AUDIO", "IMAGE", "STRING")
     RETURN_NAMES = ("context", "audio", "image", "lyrics")
     FUNCTION = "preview"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "llm_toolkit/utils/audio"
     OUTPUT_NODE = True
 
     # ------------------------------------------------------------------

@@ -13,7 +13,8 @@ if parent_dir not in sys.path:
 # Relative imports
 try:
     from llmtoolkit_utils import tensor_to_base64, process_images_for_comfy, TENSOR_SUPPORT, get_api_key
-    from send_request import run_async # Assuming send_request.py exists for run_async
+    # Import helpers from send_request
+    from send_request import run_async, send_request  # Added send_request for Gemini image generation
     # Import the specific API call function from root directory
     from openai_api import send_openai_image_generation_request
 except ImportError:
@@ -293,6 +294,45 @@ listen to the heartbeat of a baby otter.
                 else:
                     error_message = "API response did not contain expected image data."
                     logger.error(f"{error_message} Response: {raw_api_response}")
+
+            elif llm_provider in {"gemini", "google"}:
+                # ------------------------------------------------------------------
+                #  Gemini / Imagen – image generation via OpenAI-compat endpoint
+                # ------------------------------------------------------------------
+
+                if edit_mode or variation_mode:
+                    error_message = (
+                        "Gemini image editing / variation not yet supported by GenerateImage node. "
+                        "Please use 'generate' mode."
+                    )
+                    logger.error(error_message)
+                else:
+                    # Batch generation handled via batch_count (n)
+                    try:
+                        raw_api_response = run_async(
+                            send_request(
+                                llm_provider=llm_provider,
+                                base_ip="localhost",
+                                port="0",
+                                images=None,  # Gemini generation does not require prior image
+                                llm_model=llm_model,
+                                system_message="You are a helpful assistant.",
+                                user_message=prompt_text,
+                                messages=[],
+                                llm_api_key=api_key,
+                                batch_count=n,
+                                strategy="create",
+                            )
+                        )
+
+                        if raw_api_response and raw_api_response.get("data"):
+                            output_image_tensor, _ = process_images_for_comfy(raw_api_response)
+                        else:
+                            error_message = "Gemini API response did not contain expected image data."
+                            logger.error("%s Response: %s", error_message, raw_api_response)
+                    except Exception as g_exc:
+                        error_message = f"Gemini image generation error: {g_exc}"
+                        logger.error(error_message, exc_info=True)
 
             elif llm_provider == "bfl":
                 # ------------------------------------------------------------------
