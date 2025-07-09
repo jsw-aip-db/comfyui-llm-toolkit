@@ -17,6 +17,8 @@ try:
     from send_request import run_async, send_request  # Added send_request for Gemini image generation
     # Import the specific API call function from root directory
     from openai_api import send_openai_image_generation_request
+    # Import new Gemini image generation functions
+    from gemini_image_api import send_gemini_image_generation_unified
 except ImportError:
     logger = logging.getLogger(__name__)
     logger.error("Failed relative imports in generate_image.py. Check file structure and __init__.py.")
@@ -25,6 +27,7 @@ except ImportError:
         from llmtoolkit_utils import tensor_to_base64, process_images_for_comfy, TENSOR_SUPPORT, get_api_key
         from send_request import run_async
         from openai_api import send_openai_image_generation_request
+        from gemini_image_api import send_gemini_image_generation_unified
     except ImportError:
         logging.error("Failed to import required modules for generate_image.py")
         TENSOR_SUPPORT = False
@@ -95,22 +98,28 @@ listen to the heartbeat of a baby otter.
         prompt_config = context.get("prompt_config", {})
         generation_config = context.get("generation_config", {})
 
+        # Debug logging
+        logger.debug(f"Provider config: {provider_config}")
+        logger.debug(f"Generation config keys: {list(generation_config.keys())}")
+
         # --- Determine Provider and Model ---
         llm_provider = provider_config.get("provider_name", self.DEFAULT_PROVIDER).lower()
+        llm_model = provider_config.get("llm_model", "")
 
-        # Map provider-specific default models
-        if llm_provider == "openai":
-            default_model_for_provider = self.DEFAULT_MODEL  # gpt-image-1
-        elif llm_provider == "bfl":
-            default_model_for_provider = "flux-kontext-max"
-        else:
-            default_model_for_provider = ""
+        # If no model in provider_config, check generation_config or use defaults
+        if not llm_model:
+            llm_model = generation_config.get("model", "")
+            
+        # If still no model, use provider-specific defaults
+        if not llm_model:
+            if llm_provider == "openai":
+                llm_model = self.DEFAULT_MODEL  # gpt-image-1
+            elif llm_provider == "bfl":
+                llm_model = "flux-kontext-max"
+            elif llm_provider in {"gemini", "google"}:
+                llm_model = "gemini-2.0-flash-preview-image-generation"
 
-        llm_model = (
-            provider_config.get("llm_model")
-            or generation_config.get("model")
-            or default_model_for_provider
-        )
+        logger.info(f"Using provider: {llm_provider}, model: {llm_model}")
 
         # --- Get API Key ---
         api_key = provider_config.get("api_key", "")
@@ -118,19 +127,26 @@ listen to the heartbeat of a baby otter.
         # If API key is missing or placeholder, attempt automatic resolution via utils.get_api_key
         if (
             not api_key or api_key in {"1234", "", None}
-        ) and llm_provider in {"openai", "bfl"}:
-            env_var_name = "OPENAI_API_KEY" if llm_provider == "openai" else "BFL_API_KEY"
-            try:
-                api_key = get_api_key(env_var_name, llm_provider)
-                logger.info(
-                    "GenerateImage: Retrieved API key for %s via get_api_key helper.",
-                    llm_provider,
-                )
-            except ValueError as _e:
-                logger.warning("GenerateImage: get_api_key failed – %s", _e)
+        ) and llm_provider in {"openai", "bfl", "gemini", "google"}:
+            env_var_name = {
+                "openai": "OPENAI_API_KEY",
+                "bfl": "BFL_API_KEY", 
+                "gemini": "GEMINI_API_KEY",
+                "google": "GEMINI_API_KEY"
+            }.get(llm_provider, "")
+            
+            if env_var_name:
+                try:
+                    api_key = get_api_key(env_var_name, llm_provider)
+                    logger.info(
+                        "GenerateImage: Retrieved API key for %s via get_api_key helper.",
+                        llm_provider,
+                    )
+                except ValueError as _e:
+                    logger.warning("GenerateImage: get_api_key failed – %s", _e)
 
         # After retries, ensure we have a usable key for providers that need one
-        if llm_provider in {"openai", "bfl"} and not api_key:
+        if llm_provider in {"openai", "bfl", "gemini", "google"} and not api_key:
             logger.error(f"GenerateImage: Missing API key for provider '{llm_provider}'.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = f"Missing API key for {llm_provider}"
@@ -152,7 +168,16 @@ listen to the heartbeat of a baby otter.
         image_b64 = prompt_config.get("image_base64", None) # From PromptManager
         mask_b64 = prompt_config.get("mask_base64", None)   # From PromptManager
 
-        if not prompt_text and not image_b64:
+        # Handle multiple images for batch or list inputs
+        if isinstance(image_b64, list) and len(image_b64) > 0:
+            # For providers that support only single image, use the first one
+            primary_image_b64 = image_b64[0]
+            all_images_b64 = image_b64
+        else:
+            primary_image_b64 = image_b64
+            all_images_b64 = [image_b64] if image_b64 else []
+
+        if not prompt_text and not primary_image_b64:
             logger.error("GenerateImage: Requires at least a text prompt or an input image.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = "Missing text prompt or input image"
@@ -204,10 +229,19 @@ listen to the heartbeat of a baby otter.
         edit_mode = mode == "edit"
         variation_mode = mode == "variation"
 
+        # Provider-specific mode validation
+        if llm_provider in {"gemini", "google"} and llm_model.startswith("imagen"):
+            # Imagen models only support generation
+            if edit_mode or variation_mode:
+                logger.warning(f"Imagen models only support 'generate' mode. Switching from '{mode}' to 'generate'.")
+                mode = "generate"
+                edit_mode = False
+                variation_mode = False
+
         # If in edit mode with image input and no explicit size passed, choose size based on image dims
-        if edit_mode and image_b64 and not size:
+        if edit_mode and primary_image_b64 and not size:
             from llmtoolkit_utils import get_dims_from_base64, choose_openai_size
-            dims = get_dims_from_base64(image_b64)
+            dims = get_dims_from_base64(primary_image_b64)
             if dims:
                 w, h = dims
                 size = choose_openai_size(w, h, llm_model)
@@ -218,7 +252,7 @@ listen to the heartbeat of a baby otter.
             size = "1024x1024"
 
         # Validate requirements for chosen mode
-        if edit_mode and not image_b64:
+        if edit_mode and not primary_image_b64:
             logger.error("GenerateImage: 'edit' mode requires at least one reference image.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = "Edit mode requires both image and mask"
@@ -243,7 +277,7 @@ listen to the heartbeat of a baby otter.
                     pass
             return {"ui": ui_dict, "result": (context, placeholder_img,)}
 
-        if variation_mode and not image_b64:
+        if variation_mode and not primary_image_b64:
             logger.error("GenerateImage: 'variation' mode selected but input image missing.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = "Variation mode requires an input image"
@@ -279,7 +313,7 @@ listen to the heartbeat of a baby otter.
                         output_format_gpt=output_format_gpt,
                         output_compression_gpt=output_compression_gpt,
                         moderation_gpt=moderation_gpt,
-                        image_base64=image_b64,
+                        image_base64=primary_image_b64,
                         mask_base64=mask_b64,
                         edit_mode=edit_mode,
                         variation_mode=variation_mode
@@ -297,42 +331,47 @@ listen to the heartbeat of a baby otter.
 
             elif llm_provider in {"gemini", "google"}:
                 # ------------------------------------------------------------------
-                #  Gemini / Imagen – image generation via OpenAI-compat endpoint
+                #  Gemini / Imagen – unified image generation
                 # ------------------------------------------------------------------
-
-                if edit_mode or variation_mode:
-                    error_message = (
-                        "Gemini image editing / variation not yet supported by GenerateImage node. "
-                        "Please use 'generate' mode."
+                logger.info(f"Calling Gemini/Imagen API (model: {llm_model}, mode: {mode})")
+                
+                # Collect all relevant parameters from generation_config
+                kwargs = {
+                    "temperature": generation_config.get("temperature_gemini", 0.7),
+                    "max_tokens": generation_config.get("max_tokens_gemini", 8192),
+                    "person_generation": generation_config.get("person_generation", "allow_adult"),
+                    "safety_filter_level": generation_config.get("safety_filter_level", "block_some"),
+                    "language": generation_config.get("language"),
+                }
+                
+                # Get seed
+                seed = generation_config.get("seed", None)
+                
+                # Get aspect ratio (prefer explicit over size conversion)
+                aspect_ratio = generation_config.get("aspect_ratio", None)
+                
+                raw_api_response = run_async(
+                    send_gemini_image_generation_unified(
+                        api_key=api_key,
+                        model=llm_model,
+                        prompt=prompt_text,
+                        n=n,
+                        size=size,
+                        aspect_ratio=aspect_ratio,
+                        seed=seed,
+                        edit_mode=edit_mode,
+                        variation_mode=variation_mode,
+                        input_image_base64=all_images_b64 if (edit_mode or variation_mode) else None,
+                        mask_base64=mask_b64,
+                        **kwargs
                     )
-                    logger.error(error_message)
+                )
+                
+                if raw_api_response and raw_api_response.get("data"):
+                    output_image_tensor, _ = process_images_for_comfy(raw_api_response)
                 else:
-                    # Batch generation handled via batch_count (n)
-                    try:
-                        raw_api_response = run_async(
-                            send_request(
-                                llm_provider=llm_provider,
-                                base_ip="localhost",
-                                port="0",
-                                images=None,  # Gemini generation does not require prior image
-                                llm_model=llm_model,
-                                system_message="You are a helpful assistant.",
-                                user_message=prompt_text,
-                                messages=[],
-                                llm_api_key=api_key,
-                                batch_count=n,
-                                strategy="create",
-                            )
-                        )
-
-                        if raw_api_response and raw_api_response.get("data"):
-                            output_image_tensor, _ = process_images_for_comfy(raw_api_response)
-                        else:
-                            error_message = "Gemini API response did not contain expected image data."
-                            logger.error("%s Response: %s", error_message, raw_api_response)
-                    except Exception as g_exc:
-                        error_message = f"Gemini image generation error: {g_exc}"
-                        logger.error(error_message, exc_info=True)
+                    error_message = "Gemini/Imagen API response did not contain expected image data."
+                    logger.error("%s Response: %s", error_message, raw_api_response)
 
             elif llm_provider == "bfl":
                 # ------------------------------------------------------------------
@@ -359,7 +398,7 @@ listen to the heartbeat of a baby otter.
                 seed_bfl = generation_config.get("seed")
                 prompt_upsampling = generation_config.get("prompt_upsampling", False)
                 safety_tolerance = generation_config.get("safety_tolerance", 2)
-                output_format_bfl = generation_config.get("output_format")  # 'jpeg' or 'png'
+                output_format_bfl = generation_config.get("output_format_bfl")  # 'jpeg' or 'png'
 
                 logger.info(
                     "Calling BFL Flux Kontext MAX (aspect_ratio=%s, edit=%s)",
@@ -372,7 +411,7 @@ listen to the heartbeat of a baby otter.
                         api_key=api_key,
                         prompt=prompt_text,
                         aspect_ratio=aspect_ratio,
-                        input_image_base64=image_b64 if edit_mode else None,
+                        input_image_base64=primary_image_b64 if edit_mode else None,
                         seed=seed_bfl,
                         prompt_upsampling=prompt_upsampling,
                         safety_tolerance=safety_tolerance,

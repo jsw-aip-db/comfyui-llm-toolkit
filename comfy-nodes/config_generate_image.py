@@ -16,8 +16,13 @@ logger = logging.getLogger(__name__)
 
 class ConfigGenerateImage:
     """
-    Configures parameters for image generation APIs (like DALL-E, GPT-Image)
-    and adds them to a generation_config dictionary within the context.
+    [LEGACY] Universal configuration for all image generation APIs.
+    
+    NOTE: This node is kept for backwards compatibility. 
+    Please use the provider-specific nodes instead:
+    - ConfigGenerateImageOpenAI - for OpenAI/DALL-E
+    - ConfigGenerateImageGemini - for Gemini/Imagen
+    - ConfigGenerateImageBFL - for BFL Flux Kontext Max
     """
     # Define options based on Images API documentation
     # Use 'auto' as default where applicable, let backend handle specifics
@@ -36,6 +41,12 @@ class ConfigGenerateImage:
 
     BACKGROUND_OPTIONS_GPT = ["auto", "opaque", "transparent"]
     OUTPUT_FORMAT_OPTIONS_GPT = ["png", "jpeg", "webp"]
+    
+    # Gemini/Imagen specific options
+    ASPECT_RATIO_OPTIONS = ["1:1", "3:4", "4:3", "9:16", "16:9"]
+    PERSON_GENERATION_OPTIONS = ["dont_allow", "allow_adult", "allow_all"]
+    SAFETY_FILTER_OPTIONS = ["block_few", "block_some", "block_most"]
+    LANGUAGE_OPTIONS = ["auto", "en", "es-MX", "ja-JP", "zh-CN", "hi-IN"]
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -44,8 +55,8 @@ class ConfigGenerateImage:
             "optional": {
                 "context": ("*", {}),
                 # Common parameters
-                "n": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of images (1-10). DALL-E 3 only supports 1."}),
-                "size": (cls.ALL_SIZE_OPTIONS, {"default": "1024x1024", "tooltip": "Image dimensions. Supported sizes vary by model."}),
+                "n": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of images (1-10). DALL-E 3 only supports 1, Imagen 4 Ultra only supports 1."}),
+                "size": (cls.ALL_SIZE_OPTIONS, {"default": "1024x1024", "tooltip": "Image dimensions. Supported sizes vary by model. Converted to aspect ratio for Gemini/Imagen."}),
                 "response_format": (["url", "b64_json"], {"default": "b64_json", "tooltip": "Return format (b64_json recommended for ComfyUI). gpt-image-1 always uses b64_json."}),
                 "user": ("STRING", {"default": "", "multiline": False, "tooltip": "Optional user ID for moderation tracking."}),
 
@@ -60,8 +71,23 @@ class ConfigGenerateImage:
                 "moderation_gpt": (["auto", "low"], {"default": "auto", "tooltip": "GPT-Image-1 content moderation level."}),
                 "output_compression_gpt": ("INT", {"default": 100, "min": 0, "max": 100, "step": 1, "tooltip": "GPT-Image-1 compression (0-100) for webp/jpeg."}),
 
+                # Gemini/Imagen specific
+                "aspect_ratio": (cls.ASPECT_RATIO_OPTIONS, {"default": "1:1", "tooltip": "Aspect ratio for Gemini/Imagen/BFL (overrides size conversion)."}),
+                "person_generation": (cls.PERSON_GENERATION_OPTIONS, {"default": "allow_adult", "tooltip": "Imagen person generation policy."}),
+                "safety_filter_level": (cls.SAFETY_FILTER_OPTIONS, {"default": "block_some", "tooltip": "Imagen safety filter level."}),
+                "language": (cls.LANGUAGE_OPTIONS, {"default": "auto", "tooltip": "Language hint for Gemini/Imagen generation."}),
+                
+                # Gemini native specific
+                "temperature_gemini": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.1, "tooltip": "Gemini native generation temperature."}),
+                "max_tokens_gemini": ("INT", {"default": 8192, "min": 1, "max": 32768, "step": 1, "tooltip": "Max tokens for Gemini native generation."}),
+                
+                # BFL specific (already supported)
+                "prompt_upsampling": ("BOOLEAN", {"default": False, "tooltip": "BFL Flux: Enhance prompt for more creative generation."}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6, "step": 1, "tooltip": "BFL Flux safety tolerance (0=strict, 6=relaxed). Limit of 2 for image editing."}),
+                "output_format_bfl": (["png", "jpeg"], {"default": "png", "tooltip": "BFL Flux output format."}),
+                
                 # Seed (Common but may not be supported by all APIs)
-                # "seed": ("INT", {"default": -1, "min": -1, "max": 0xffffffffffffffff, "tooltip": "Seed for generation (-1 for random). API support varies."}),
+                "seed": ("INT", {"default": -1, "min": -1, "max": 0xffffffffffffffff, "tooltip": "Seed for generation (-1 for random). Supported by Gemini, Imagen, BFL."}),
             }
         }
 
@@ -119,10 +145,27 @@ class ConfigGenerateImage:
         generation_config['moderation_gpt'] = kwargs.get('moderation_gpt', 'auto')
         generation_config['output_compression_gpt'] = kwargs.get('output_compression_gpt', 100)
 
+        # Gemini/Imagen specific
+        generation_config['aspect_ratio'] = kwargs.get('aspect_ratio', '1:1')
+        generation_config['person_generation'] = kwargs.get('person_generation', 'allow_adult')
+        generation_config['safety_filter_level'] = kwargs.get('safety_filter_level', 'block_some')
+        language = kwargs.get('language', 'auto')
+        if language != 'auto':
+            generation_config['language'] = language
+        
+        # Gemini native specific
+        generation_config['temperature_gemini'] = kwargs.get('temperature_gemini', 0.7)
+        generation_config['max_tokens_gemini'] = kwargs.get('max_tokens_gemini', 8192)
+        
+        # BFL specific
+        generation_config['prompt_upsampling'] = kwargs.get('prompt_upsampling', False)
+        generation_config['safety_tolerance'] = kwargs.get('safety_tolerance', 2)
+        generation_config['output_format_bfl'] = kwargs.get('output_format_bfl', 'png')
+
         # Seed handling (optional, API support varies)
-        # seed_val = kwargs.get('seed', -1)
-        # if seed_val != -1:
-        #     generation_config['seed'] = seed_val
+        seed_val = kwargs.get('seed', -1)
+        if seed_val != -1:
+            generation_config['seed'] = seed_val
 
         # Add the config to the main context
         output_context["generation_config"] = generation_config
@@ -135,5 +178,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImage": ConfigGenerateImage
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImage": "Configure Image Generation (LLMToolkit)"
+    "ConfigGenerateImage": "[LEGACY] Configure Image Generation - All Providers (LLMToolkit)"
 } 

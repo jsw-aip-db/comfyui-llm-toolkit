@@ -36,12 +36,25 @@ class GeminiProviderNode:
 
     # Fallback list used when live fetching fails or no API key is present.
     _DEFAULT_MODELS: List[str] = [
+        # Text models
         "gemini-2.5-pro",
         "gemini-2.5-flash",
         "gemini-2.0-pro",
         "gemini-2.0-flash",
         "gemini-pro",
         "gemini-pro-vision",
+        # Native Gemini image generation
+        "gemini-2.0-flash-preview-image-generation",
+        # Imagen models (stable versions as per docs)
+        "imagen-3.0-generate-002",
+        # Imagen models (preview versions)
+        "imagen-4.0-generate-preview-06-06",
+        "imagen-4.0-ultra-generate-preview-06-06",
+        # Legacy naming (for compatibility)
+        "imagen-3.0-generate-001",
+        "imagen-4.0-generate-001",
+        "imagen-4.0-ultra-generate-001",
+        "imagen-3.0-generate-preview-06-06",
         "imagen-3-light-alpha",
     ]
 
@@ -154,7 +167,8 @@ class GeminiProviderNode:
             else:
                 result = {"provider_config": provider_config, "passthrough_data": context}
         else:
-            result = provider_config
+            # Always return a proper context dictionary
+            result = {"provider_config": provider_config}
 
         return (result,)
 
