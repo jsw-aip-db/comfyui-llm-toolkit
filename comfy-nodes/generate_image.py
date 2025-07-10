@@ -19,6 +19,8 @@ try:
     from openai_api import send_openai_image_generation_request
     # Import new Gemini image generation functions
     from gemini_image_api import send_gemini_image_generation_unified
+    # Import new WaveSpeed image generation functions
+    from wavespeed_image_api import send_wavespeed_image_edit_request
 except ImportError:
     logger = logging.getLogger(__name__)
     logger.error("Failed relative imports in generate_image.py. Check file structure and __init__.py.")
@@ -28,6 +30,7 @@ except ImportError:
         from send_request import run_async
         from openai_api import send_openai_image_generation_request
         from gemini_image_api import send_gemini_image_generation_unified
+        from wavespeed_image_api import send_wavespeed_image_edit_request
     except ImportError:
         logging.error("Failed to import required modules for generate_image.py")
         TENSOR_SUPPORT = False
@@ -50,13 +53,12 @@ class GenerateImage:
     Outputs the generated image(s) as a ComfyUI IMAGE tensor and updates the context.
     """
 
-    DEFAULT_PROVIDER = "openai"
-    DEFAULT_MODEL = "gpt-image-1" # Favors the newer model
+    DEFAULT_PROVIDER = "wavespeed"
+    DEFAULT_MODEL = "wavespeed-ai/flux-kontext-dev-ultra-fast"
     # Default prompt shown in the node UI when no context is provided
     DEFAULT_PROMPT = (
         """
-A children's book drawing of a veterinarian using a stethoscope to 
-listen to the heartbeat of a baby otter.
+A stunning, professional-quality portrait of a character with rainbow-colored short curly hair.
 """
     )
 
@@ -113,11 +115,13 @@ listen to the heartbeat of a baby otter.
         # If still no model, use provider-specific defaults
         if not llm_model:
             if llm_provider == "openai":
-                llm_model = self.DEFAULT_MODEL  # gpt-image-1
+                llm_model = "dall-e-3" 
             elif llm_provider == "bfl":
                 llm_model = "flux-kontext-max"
             elif llm_provider in {"gemini", "google"}:
                 llm_model = "gemini-2.0-flash-preview-image-generation"
+            elif llm_provider == "wavespeed":
+                llm_model = "bytedance/seededit-v3" # Default, can be overridden by provider node
 
         logger.info(f"Using provider: {llm_provider}, model: {llm_model}")
 
@@ -127,12 +131,13 @@ listen to the heartbeat of a baby otter.
         # If API key is missing or placeholder, attempt automatic resolution via utils.get_api_key
         if (
             not api_key or api_key in {"1234", "", None}
-        ) and llm_provider in {"openai", "bfl", "gemini", "google"}:
+        ) and llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"}:
             env_var_name = {
                 "openai": "OPENAI_API_KEY",
                 "bfl": "BFL_API_KEY", 
                 "gemini": "GEMINI_API_KEY",
-                "google": "GEMINI_API_KEY"
+                "google": "GEMINI_API_KEY",
+                "wavespeed": "WAVESPEED_API_KEY",
             }.get(llm_provider, "")
             
             if env_var_name:
@@ -146,7 +151,7 @@ listen to the heartbeat of a baby otter.
                     logger.warning("GenerateImage: get_api_key failed – %s", _e)
 
         # After retries, ensure we have a usable key for providers that need one
-        if llm_provider in {"openai", "bfl", "gemini", "google"} and not api_key:
+        if llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"} and not api_key:
             logger.error(f"GenerateImage: Missing API key for provider '{llm_provider}'.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = f"Missing API key for {llm_provider}"
@@ -237,6 +242,14 @@ listen to the heartbeat of a baby otter.
                 mode = "generate"
                 edit_mode = False
                 variation_mode = False
+        
+        if llm_provider == "wavespeed" and llm_model in {"bytedance/seededit-v3", "bytedance/portrait"}:
+             if mode != "edit":
+                  logger.warning(f"{llm_model} only supports 'edit' mode. Forcing 'edit' mode.")
+                  mode = "edit"
+                  edit_mode = True
+                  variation_mode = False
+
 
         # If in edit mode with image input and no explicit size passed, choose size based on image dims
         if edit_mode and primary_image_b64 and not size:
@@ -372,6 +385,83 @@ listen to the heartbeat of a baby otter.
                 else:
                     error_message = "Gemini/Imagen API response did not contain expected image data."
                     logger.error("%s Response: %s", error_message, raw_api_response)
+
+            elif llm_provider == "wavespeed":
+                # ------------------------------------------------------------------
+                #  WaveSpeed Provider (various models)
+                # ------------------------------------------------------------------
+                if llm_model in {"bytedance/seededit-v3", "bytedance/portrait"}:
+                    from wavespeed_image_api import send_wavespeed_image_edit_request
+                    # This model is specifically for editing
+                    if not edit_mode:
+                        logger.error(f"WaveSpeed model {llm_model} only supports 'edit' mode.")
+                        error_message = f"WaveSpeed model {llm_model} only supports 'edit' mode."
+                    elif not primary_image_b64:
+                        error_message = "Edit mode with WaveSpeed requires an input image."
+                    else:
+                        seed = generation_config.get("seed", -1)
+                        guidance_scale = None
+                        if llm_model == "bytedance/seededit-v3":
+                            guidance_scale = generation_config.get("guidance_scale", 0.5)
+
+                        logger.info(f"Calling WaveSpeed model {llm_model}...")
+                        raw_api_response = run_async(
+                            send_wavespeed_image_edit_request(
+                                api_key=api_key,
+                                model=llm_model,
+                                prompt=prompt_text,
+                                image_base64=primary_image_b64,
+                                guidance_scale=guidance_scale,
+                                seed=seed,
+                            )
+                        )
+                elif llm_model in {
+                    "wavespeed-ai/flux-kontext-dev/multi-ultra-fast",
+                    "wavespeed-ai/flux-kontext-dev-ultra-fast"
+                }:
+                    from wavespeed_image_api import send_wavespeed_flux_request
+
+                    # This model supports generate, edit, and variation based on inputs
+                    # Determine which image parameter to use
+                    image_param = None
+                    images_param = None
+                    
+                    is_multi = "multi" in llm_model
+                    if is_multi:
+                        images_param = all_images_b64 if (edit_mode or variation_mode) and all_images_b64 else None
+                    else:
+                        image_param = primary_image_b64 if (edit_mode or variation_mode) and primary_image_b64 else None
+
+                    if (edit_mode or variation_mode) and not image_param and not images_param:
+                        error_message = f"Mode '{mode}' requires an input image for the Flux model."
+                    else:
+                        params = {
+                            "api_key": api_key,
+                            "model": llm_model,
+                            "prompt": prompt_text,
+                            "image_base64": image_param,
+                            "images_base64": images_param,
+                            "size": generation_config.get("size"),
+                            "num_inference_steps": generation_config.get("num_inference_steps", 28),
+                            "guidance_scale": generation_config.get("guidance_scale", 2.5),
+                            "num_images": generation_config.get("n", 1),
+                            "seed": generation_config.get("seed", -1),
+                            "enable_safety_checker": generation_config.get("enable_safety_checker", True),
+                        }
+                        logger.info(f"Calling WaveSpeed Flux model ({llm_model}) with mode: {mode}...")
+                        raw_api_response = run_async(send_wavespeed_flux_request(**params))
+                else:
+                    error_message = f"The WaveSpeed model '{llm_model}' is not supported by the GenerateImage node yet."
+
+                # Common response processing for all wavespeed models
+                if not error_message:
+                    if raw_api_response and raw_api_response.get("data"):
+                        output_image_tensor, _ = process_images_for_comfy(raw_api_response)
+                    else:
+                        error_message = "WaveSpeed API response did not contain expected image data."
+                        if raw_api_response and raw_api_response.get("error"):
+                            error_message += f" Details: {raw_api_response.get('details', raw_api_response['error'])}"
+                        logger.error(f"{error_message} Response: {raw_api_response}")
 
             elif llm_provider == "bfl":
                 # ------------------------------------------------------------------

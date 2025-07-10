@@ -177,7 +177,7 @@ class ConfigGenerateMusic:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config"
+    CATEGORY = "llm_toolkit/config/music"
 
     # ------------------------------------------------------------------
     # Execution

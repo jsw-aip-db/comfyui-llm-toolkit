@@ -40,7 +40,7 @@ class ConfigGenerateImageBFL:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/bfl"
+    CATEGORY = "llm_toolkit/config/image/bfl"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """

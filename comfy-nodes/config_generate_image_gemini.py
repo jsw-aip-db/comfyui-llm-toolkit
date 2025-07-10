@@ -51,7 +51,7 @@ class ConfigGenerateImageGemini:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/gemini"
+    CATEGORY = "llm_toolkit/config/image/gemini"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """

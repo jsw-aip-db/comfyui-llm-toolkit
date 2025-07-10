@@ -94,7 +94,7 @@ class ConfigGenerateImage:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config"
+    CATEGORY = "llm_toolkit/config/image/all"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """

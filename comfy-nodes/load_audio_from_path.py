@@ -1,83 +1,104 @@
 # comfy-nodes/load_audio_from_path.py
-"""Load Audio From Path - Bridge node to load audio files into ComfyUI format."""
+"""Load Audio From Path (LLMToolkit)
+
+Utility node that takes a string path to an audio file, loads it,
+previews it in the UI, and returns an `AUDIO` object for use with other
+audio nodes. Unlike the built-in LoadAudio node, this one accepts an
+arbitrary path from an input.
+"""
+
+from __future__ import annotations
 
 import os
-import torch
+import shutil
 import logging
-from typing import Tuple, Dict, Any
+import random
 
-# Try to import torchaudio for audio loading
 try:
     import torchaudio
+    import torch
 except ImportError:
-    print("Warning: torchaudio is not installed. The LoadAudioFromPath node will not work.")
-    print("Please run: pip install torchaudio")
+    # This should not happen in a ComfyUI environment with audio nodes.
     torchaudio = None
+    torch = None
+
+try:
+    import folder_paths
+except ImportError:
+    # Mock for local development
+    class MockFolderPaths:
+        def get_output_directory(self): return "output"
+        def get_input_directory(self): return "input"
+        def get_temp_directory(self): return "temp"
+    folder_paths = MockFolderPaths()
+
+# Import save_audio function from core nodes
+try:
+    from comfy_extras.nodes_audio import save_audio, SaveAudio
+except ImportError:
+    save_audio = None
+    SaveAudio = object
 
 logger = logging.getLogger(__name__)
 
+class LoadAudioFromPath(SaveAudio if SaveAudio is not object else object):
+    def __init__(self):
+        if SaveAudio is not object:
+            self.output_dir = folder_paths.get_temp_directory()
+            self.type = "temp"
+            self.prefix_append = "_temp_" + ''.join(random.choice("abcdefghijklmnopqrstupvxyz") for x in range(5))
 
-class LoadAudioFromPath:
-    """Load an audio file from a file path string and convert to ComfyUI audio format."""
-    
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                # This input will connect to the 'audio_path' output of GenerateSpeech
-                "audio_path": ("STRING", {"multiline": False, "default": ""}),
-            }
+                "audio_path": (
+                    "STRING",
+                    {
+                        "multiline": False,
+                        "placeholder": "/absolute/or/relative/path.wav",
+                        "tooltip": "Full path to the audio file.",
+                    },
+                ),
+            },
+            "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
-    # We output the special AUDIO type that other audio nodes understand
-    RETURN_TYPES = ("AUDIO",)
-    RETURN_NAMES = ("audio",)
-    FUNCTION = "load_audio"
-    CATEGORY = "llm_toolkit/utils/audio"  # Consistent with LoadVideoFromPath
+    CATEGORY = "llm_toolkit/utils/audio"
 
-    def load_audio(self, audio_path: str) -> Tuple[Dict[str, Any]]:
-        """Load audio file and return as ComfyUI audio format."""
-        
-        if not torchaudio:
-            raise ImportError("torchaudio is not installed. Cannot run LoadAudioFromPath.")
-        
-        # Validate the input path
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "audio_path")
+    FUNCTION = "load_and_preview"
+    OUTPUT_NODE = True
+
+    def load_and_preview(self, audio_path: str, prompt=None, extra_pnginfo=None):
+        if torchaudio is None or torch is None:
+            logger.error("torchaudio or torch is not installed. Cannot load or preview audio.")
+            return (None, audio_path, {"ui": {"audio": []}})
+
+        audio_path = audio_path.strip()
         if not audio_path or not os.path.exists(audio_path):
-            logger.error(f"LoadAudioFromPath: Audio path is empty or file does not exist: {audio_path}")
-            # Return a silent, empty audio object to prevent crashing the workflow
-            return ({"waveform": torch.zeros((1, 1, 1)), "sample_rate": 44100},)
+            logger.warning("LoadAudioFromPath: Audio path is empty or file does not exist: %s", audio_path)
+            return (None, audio_path, {"ui": {"audio": []}})
 
+        # Load audio
         try:
-            # Load the audio file using torchaudio
-            # This is the most reliable way to get the waveform and sample rate
             waveform, sample_rate = torchaudio.load(audio_path)
-
-            # Ensure the waveform tensor has a batch dimension for ComfyUI compatibility
-            # Standard audio nodes expect [batch_size, num_channels, num_samples]
-            if waveform.dim() == 2:
-                waveform = waveform.unsqueeze(0)  # Adds the batch dimension
-
-            # Create the AUDIO dictionary object
-            audio_output = {
-                "waveform": waveform,
-                "sample_rate": sample_rate
-            }
-            
-            logger.info(f"Loaded audio from {audio_path} with shape {waveform.shape} and sample rate {sample_rate}")
-            
-            return (audio_output,)
-
+            audio_out = {"waveform": waveform.unsqueeze(0), "sample_rate": sample_rate}
         except Exception as e:
-            logger.error(f"Error loading audio from path '{audio_path}': {e}", exc_info=True)
-            # Return a silent, empty audio object on failure
-            return ({"waveform": torch.zeros((1, 1, 1)), "sample_rate": 44100},)
+            logger.error("Failed to load audio file %s: %s", audio_path, e, exc_info=True)
+            return (None, audio_path, {"ui": {"audio": []}})
+
+        # Use the save_audio function to generate preview (without actually saving)
+        if save_audio and SaveAudio is not object:
+            # Call save_audio to create the preview
+            result = save_audio(self, audio_out, filename_prefix="preview", format="flac", prompt=prompt, extra_pnginfo=extra_pnginfo)
+            # Return the audio data along with the UI preview
+            return (audio_out, audio_path, result)
+        else:
+            # Fallback if save_audio is not available
+            return (audio_out, audio_path, {"ui": {"audio": []}})
 
 
-# Add the new node to ComfyUI's list of recognized nodes
-NODE_CLASS_MAPPINGS = {
-    "LoadAudioFromPath": LoadAudioFromPath
-}
-
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "LoadAudioFromPath": "Load Audio From Path (LLMToolkit)"
-} 
+NODE_CLASS_MAPPINGS = {"LoadAudioFromPath": LoadAudioFromPath}
+NODE_DISPLAY_NAME_MAPPINGS = {"LoadAudioFromPath": "Load Audio From Path (LLMToolkit)"} 

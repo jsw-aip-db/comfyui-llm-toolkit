@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from context_payload import extract_context
 
-# Ensure parent directory is in path if running standalone for testing
+# Ensure parent directory is in path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
@@ -16,22 +16,18 @@ logger = logging.getLogger(__name__)
 
 class ConfigGenerateImageOpenAI:
     """
-    Configures parameters specifically for OpenAI image generation APIs (DALL-E, GPT-Image).
+    Configures parameters specifically for OpenAI's DALL-E and GPT-Image models.
     """
-    # OpenAI specific size options
-    SIZE_OPTIONS_GPT = ["auto", "1024x1024", "1024x1536", "1536x1024"]
-    SIZE_OPTIONS_DALLE2 = ["256x256", "512x512", "1024x1024"]
+    # DALL-E 2/3 Options
     SIZE_OPTIONS_DALLE3 = ["1024x1024", "1792x1024", "1024x1792"]
-    ALL_SIZE_OPTIONS = sorted(list(set(SIZE_OPTIONS_GPT + SIZE_OPTIONS_DALLE2 + SIZE_OPTIONS_DALLE3)))
-
-    # Quality options
-    QUALITY_OPTIONS_GPT = ["auto", "low", "medium", "high"]
+    SIZE_OPTIONS_DALLE2 = ["256x256", "512x512", "1024x1024"]
+    ALL_DALLE_SIZES = sorted(list(set(SIZE_OPTIONS_DALLE3 + SIZE_OPTIONS_DALLE2)))
+    
     QUALITY_OPTIONS_DALLE3 = ["standard", "hd"]
-
-    # Style options
     STYLE_OPTIONS_DALLE3 = ["vivid", "natural"]
 
-    # GPT-Image specific
+    # GPT-Image-1 Options
+    QUALITY_OPTIONS_GPT = ["auto", "low", "medium", "high"]
     BACKGROUND_OPTIONS_GPT = ["auto", "opaque", "transparent"]
     OUTPUT_FORMAT_OPTIONS_GPT = ["png", "jpeg", "webp"]
 
@@ -41,9 +37,9 @@ class ConfigGenerateImageOpenAI:
             "required": {},
             "optional": {
                 "context": ("*", {}),
-                # Common OpenAI parameters
-                "n": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of images (1-10). DALL-E 3 only supports 1."}),
-                "size": (cls.ALL_SIZE_OPTIONS, {"default": "1024x1024", "tooltip": "Image dimensions. Supported sizes vary by model."}),
+                # Common parameters
+                "n": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "tooltip": "Number of images (DALL-E 3 only supports 1)."}),
+                "size": (cls.ALL_DALLE_SIZES, {"default": "1024x1024", "tooltip": "Image dimensions (supported sizes vary by model)."}),
                 "response_format": (["url", "b64_json"], {"default": "b64_json", "tooltip": "Return format (b64_json recommended for ComfyUI). gpt-image-1 always uses b64_json."}),
                 "user": ("STRING", {"default": "", "multiline": False, "tooltip": "Optional user ID for moderation tracking."}),
 
@@ -52,9 +48,9 @@ class ConfigGenerateImageOpenAI:
                 "style_dalle3": (cls.STYLE_OPTIONS_DALLE3, {"default": "vivid", "tooltip": "DALL-E 3 style (vivid/natural)."}),
 
                 # GPT-Image-1 specific
-                "quality_gpt": (cls.QUALITY_OPTIONS_GPT, {"default": "auto", "tooltip": "GPT-Image-1 quality (low/medium/high/auto)."}),
-                "background_gpt": (cls.BACKGROUND_OPTIONS_GPT, {"default": "auto", "tooltip": "GPT-Image-1 background (opaque/transparent/auto)."}),
-                "output_format_gpt": (cls.OUTPUT_FORMAT_OPTIONS_GPT, {"default": "png", "tooltip": "GPT-Image-1 output format (png/jpeg/webp)."}),
+                "quality_gpt": (cls.QUALITY_OPTIONS_GPT, {"default": "auto", "tooltip": "GPT-Image-1 quality."}),
+                "background_gpt": (cls.BACKGROUND_OPTIONS_GPT, {"default": "auto", "tooltip": "GPT-Image-1 background."}),
+                "output_format_gpt": (cls.OUTPUT_FORMAT_OPTIONS_GPT, {"default": "png", "tooltip": "GPT-Image-1 output format."}),
                 "moderation_gpt": (["auto", "low"], {"default": "auto", "tooltip": "GPT-Image-1 content moderation level."}),
                 "output_compression_gpt": ("INT", {"default": 100, "min": 0, "max": 100, "step": 1, "tooltip": "GPT-Image-1 compression (0-100) for webp/jpeg."}),
             }
@@ -63,21 +59,16 @@ class ConfigGenerateImageOpenAI:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/openai"
+    CATEGORY = "llm_toolkit/config/image/openai"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
-        """
-        Adds OpenAI-specific image generation parameters to the context.
-        """
         logger.info("ConfigGenerateImageOpenAI executing...")
 
-        # Initialize or copy the context
         if context is None:
             output_context = {}
         elif isinstance(context, dict):
             output_context = context.copy()
         else:
-            # Try to unwrap ContextPayload
             unwrapped = extract_context(context)
             if isinstance(unwrapped, dict):
                 output_context = unwrapped.copy()
@@ -85,34 +76,30 @@ class ConfigGenerateImageOpenAI:
             else:
                 output_context = {"passthrough_data": context}
 
-        # Initialize generation_config dictionary
         generation_config = output_context.get("generation_config", {})
         if not isinstance(generation_config, dict):
             generation_config = {}
 
-        # Add OpenAI parameters
+        # Common
         generation_config['n'] = kwargs.get('n', 1)
         generation_config['size'] = kwargs.get('size', '1024x1024')
         generation_config['response_format'] = kwargs.get('response_format', 'b64_json')
-        
-        user = kwargs.get('user', "").strip()
-        if user: 
-            generation_config['user'] = user
+        if kwargs.get('user', "").strip():
+            generation_config['user'] = kwargs.get('user').strip()
 
-        # DALL-E 3 specific
+        # DALL-E 3
         generation_config['quality_dalle3'] = kwargs.get('quality_dalle3', 'standard')
         generation_config['style_dalle3'] = kwargs.get('style_dalle3', 'vivid')
 
-        # GPT-Image-1 specific
+        # GPT-Image-1
         generation_config['quality_gpt'] = kwargs.get('quality_gpt', 'auto')
         generation_config['background_gpt'] = kwargs.get('background_gpt', 'auto')
         generation_config['output_format_gpt'] = kwargs.get('output_format_gpt', 'png')
         generation_config['moderation_gpt'] = kwargs.get('moderation_gpt', 'auto')
         generation_config['output_compression_gpt'] = kwargs.get('output_compression_gpt', 100)
 
-        # Add the config to the main context
         output_context["generation_config"] = generation_config
-        logger.info(f"ConfigGenerateImageOpenAI: Updated context with generation_config")
+        logger.info("ConfigGenerateImageOpenAI: Updated context with generation_config.")
 
         return (output_context,)
 
