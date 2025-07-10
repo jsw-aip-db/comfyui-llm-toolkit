@@ -121,7 +121,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
             elif llm_provider in {"gemini", "google"}:
                 llm_model = "gemini-2.0-flash-preview-image-generation"
             elif llm_provider == "wavespeed":
-                llm_model = "bytedance/seededit-v3" # Default, can be overridden by provider node
+                llm_model = self.DEFAULT_MODEL # Use the class default
 
         logger.info(f"Using provider: {llm_provider}, model: {llm_model}")
 
