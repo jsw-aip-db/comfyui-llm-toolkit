@@ -87,17 +87,29 @@ class LoadAudioFromPath(SaveAudio if SaveAudio is not object else object):
             audio_out = {"waveform": waveform.unsqueeze(0), "sample_rate": sample_rate}
         except Exception as e:
             logger.error("Failed to load audio file %s: %s", audio_path, e, exc_info=True)
-            return (None, audio_path, {"ui": {"audio": []}})
+            return {"ui": {"audio": []}, "result": (None, audio_path)}
 
-        # Use the save_audio function to generate preview (without actually saving)
+        # --- Preview generation --------------------------------------------------
+        preview_dict = {"ui": {"audio": []}}
         if save_audio and SaveAudio is not object:
-            # Call save_audio to create the preview
-            result = save_audio(self, audio_out, filename_prefix="preview", format="flac", prompt=prompt, extra_pnginfo=extra_pnginfo)
-            # Return the audio data along with the UI preview
-            return (audio_out, audio_path, result)
-        else:
-            # Fallback if save_audio is not available
-            return (audio_out, audio_path, {"ui": {"audio": []}})
+            try:
+                preview_dict = save_audio(
+                    self,
+                    audio_out,
+                    filename_prefix="preview",
+                    format="flac",
+                    prompt=prompt,
+                    extra_pnginfo=extra_pnginfo,
+                )
+            except Exception as e:
+                logger.warning("save_audio preview failed: %s", e, exc_info=True)
+
+        # Ensure we return the correct structure
+        if not isinstance(preview_dict, dict):
+            preview_dict = {"ui": {"audio": []}}
+
+        preview_dict["result"] = (audio_out, audio_path)
+        return preview_dict
 
 
 NODE_CLASS_MAPPINGS = {"LoadAudioFromPath": LoadAudioFromPath}
