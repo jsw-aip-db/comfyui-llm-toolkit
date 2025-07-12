@@ -34,6 +34,14 @@ logger = logging.getLogger(__name__)
 def _discover_models() -> List[str]:
     """Return a list of local transformer model directories (relative names)."""
 
+    # Start with a curated list of recommended models that users can download.
+    recommended_models = [
+        "Qwen/Qwen2.5-VL-7B-Instruct",
+        "Qwen/Qwen2.5-VL-3B-Instruct-AWQ",
+        "Qwen/Qwen3-4B-AWQ",
+        "SoybeanMilk/Kimi-VL-A3B-Thinking-2506-BNB-4bit",
+    ]
+
     model_parent_dirs: List[Path] = []
 
     # Explicitly look inside the common folders used for HF style checkpoints.
@@ -53,6 +61,15 @@ def _discover_models() -> List[str]:
 
     seen: set[str] = set()
     out: List[str] = []
+    
+    # Add recommended models first, and add them to the seen set
+    for model in recommended_models:
+        if model not in seen:
+            out.append(model)
+            # Add the repo name (e.g., "Qwen3-4B-AWQ") to seen to avoid duplicates
+            # from local discovery if the user has downloaded it.
+            seen.add(model.split("/")[-1])
+
     for parent in model_parent_dirs:
         if not parent.exists():
             continue

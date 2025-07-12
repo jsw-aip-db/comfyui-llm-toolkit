@@ -183,6 +183,13 @@ async def send_request_stream(
         # Ensure requested model is present locally (will pull if missing)
         ensure_ollama_model(llm_model, base_ip, port)
 
+        # Ollama expects plain base64 strings without the 'data:image/...' prefix
+        if base64_images:
+            base64_images = [
+                img.split("base64,")[1] if isinstance(img, str) and "base64," in img else img
+                for img in base64_images
+            ]
+
         # Decide which Ollama endpoint to use:
         #   • /api/generate  – fast text-only streaming (no image support)
         #   • /api/chat      – full chat/completions with image support
@@ -386,8 +393,8 @@ async def send_request_stream(
 def _remove_thinking_tags(text: str) -> str:
     """Remove <think>...</think> blocks from text, including the tags themselves."""
     import re
-    # Pattern to match <think>...</think> blocks (including nested content and newlines)
-    pattern = r'<think>.*?</think>'
+    # Pattern to match <think>...</think> or ◁think▷...◁/think▷
+    pattern = r'<think>.*?</think>|◁think▷.*?◁/think▷'
     cleaned = re.sub(pattern, '', text, flags=re.DOTALL)
     # Clean up any extra whitespace/newlines left behind
     cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)  # Replace multiple newlines with double

@@ -150,9 +150,7 @@ class LLMToolkitProviderSelector:
     configuration dictionary for downstream generator nodes.
     """
     SUPPORTED_PROVIDERS = [
-        "transformers", "llamacpp", "ollama", "kobold", "lmstudio", "textgen",
-        "groq", "gemini", "openai", "bfl", "anthropic", "mistral", "deepseek", "xai",
-        "huggingface", "vllm", "google"
+        "transformers", "llamacpp", "ollama", "kobold", "lmstudio", "textgen", "vllm"
     ]
     REQUIRES_IP_PORT = ["ollama", "llamacpp", "kobold", "lmstudio", "textgen", "vllm"]
 
