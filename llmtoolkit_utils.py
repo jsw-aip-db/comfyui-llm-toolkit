@@ -447,6 +447,21 @@ def convert_images_for_api(images, target_format='tensor'):
         except Exception as e:
             raise ValueError(f"Unsupported image format or target format: {target_format}. Error: {str(e)}") from e
 
+    # Handle raw image bytes input (e.g. fetched via httpx / requests)
+    if isinstance(images, (bytes, bytearray)) or (isinstance(images, list) and all(isinstance(x, (bytes, bytearray)) for x in images)):
+        # Handle raw image bytes input (e.g. fetched via httpx / requests)
+        byte_list = [images] if isinstance(images, (bytes, bytearray)) else images
+        if target_format == 'base64':
+            return [base64.b64encode(b).decode('utf-8') for b in byte_list]
+        elif target_format == 'pil':
+            return [Image.open(BytesIO(b)) for b in byte_list]
+        elif target_format == 'tensor':
+            pil_images = [Image.open(BytesIO(b)) for b in byte_list]
+            tensors = [pil_to_tensor(img) for img in pil_images]
+            return torch.stack(tensors).permute(0, 2, 3, 1)  # ComfyUI format (B,H,W,C)
+        else:
+            raise ValueError(f"Unsupported target format for bytes input: {target_format}")
+
 def convert_single_image(image, target_format):
     """Helper function to convert a single image"""
     if isinstance(image, str) and image.startswith('data:image'):

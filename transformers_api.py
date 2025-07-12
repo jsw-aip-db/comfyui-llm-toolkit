@@ -178,12 +178,39 @@ async def _ensure_model_loaded(
             try:
                 from awq import AutoAWQForCausalLM  # type: ignore
 
-                model = AutoAWQForCausalLM.from_pretrained(  # noqa: F401 – optional import
-                    model_name_or_path,
-                    torch_dtype=dtype,
-                    device_map="auto" if device == "cuda" else None,
-                    trust_remote_code=trust_remote_code,
-                )
+                # NB: Using `device_map="auto"` sometimes places the token embedding
+                # layer on CPU while the rest of the model (and the input IDs) reside
+                # on GPU, which then crashes inside `torch.embedding`.  We therefore
+                # load without device mapping first and *explicitly* move the entire
+                # model to the requested device afterwards.
+
+                # Prefer the dedicated *from_quantized* helper when available because it sets up
+                # quantised layers on the correct device automatically.  Fall back to the plain
+                # *from_pretrained* call with `device_map='auto'` otherwise.
+
+                try:
+                    model = AutoAWQForCausalLM.from_quantized(  # type: ignore[attr-defined]
+                        model_name_or_path,
+                        torch_dtype=dtype,
+                        device_map="auto" if device == "cuda" else None,
+                        trust_remote_code=trust_remote_code,
+                    )
+                except AttributeError:
+                    # Older awq versions – fall back to from_pretrained
+                    model = AutoAWQForCausalLM.from_pretrained(
+                        model_name_or_path,
+                        torch_dtype=dtype,
+                        device_map="auto" if device == "cuda" else None,
+                        trust_remote_code=trust_remote_code,
+                    )
+
+                # Sanity-check: ensure the token embedding sits on the same device as the rest
+                try:
+                    emb = model.get_input_embeddings()
+                    if emb is not None and emb.weight.device != model.device:
+                        emb.to(model.device)
+                except Exception:
+                    pass  # defensive – skip if anything unexpected
                 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=trust_remote_code)
                 _MODEL_CACHE[model_name_or_path] = {
                     "model": model,
@@ -269,7 +296,12 @@ async def send_transformers_request(
         processor = artefacts.get("processor")
         modal_type = artefacts.get("modal", "text")
 
-        device = mdl.device if hasattr(mdl, "device") else torch.device("cpu")
+        # Determine the primary device of the model by inspecting the first parameter
+        try:
+            first_param = next(mdl.parameters())
+            device = first_param.device
+        except StopIteration:
+            device = torch.device("cpu")
         mdl.eval()
 
         # Build the conversation list for chat-style models
@@ -321,18 +353,35 @@ async def send_transformers_request(
             if tokenizer is None:
                 raise RuntimeError("Tokenizer missing for text model")
 
-            # Compose single prompt from messages for simple models
-            prompt_parts: List[str] = []
-            for msg in messages:
-                if msg["role"] == "system":
-                    prompt_parts.append(f"[INST] {msg['content']} [/INST]")
-                elif msg["role"] == "user":
-                    prompt_parts.append(f"<|user|>: {msg['content']}")
-                elif msg["role"] == "assistant":
-                    prompt_parts.append(f"<|assistant|>: {msg['content']}")
-            prompt = "\n".join(prompt_parts) + "\n<|assistant|>:"
+            # Prefer the model-specific chat template when the tokenizer provides one.
+            if hasattr(tokenizer, "apply_chat_template"):
+                try:
+                    prompt_text = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                    )
+                except TypeError:
+                    # Some tokenizers (e.g. Qwen3) require enable_thinking kwarg – fall back to default
+                    prompt_text = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                        enable_thinking=True,
+                    )
+            else:
+                # Fallback to simple concatenation for generic models
+                prompt_parts: List[str] = []
+                for msg in messages:
+                    if msg["role"] == "system":
+                        prompt_parts.append(f"[INST] {msg['content']} [/INST]")
+                    elif msg["role"] == "user":
+                        prompt_parts.append(f"<|user|>: {msg['content']}")
+                    elif msg["role"] == "assistant":
+                        prompt_parts.append(f"<|assistant|>: {msg['content']}")
+                prompt_text = "\n".join(prompt_parts) + "\n<|assistant|>:"
 
-            input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
+            input_ids = tokenizer(prompt_text, return_tensors="pt").input_ids.to(device)
             with torch.no_grad():
                 gen_ids = mdl.generate(
                     input_ids,
@@ -342,7 +391,32 @@ async def send_transformers_request(
                     top_p=top_p,
                     repetition_penalty=repeat_penalty,
                 )
-            content = tokenizer.decode(gen_ids[0][input_ids.shape[-1] :], skip_special_tokens=True)
+            
+            output_ids = gen_ids[0][input_ids.shape[-1] :]
+            model_name_lower = model.lower()
+
+            if "qwen3" in model_name_lower:
+                try:
+                    eot_token_id = 151668  # Token ID for </think> in Qwen3
+                    output_ids_list = output_ids.tolist()
+                    index = len(output_ids_list) - output_ids_list[::-1].index(eot_token_id)
+                    content_ids = output_ids_list[index:]
+                    content = tokenizer.decode(content_ids, skip_special_tokens=True).strip()
+                except ValueError:
+                    content = tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+            
+            elif "kimi-vl" in model_name_lower and "thinking" in model_name_lower:
+                bot_token = "◁think▷"
+                eot_token = "◁/think▷"
+                decoded_text = tokenizer.decode(output_ids, skip_special_tokens=True)
+                
+                if bot_token in decoded_text and eot_token in decoded_text:
+                    _, summary = decoded_text.split(eot_token, 1)
+                    content = summary.strip()
+                else:
+                    content = decoded_text.strip()
+            else:
+                content = tokenizer.decode(output_ids, skip_special_tokens=True)
 
         return {
             "choices": [
@@ -411,7 +485,11 @@ async def send_transformers_request_stream(
         if tokenizer is None:
             raise RuntimeError("Tokenizer missing for text model (streaming)")
 
-        device = mdl.device if hasattr(mdl, "device") else torch.device("cpu")
+        try:
+            first_param = next(mdl.parameters())
+            device = first_param.device
+        except StopIteration:
+            device = torch.device("cpu")
         mdl.eval()
 
         # Build prompt
@@ -422,15 +500,36 @@ async def send_transformers_request_stream(
         if user_message:
             messages = messages + [{"role": "user", "content": user_message}]
 
-        prompt_parts: List[str] = []
-        for msg in messages:
-            if msg["role"] == "system":
-                prompt_parts.append(f"[INST] {msg['content']} [/INST]")
-            elif msg["role"] == "user":
-                prompt_parts.append(f"<|user|>: {msg['content']}")
-            elif msg["role"] == "assistant":
-                prompt_parts.append(f"<|assistant|>: {msg['content']}")
-        prompt = "\n".join(prompt_parts) + "\n<|assistant|>:"
+        # Use model-specific chat template if available to prevent token leakage
+        if hasattr(tokenizer, "apply_chat_template"):
+            try:
+                prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            except (TypeError, ValueError):
+                try:
+                    # Fallback for models needing specific kwargs (e.g., Qwen3 `enable_thinking`)
+                    prompt = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                        enable_thinking=True,
+                    )
+                except (TypeError, ValueError):
+                    # Final fallback to simple join for other template issues.
+                    prompt_parts: List[str] = [f"{m['role']}: {m['content']}" for m in messages]
+                    prompt = "\n".join(prompt_parts) + "\nassistant:"
+        else:
+            # Legacy fallback for models without a chat template
+            prompt_parts: List[str] = []
+            for msg in messages:
+                if msg["role"] == "system":
+                    prompt_parts.append(f"[INST] {msg['content']} [/INST]")
+                elif msg["role"] == "user":
+                    prompt_parts.append(f"<|user|>: {msg['content']}")
+                elif msg["role"] == "assistant":
+                    prompt_parts.append(f"<|assistant|>: {msg['content']}")
+            prompt = "\n".join(prompt_parts) + "\n<|assistant|>:"
 
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
 
