@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 import logging
+import os
 from pathlib import Path
 
 import folder_paths  # Provided by ComfyUI runtime
@@ -32,9 +33,10 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 def _discover_models() -> List[str]:
-    """Return a list of local transformer model directories (relative names)."""
+    """Return a list of local transformer model directories and recommended models."""
 
     # Start with a curated list of recommended models that users can download.
+    # These are identifiers, not local paths.
     recommended_models = [
         "Qwen/Qwen2.5-VL-7B-Instruct",
         "Qwen/Qwen2.5-VL-3B-Instruct-AWQ",
@@ -45,61 +47,57 @@ def _discover_models() -> List[str]:
     model_parent_dirs: List[Path] = []
 
     # Explicitly look inside the common folders used for HF style checkpoints.
-    # Users often place models under either  `models/transformers/<repo>` or
-    # `models/LLM/<repo>` so we iterate over both when they exist.
     for fld in ("transformers", "LLM"):
         try:
             for p in folder_paths.get_folder_paths(fld):
                 model_parent_dirs.append(Path(p))
         except Exception:
-            # The folder name might not be registered in `folder_paths` – that is
-            # fine, we will fall back to the generic `models` directory anyway.
             continue
 
-    # Fallback: root *models* dir itself (ComfyUI/models)
-    model_parent_dirs.append(Path(folder_paths.models_dir))
-
-    seen: set[str] = set()
-    out: List[str] = []
-    
-    # Add recommended models first, and add them to the seen set
-    for model in recommended_models:
-        if model not in seen:
-            out.append(model)
-            # Add the repo name (e.g., "Qwen3-4B-AWQ") to seen to avoid duplicates
-            # from local discovery if the user has downloaded it.
-            seen.add(model.split("/")[-1])
-
+    # 1. Scan local directories and map model names to full paths.
+    local_models_map: Dict[str, str] = {}
     for parent in model_parent_dirs:
-        if not parent.exists():
+        if not parent.is_dir():
             continue
-        # We inspect *one* level below the parent because HF repos are usually
-        # stored as `<parent>/<repo-name>/*` with the `config.json` at the root
-        # of the repo directory.
-        for child in parent.iterdir():
-            try:
-                if not child.is_dir():
-                    continue
+        logger.debug("[Transformers-Provider] Recursively scanning for models in: %s", parent)
+        for root, dirs, files in os.walk(parent, topdown=True):
+            if "config.json" in files:
+                model_path = Path(root)
+                model_name = model_path.name
+                
+                # Prioritize existing entries, maybe from a more specific path
+                if model_name not in local_models_map:
+                    local_models_map[model_name] = model_path.as_posix()
 
-                # Case 1: <parent>/<repo-name>/config.json
-                if (child / "config.json").exists():
-                    if child.name not in seen:
-                        out.append(child.as_posix())
-                        seen.add(child.name)
-                # Case 2: <parent>/<group>/<repo-name>/config.json
-                else:
-                    for grand in child.iterdir():
-                        try:
-                            if grand.is_dir() and (grand / "config.json").exists():
-                                if grand.name not in seen:
-                                    out.append(grand.as_posix())
-                                    seen.add(grand.name)
-                        except OSError:
-                            # Skip grandchildren that can't be stat'd (e.g. symlinks, special files)
-                            pass
-            except OSError:
-                # Skip children that can't be stat'd
-                pass
+                # Prune search: don't descend into model subdirectories.
+                dirs[:] = []
+
+    # 2. Build the final list, prioritizing local paths for recommended models.
+    out: List[str] = []
+    # Use a set on the final path/ID to prevent duplicates
+    seen_entries: set[str] = set()
+
+    for rec_model_id in recommended_models:
+        rec_model_name = Path(rec_model_id).name
+        
+        # If a recommended model is found locally, use its local path.
+        if rec_model_name in local_models_map:
+            local_path = local_models_map[rec_model_name]
+            if local_path not in seen_entries:
+                 out.append(local_path)
+                 seen_entries.add(local_path)
+        else:
+            # Otherwise, add the HuggingFace identifier so the user can download it.
+            if rec_model_id not in seen_entries:
+                out.append(rec_model_id)
+                seen_entries.add(rec_model_id)
+
+    # 3. Add any other local models that weren't in the recommended list.
+    for model_name, model_path in local_models_map.items():
+        if model_path not in seen_entries:
+            out.append(model_path)
+            seen_entries.add(model_path)
+    
     return sorted(out)
 
 
