@@ -1063,5 +1063,409 @@
             "high_contrast": true,
             "sharp_details": true
         }
-    }
+    },
+	{
+		"style": "Ghibli Pastel Watercolor",
+		"material": "hand-painted watercolor textures",
+		"surface_texture": "soft pastel wash with visible brushstrokes",
+		"lighting": {
+		  "type": "diffuse daylight",
+		  "intensity": "medium",
+		  "direction": "soft fill",
+		  "accent_colors": ["pastel green", "blush pink"],
+		  "reflections": false,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "muted pastel",
+		  "secondary": "light cream",
+		  "highlights": "warm white",
+		  "rim_light": "soft golden edge"
+		},
+		"background": {
+		  "color": "sky blue wash",
+		  "vignette": false,
+		  "texture": "minimal paper grain"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": true,
+		  "high_contrast": false,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Pop Art Primary Bold",
+		"material": "screen-printed ink layers",
+		"surface_texture": "halftone dots and bold outlines",
+		"lighting": {
+		  "type": "studio flat",
+		  "intensity": "high",
+		  "direction": "even frontal",
+		  "accent_colors": ["red", "yellow", "blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "saturated primaries",
+		  "secondary": "white negative space",
+		  "highlights": "bright white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "solid primary",
+		  "vignette": false,
+		  "texture": "polka dot pattern"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Art Nouveau Organic Line",
+		"material": "lithograph ink on parchment",
+		"surface_texture": "smooth with flowing linework",
+		"lighting": {
+		  "type": "soft natural light",
+		  "intensity": "low-medium",
+		  "direction": "side-lit",
+		  "accent_colors": ["olive green", "golden amber"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "earthy green",
+		  "secondary": "warm gold",
+		  "highlights": "rosy pink",
+		  "rim_light": "gentle amber edge"
+		},
+		"background": {
+		  "color": "cream floral motif",
+		  "vignette": false,
+		  "texture": "fine line ornament"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": false,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Bauhaus Minimal Geometry",
+		"material": "matte concrete and steel",
+		"surface_texture": "smooth, unadorned",
+		"lighting": {
+		  "type": "directional skylight",
+		  "intensity": "high",
+		  "direction": "top-down",
+		  "accent_colors": ["primary red", "primary blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "neutral gray",
+		  "secondary": "primary yellow",
+		  "highlights": "white edge",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "monochrome gray",
+		  "vignette": false,
+		  "texture": "diagonal line grid"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Y2K Digital Chrome",
+		"material": "polished chrome plastic",
+		"surface_texture": "mirror-finish with subtle digital noise",
+		"lighting": {
+		  "type": "strobe RGB",
+		  "intensity": "high",
+		  "direction": "multi-angle flashes",
+		  "accent_colors": ["silver", "cyan", "magenta"],
+		  "reflections": true,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "chrome silver",
+		  "secondary": "neon teal",
+		  "highlights": "white glare",
+		  "rim_light": "neon pink edge"
+		},
+		"background": {
+		  "color": "black-to-silver gradient",
+		  "vignette": true,
+		  "texture": "glitch pattern"
+		},
+		"post_processing": {
+		  "chromatic_aberration": true,
+		  "glow": true,
+		  "high_contrast": true,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Memphis Typography",
+		"material": "laminated plastic",
+		"surface_texture": "smooth with bold geometrics",
+		"lighting": {
+		  "type": "studio even",
+		  "intensity": "medium-high",
+		  "direction": "frontal",
+		  "accent_colors": ["yellow", "cyan", "magenta"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "white base",
+		  "secondary": "bright shapes",
+		  "highlights": "black outlines",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "white",
+		  "vignette": false,
+		  "texture": "scattered black squiggles"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Impressionist Brush Stroke",
+		"material": "oil paint on canvas",
+		"surface_texture": "short, visible brushstrokes",
+		"lighting": {
+		  "type": "natural outdoor",
+		  "intensity": "medium",
+		  "direction": "ambient daylight",
+		  "accent_colors": ["amber", "sky blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "soft pastel",
+		  "secondary": "earth tones",
+		  "highlights": "bright white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "loose landscape wash",
+		  "vignette": false,
+		  "texture": "canvas grain"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": false,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Cyberpunk Neon Noir",
+		"material": "slick glass and neon tubing",
+		"surface_texture": "rain-soaked reflective",
+		"lighting": {
+		  "type": "neon signage",
+		  "intensity": "high",
+		  "direction": "city-lit overhead",
+		  "accent_colors": ["electric blue", "hot pink"],
+		  "reflections": true,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "deep black",
+		  "secondary": "neon accents",
+		  "highlights": "cyan edge",
+		  "rim_light": "magenta glow"
+		},
+		"background": {
+		  "color": "dark wet alley",
+		  "vignette": true,
+		  "texture": "rain streaks"
+		},
+		"post_processing": {
+		  "chromatic_aberration": true,
+		  "glow": true,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "GTA Pricedown Collage",
+		"material": "vector panels with solid fills",
+		"surface_texture": "flat with halftone gradients",
+		"lighting": {
+		  "type": "high-contrast comic shading",
+		  "intensity": "strong",
+		  "direction": "varied per panel",
+		  "accent_colors": ["black", "white"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "strong primaries",
+		  "secondary": "muted grays and tans",
+		  "highlights": "white stroke",
+		  "rim_light": "thick black outline"
+		},
+		"background": {
+		  "color": "solid pastel",
+		  "texture": "none"
+		},
+		"post_processing": {
+		  "halftone": true,
+		  "outline": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Simpsons Cel-Animation",
+		"material": "hand-drawn line art",
+		"surface_texture": "smooth flat fill",
+		"lighting": {
+		  "type": "flat cel light",
+		  "intensity": "uniform",
+		  "direction": "none",
+		  "accent_colors": ["yellow skin", "bright blues", "reds", "greens"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "Simpsons yellow",
+		  "secondary": "bold primary costumes",
+		  "highlights": "white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "solid pastel",
+		  "texture": "none"
+		},
+		"post_processing": {
+		  "antialias": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Saved by the Bell Neon Title",
+		"material": "vector geometric shapes",
+		"surface_texture": "flat with halftone accents",
+		"lighting": {
+		  "type": "clean drop shadows",
+		  "intensity": "medium",
+		  "direction": "offset",
+		  "accent_colors": ["turquoise", "hot pink", "sunshine yellow"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "bright pastels",
+		  "secondary": "white or black backdrop",
+		  "highlights": "none",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "white or black",
+		  "texture": "geometric motifs"
+		},
+		"post_processing": {
+		  "halftone": true,
+		  "outline": false
+		}
+	  },
+	  {
+		"style": "SimCity Isometric Playful",
+		"material": "3D isometric blocks",
+		"surface_texture": "soft cell-shaded",
+		"lighting": {
+		  "type": "ambient soft",
+		  "intensity": "medium",
+		  "direction": "top-down",
+		  "accent_colors": ["sky blue", "grass green", "brick red"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "vibrant harmonies",
+		  "secondary": "neutral grays",
+		  "highlights": "white edges",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "sky gradient",
+		  "texture": "minimal"
+		},
+		"post_processing": {
+		  "antialias": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Wallace & Gromit Claymation",
+		"material": "digital clay textures",
+		"surface_texture": "irregular tactile shading",
+		"lighting": {
+		  "type": "soft warm fill",
+		  "intensity": "low-medium",
+		  "direction": "camera frontal",
+		  "accent_colors": ["warm ochre", "slate gray", "muted green"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "earthy neutrals",
+		  "secondary": "muted accents",
+		  "highlights": "soft white",
+		  "rim_light": "slight vignette"
+		},
+		"background": {
+		  "color": "studio set",
+		  "texture": "film grain overlay"
+		},
+		"post_processing": {
+		  "film_grain": true,
+		  "vignette": true
+		}
+	  },
+	  {
+		"style": "Betamax Retro VHS",
+		"material": "glossy neon ribbons",
+		"surface_texture": "flat with scanline artifacts",
+		"lighting": {
+		  "type": "UV neon",
+		  "intensity": "high",
+		  "direction": "linear streaks",
+		  "accent_colors": ["cyan", "magenta", "yellow"],
+		  "reflections": false,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "neon cyan",
+		  "secondary": "deep charcoal",
+		  "highlights": "white noise",
+		  "rim_light": "glitch edges"
+		},
+		"background": {
+		  "color": "black",
+		  "texture": "VHS static"
+		},
+		"post_processing": {
+		  "glitch": true,
+		  "chromatic_aberration": true,
+		  "scanlines": true
+		}
+	  }
 ]

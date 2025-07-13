@@ -46,13 +46,13 @@
   },
   {
     "task": "Haircut",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nChange the haircut of the subject. Suggest a variety of haircuts, styles, colors, etc. Adapt the haircut to the subject's characteristics so that it looks natural.\n\nDescribe how to visually edit the hair of the subject so that it has this new haircut.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nChange the haircut of the subject. Suggest a variety of haircuts, styles, colors, etc. Adapt the haircut to the subject's characteristics so that it looks natural.\n\nDescribe how to visually edit the hair of the subject so that it has this new haircut.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Bodybuilder",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nAsk to largely increase the muscles of the subjects while keeping the same pose and context.\n\nDescribe visually how to edit the subjects so that they turn into bodybuilders and have these exagerated large muscles: biceps, abdominals, triceps, etc.\n\nYou may change the clothse to make sure they reveal the overmuscled, exagerated body.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nAsk to largely increase the muscles of the subjects while keeping the same pose and context.\n\nDescribe visually how to edit the subjects so that they turn into bodybuilders and have these exagerated large muscles: biceps, abdominals, triceps, etc.\n\nYou may change the clothse to make sure they reveal the overmuscled, exagerated body.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Remove Furniture",
@@ -61,8 +61,8 @@
   },
   {
     "task": "Interior Design",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nYou are an interior designer. Redo the interior design of this image. Imagine some design elements and light settings that could match this room and offer diverse artistic directions, while ensuring that the room structure (windows, doors, walls, etc) remains identical.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nYou are an interior designer. Redo the interior design of this image. Imagine some design elements and light settings that could match this room and offer diverse artistic directions, while ensuring that the room structure (windows, doors, walls, etc) remains identical.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Season Shift",
@@ -71,13 +71,13 @@
   },
   {
     "task": "Age Progression",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nAlter the apparent age of the main subject. Provide two instructions that age the subject forward (older) and two that age the subject backward (younger), adjusting skin texture, hair, posture, and accessories while retaining identity and pose.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nAlter the apparent age of the main subject. Provide two instructions that age the subject forward (older) and two that age the subject backward (younger), adjusting skin texture, hair, posture, and accessories while retaining identity and pose.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
-    "task": "Add Pet",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nIntroduce a believable animal companion into the scene. Suggest different animals (dog, cat, bird, etc.) in natural poses that interact with the subject or environment. Ensure lighting, scale, and shadows match the original image.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 4 instructions."
+    "task": "Add Pet 1 variations",
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation instructions.\n\nThe brief:\n\nIntroduce a believable animal companion into the scene. Suggest different animals (dog, cat, bird, etc.) in natural poses that interact with the subject or environment. Ensure lighting, scale, and shadows match the original image.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line is a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Historical Era",
@@ -96,8 +96,8 @@
   },
   {
     "task": "Virtual Makeup",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nApply varied cosmetic looks to the subject’s face (e.g. natural glam, bold editorial, vintage 60s, festival glitter). Adjust skin finish, eye makeup, lip color, and subtle lighting tweaks while preserving facial features and expression.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nApply varied cosmetic looks to the subject’s face (e.g. natural glam, bold editorial, vintage 60s, festival glitter). Adjust skin finish, eye makeup, lip color, and subtle lighting tweaks while preserving facial features and expression.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Pattern Overlay",
@@ -106,12 +106,117 @@
   },
   {
     "task": "Change Outfit",
-    "num_instructions": 4,
-    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nRe-dress the subject in diverse clothing styles (e.g. haute couture, casual streetwear, futuristic tech-suit, traditional cultural attire). Modify garments, colors, and textures while keeping pose, body shape, and lighting consistent.\n\nYour response must consist of exactly 4 numbered lines (1-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 4 instructions."
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instructions*.\n\nThe brief:\n\nRe-dress the subject in diverse clothing styles (e.g. haute couture, casual streetwear, futuristic tech-suit, traditional cultural attire). Modify garments, colors, and textures while keeping pose, body shape, and lighting consistent.\n\nYour response must consist of exactly 1 numbered lines (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instructions."
   },
   {
     "task": "Double Exposure",
     "num_instructions": 1,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nCreate an artistic double-exposure effect by blending the original subject with a secondary thematic scene (e.g. city skyline, forest silhouette, cosmic nebula). Ensure transparency, layering, and tonal harmony are balanced.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instruction."
+  },
+  {
+    "task": "Teleport 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of scene descriptors (e.g., \"cyberpunk alley, underwater temple, 4950s diner\"). Use only the first descriptor. Teleport the subject to this new location, scenario and style while keeping the subject unchanged.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Move Camera 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of camera-movement keywords (e.g., \"aerial top-down, low-angle dolly, 360 spin\"). Use only the first keyword. Move the camera accordingly to re-frame the scene and reveal new aspects.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Relight 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of lighting styles (e.g., \"golden hour, neon noir, softbox key\"). Use only the first style. Suggest new lighting settings applying this style—focus on professional studio lighting, dramatic color shifts, alternate time of day, and inclusion or removal of natural light.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Product 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of product-photography concepts (e.g., \"minimalist flat-lay, lifestyle kitchen shot, high-key studio\"). Use only the first concept. Turn the image into a professional product photo following that concept—describe scenes (packshot or in-use), lighting setups, camera angles/framing, zoom levels, and include at least one usage scenario.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Zoom 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of zoom levels or focal targets (e.g., \"extreme close-up on eyes, medium crop on hands\"). Use only the first entry. Apply that zoom in four different ways, focusing on framing, crop, and subject emphasis.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Colorize 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of color styles (e.g., \"vintage Kodachrome, cyber teal-orange, monochrome red\"). Use only the first style. Colorize the image in four different ways following that style, including any restoration or tonal guidance.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Movie Poster 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user may supply a comma-separated list of genres or titles (e.g., \"sci-fi epic, indie rom-com\"). Use only the first entry. Create four movie-poster designs reflecting that genre or title—stylize the title, add taglines, quotes, billing blocks, and genre-appropriate layouts.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Cartoonify 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of cartoon styles (e.g., \"90s anime, Pixar 3D, classic Disney\"). Use only the first style. Render the image in four different ways following that style—include cultural or era references, line weight, shading, and texture.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Haircut 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of haircut descriptors (e.g., \"bob cut, mohawk, long wavy, buzz cut\"). Assign each descriptor in order to the subject’s hair across four variations—preserve identity, face shape, and existing lighting.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Bodybuilder 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of exaggerated physique styles (e.g., \"classic Arnold, shredded aesthetic, powerlifter bulk, comic-book hero\"). Apply each style in order across four variations—keep pose, context, and lighting consistent while enlarging muscles accordingly.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Interior Design 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of interior styles (e.g., \"Scandinavian minimal, boho chic, industrial loft, mid-century modern\"). Redesign the room in each style across four variations—preserve structure (walls, windows, doors), and propose furniture, color palette, textures, and lighting.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Season Shift 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of seasons (e.g., \"autumn, winter\"). Use only the first season. Transform the scene to that season in four unique ways—alter foliage, weather, lighting, and seasonal props while preserving subject placement.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Age Progression 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of age descriptors (e.g., \"teen, middle-aged, elderly, child\"). Apply each age across four variations—adjust skin texture, hair, posture, and accessories while retaining identity and pose.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Add Pet 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of pets (e.g., \"dog, cat, bird, rabbit\"). Introduce each pet across four variations—ensure natural poses, correct scale, lighting, and shadow integration.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Historical Era 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of historical eras (e.g., \"Victorian London, Ancient Egypt, 4980s Miami\"). Use only the first era. Reimagine the scene in that era across four variations—update architecture, attire, props, and color palette while preserving composition.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Dramatic Weather 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of weather conditions (e.g., \"sandstorm, torrential rain, aurora night\"). Use only the first condition. Introduce that weather across four variations—modify sky, atmosphere, lighting, reflections, and shadows while keeping subjects unchanged.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Mirror World 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of symmetry types (e.g., \"horizontal flip, vertical flip, kaleidoscope radial\"). Use only the first type. Create mirrored or symmetrical versions in four ways—ensure seamless reflections and coherent perspective.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Virtual Makeup 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of makeup looks (e.g., \"smoky glam, K-beauty dewy, 80s neon, gothic matte\"). Apply each look in order across four variations—adjust skin finish, eye makeup, lip color, and subtle lighting while preserving features.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Pattern Overlay 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of patterns (e.g., \"herringbone, leopard print, holographic grid\"). Use only the first pattern. Overlay this pattern onto suitable surfaces in four variations—maintain perspective, scale, and ensure the main subjects remain unobscured.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Change Outfit 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of outfit styles (e.g., \"steampunk suit, summer linen, cyber ninja, 70s disco\"). Dress the subject in each style across four variations—modify garments, colors, and textures while keeping pose and lighting.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Double Exposure 4 variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of secondary scenes (e.g., \"misty forest, galaxy swirl, city skyline\"). Use only the first scene. Create an artistic double-exposure effect by blending the original subject with that scene in four different ways—ensure transparency, layering, and tonal harmony.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
   }
 ]
