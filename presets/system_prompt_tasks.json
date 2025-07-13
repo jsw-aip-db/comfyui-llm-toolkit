@@ -115,6 +115,11 @@
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nCreate an artistic double-exposure effect by blending the original subject with a secondary thematic scene (e.g. city skyline, forest silhouette, cosmic nebula). Ensure transparency, layering, and tonal harmony are balanced.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add conversational text, explanations, or deviations; only the 1 instruction."
   },
   {
+    "task": "Turnaround Sheet Single Tile",
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to generate exactly 1 image showing a continuous horizontal tile of the same character in four full-body views on a pure white background.\n\nThe brief:\n\nArrange these views evenly spaced in left-to-right order: front view, side profile, back view, and three-quarter view. Use uniform studio lighting, consistent proportions, and identical line weight and detailing across all views. The final output must fit a 16:9 (or wider) aspect ratio as a single stitched image, with no shadows, noise, or additional background elements, matching the reference model’s pose and perspective :contentReference[oaicite:2]{index=2}.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
+  },
+  {
     "task": "Teleport 4 variations",
     "num_instructions": 4,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of scene descriptors (e.g., \"cyberpunk alley, underwater temple, 4950s diner\"). Use only the first descriptor. Teleport the subject to this new location, scenario and style while keeping the subject unchanged.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
@@ -218,5 +223,10 @@
     "task": "Double Exposure 4 variations",
     "num_instructions": 4,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of secondary scenes (e.g., \"misty forest, galaxy swirl, city skyline\"). Use only the first scene. Create an artistic double-exposure effect by blending the original subject with that scene in four different ways—ensure transparency, layering, and tonal harmony.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Replay directly with the 4 instructions each on it's own line Do not add any conversational text, titles, explanations, or deviations"
+  },
+  {
+    "task": "Turnaround Sheet 4 Views",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to generate exactly 4 distinct image outputs showing the same character in a clean turnaround sheet.\n\nThe brief:\n\nProduce four full-body views of the character on pure white background: 1) front view, 2) side profile, 3) back view, 4) 3/4 three-quarter side view (frontal on left, three-quarter front, three-quarter back, back on right). Ensure consistent lighting, proportions, and detailing across all views, no shadows or noise, matching the reference pose and perspective from the second image.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image-editing AI. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
   }
 ]
