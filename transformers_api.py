@@ -355,20 +355,38 @@ async def send_transformers_request(
 
             # Prefer the model-specific chat template when the tokenizer provides one.
             if hasattr(tokenizer, "apply_chat_template"):
-                try:
-                    prompt_text = tokenizer.apply_chat_template(
-                        messages,
-                        tokenize=False,
-                        add_generation_prompt=True,
-                    )
-                except TypeError:
-                    # Some tokenizers (e.g. Qwen3) require enable_thinking kwarg – fall back to default
-                    prompt_text = tokenizer.apply_chat_template(
-                        messages,
-                        tokenize=False,
-                        add_generation_prompt=True,
-                        enable_thinking=True,
-                    )
+                model_name_lower = model.lower()
+                # Kimi-VL and Qwen3 models need `enable_thinking=True` for system prompts
+                if "qwen3" in model_name_lower or ("kimi-vl" in model_name_lower and "thinking" in model_name_lower):
+                    try:
+                        prompt_text = tokenizer.apply_chat_template(
+                            messages,
+                            tokenize=False,
+                            add_generation_prompt=True,
+                            enable_thinking=True,
+                        )
+                    except TypeError:
+                        # Fallback for older tokenizer versions without the kwarg
+                        prompt_text = tokenizer.apply_chat_template(
+                            messages,
+                            tokenize=False,
+                            add_generation_prompt=True,
+                        )
+                else:
+                    try:
+                        prompt_text = tokenizer.apply_chat_template(
+                            messages,
+                            tokenize=False,
+                            add_generation_prompt=True,
+                        )
+                    except TypeError:
+                        # Fallback for other models that might need it
+                        prompt_text = tokenizer.apply_chat_template(
+                            messages,
+                            tokenize=False,
+                            add_generation_prompt=True,
+                            enable_thinking=True,
+                        )
             else:
                 # Fallback to simple concatenation for generic models
                 prompt_parts: List[str] = []
@@ -502,23 +520,30 @@ async def send_transformers_request_stream(
 
         # Use model-specific chat template if available to prevent token leakage
         if hasattr(tokenizer, "apply_chat_template"):
-            try:
-                prompt = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
-                )
-            except (TypeError, ValueError):
+            model_name_lower = model.lower()
+            # Kimi-VL and Qwen3 models need `enable_thinking=True` for system prompts
+            if "qwen3" in model_name_lower or ("kimi-vl" in model_name_lower and "thinking" in model_name_lower):
                 try:
-                    # Fallback for models needing specific kwargs (e.g., Qwen3 `enable_thinking`)
+                    prompt = tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=True, enable_thinking=True
+                    )
+                except (TypeError, ValueError):
+                    prompt = tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=True
+                    )
+            else:
+                try:
+                    prompt = tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=True
+                    )
+                except (TypeError, ValueError):
+                    # Fallback for other models that might need it
                     prompt = tokenizer.apply_chat_template(
                         messages,
                         tokenize=False,
                         add_generation_prompt=True,
                         enable_thinking=True,
                     )
-                except (TypeError, ValueError):
-                    # Final fallback to simple join for other template issues.
-                    prompt_parts: List[str] = [f"{m['role']}: {m['content']}" for m in messages]
-                    prompt = "\n".join(prompt_parts) + "\nassistant:"
         else:
             # Legacy fallback for models without a chat template
             prompt_parts: List[str] = []
