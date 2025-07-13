@@ -1330,17 +1330,19 @@ def get_models(engine, base_ip, port, api_key):
                 if os.path.exists(llm_path) and os.path.isdir(llm_path):
                     # List directories in the LLM folder
                     local_models = []
-                    for model_dir in os.listdir(llm_path):
-                        model_path = os.path.join(llm_path, model_dir)
-                        if os.path.isdir(model_path):
-                            # Check if it has config.json to verify it's a model
-                            if os.path.exists(os.path.join(model_path, "config.json")):
-                                if "/" not in model_dir and "\\" not in model_dir:
-                                    # For non-namespaced models, use the directory name
-                                    local_models.append(model_dir)
-                                else:
-                                    # For models with namespaces, keep the structure
-                                    local_models.append(model_dir)
+                    # Recursively walk the LLM directory to find all models
+                    for root, dirs, files in os.walk(llm_path):
+                        if "config.json" in files:
+                            # This is a model directory. Get its identifier relative to the LLM folder.
+                            model_identifier = os.path.relpath(root, llm_path)
+                            # Normalize path separators for HuggingFace model IDs
+                            model_identifier = model_identifier.replace(os.path.sep, '/')
+                            # On Windows, relpath might return '.', which we should ignore.
+                            if model_identifier != '.':
+                                local_models.append(model_identifier)
+                            
+                            # Don't descend further into this model's directory
+                            dirs[:] = []
                     
                     # If we found local models, add them to our list
                     if local_models:
