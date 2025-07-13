@@ -373,20 +373,11 @@ async def send_transformers_request(
                             add_generation_prompt=True,
                         )
                 else:
-                    try:
-                        prompt_text = tokenizer.apply_chat_template(
-                            messages,
-                            tokenize=False,
-                            add_generation_prompt=True,
-                        )
-                    except TypeError:
-                        # Fallback for other models that might need it
-                        prompt_text = tokenizer.apply_chat_template(
-                            messages,
-                            tokenize=False,
-                            add_generation_prompt=True,
-                            enable_thinking=True,
-                        )
+                    prompt_text = tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                    )
             else:
                 # Fallback to simple concatenation for generic models
                 prompt_parts: List[str] = []
@@ -532,18 +523,9 @@ async def send_transformers_request_stream(
                         messages, tokenize=False, add_generation_prompt=True
                     )
             else:
-                try:
-                    prompt = tokenizer.apply_chat_template(
-                        messages, tokenize=False, add_generation_prompt=True
-                    )
-                except (TypeError, ValueError):
-                    # Fallback for other models that might need it
-                    prompt = tokenizer.apply_chat_template(
-                        messages,
-                        tokenize=False,
-                        add_generation_prompt=True,
-                        enable_thinking=True,
-                    )
+                prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
         else:
             # Legacy fallback for models without a chat template
             prompt_parts: List[str] = []
