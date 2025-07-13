@@ -719,7 +719,9 @@ class LLMToolkitTextGeneratorStream:
                         ]:
                             params[key] = value
                         elif key in ["system_message"]:
-                            params[key] = value
+                            # Only update if there is a value, otherwise keep default
+                            if value:
+                                params[key] = value
 
                     if "user_prompt" in provider_config:
                         params["user_message"] = provider_config["user_prompt"]
