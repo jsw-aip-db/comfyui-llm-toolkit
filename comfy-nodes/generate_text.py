@@ -672,66 +672,52 @@ class LLMToolkitTextGeneratorStream:
             inside_thinking = False
 
             try:
-                # --- Parameter processing logic (same as non-streaming) ---
+                # --- Corrected Parameter Processing Logic ---
+                # 1. Start with node defaults
                 params = {
                     "llm_provider": self.DEFAULT_PROVIDER,
                     "llm_model": llm_model,
                     "system_message": "You are a helpful, creative, and concise assistant.",
                     "user_message": prompt,
-                    "base_ip": "localhost",
-                    "port": "11434",
-                    "temperature": 0.7,
-                    "max_tokens": 1024,
-                    "top_p": 0.9,
-                    "top_k": 40,
-                    "repeat_penalty": 1.1,
-                    "stop": None,
-                    "keep_alive": "5m",  # Keep ollama model loaded for 5 mins
-                    "messages": []
+                    "base_ip": "localhost", "port": "11434",
+                    "temperature": 0.7, "max_tokens": 1024, "top_p": 0.9, "top_k": 40,
+                    "repeat_penalty": 1.1, "stop": None, "keep_alive": "5m",
+                    "messages": [], "llm_api_key": None
                 }
 
-                provider_config = None
-                if context is not None:
-                    if isinstance(context, dict) and "provider_name" in context:
-                        provider_config = context
-                    elif isinstance(context, dict) and "provider_config" in context:
-                        provider_config = context["provider_config"]
+                # 2. Apply general settings from the incoming context
+                if context and isinstance(context, dict):
+                    for key, value in context.items():
+                        if key in params:
+                            params[key] = value
 
-                if provider_config and isinstance(provider_config, dict):
-                    if "provider_name" in provider_config:
-                        params["llm_provider"] = provider_config["provider_name"]
+                # 3. Apply specific provider_config settings, which take precedence
+                provider_config = None
+                if context and isinstance(context, dict):
+                    if "provider_config" in context and isinstance(context["provider_config"], dict):
+                        provider_config = context["provider_config"]
+                    elif "provider_name" in context: # Handle flat context from old nodes
+                        provider_config = context
+                
+                if provider_config:
+                    for key, value in provider_config.items():
+                        if key in params:
+                            params[key] = value
+                    # Handle keys with different names
                     if "api_key" in provider_config:
                         params["llm_api_key"] = provider_config["api_key"]
-                    if "base_ip" in provider_config:
-                        params["base_ip"] = provider_config["base_ip"]
-                    if "port" in provider_config:
-                        params["port"] = provider_config["port"]
-                    # Merge additional keys carefully
-                    for key, value in provider_config.items():
-                        if key not in [
-                            "provider_name",
-                            "llm_model",
-                            "api_key",
-                            "base_ip",
-                            "port",
-                            "user_prompt",
-                            "system_message",
-                        ]:
-                            params[key] = value
-                        elif key in ["system_message"]:
-                            # Only update if there is a value, otherwise keep default
-                            if value:
-                                params[key] = value
+                    if "llm_model" in provider_config and provider_config["llm_model"]:
+                        params["llm_model"] = provider_config["llm_model"]
 
-                    if "user_prompt" in provider_config:
-                        params["user_message"] = provider_config["user_prompt"]
+                # 4. The user_message from context or provider_config can be used,
+                #    but the node's prompt input has the final say.
+                if context and isinstance(context, dict) and "user_prompt" in context:
+                    params["user_message"] = context.get("user_prompt")
+                if provider_config and "user_prompt" in provider_config:
+                     params["user_message"] = provider_config.get("user_prompt")
+                params["user_message"] = prompt # Node input is final override
 
-                    provider_model = provider_config.get("llm_model", "")
-                    params["llm_model"] = provider_model or ""
-                elif provider_config:
-                    logger.warning(
-                        f"provider_config is not a dictionary, it's a {type(provider_config)}. Using defaults."
-                    )
+                # --- End Corrected Parameter Processing ---
 
                 # Finalize model name fallback
                 if params.get("llm_provider"):
@@ -748,8 +734,6 @@ class LLMToolkitTextGeneratorStream:
                         logger.info("generate_stream: Retrieved OpenAI API key via get_api_key helper.")
                     except ValueError as _e:
                         logger.warning(f"generate_stream: get_api_key failed – {_e}")
-
-                # --- End Parameter Processing ---
 
                 # --- Prompt-Manager support ---------------------------------------------------
                 # If upstream PromptManager attached a prompt_config dict, use the data
