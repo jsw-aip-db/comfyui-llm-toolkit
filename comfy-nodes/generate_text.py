@@ -836,21 +836,30 @@ class LLMToolkitTextGeneratorStream:
                             chunk_to_send = ""
                             i = 0
                             while i < len(chunk):
-                                char = chunk[i]
                                 
                                 if not inside_thinking:
                                     # Check for start of thinking tag
-                                    if char == '<' and chunk[i:i+7] == '<think>':
+                                    if chunk[i:i+7] == '<think>':
                                         inside_thinking = True
                                         thinking_buffer = '<think>'
                                         i += 7
                                         continue
+                                    elif chunk[i:i+9] == '◁think▷': # <-- Add Kimi-VL start tag
+                                        inside_thinking = True
+                                        thinking_buffer = '◁think▷'
+                                        i += 9
+                                        continue
                                     else:
-                                        chunk_to_send += char
+                                        chunk_to_send += chunk[i]
                                 else:
                                     # Inside thinking block, buffer until we find closing tag
-                                    thinking_buffer += char
+                                    thinking_buffer += chunk[i]
                                     if thinking_buffer.endswith('</think>'):
+                                        inside_thinking = False
+                                        thinking_buffer = ""
+                                        i += 1
+                                        continue
+                                    elif thinking_buffer.endswith('◁/think▷'): # <-- Add Kimi-VL end tag
                                         inside_thinking = False
                                         thinking_buffer = ""
                                         i += 1

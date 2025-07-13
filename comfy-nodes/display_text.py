@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 from context_payload import extract_context
 
 def _remove_thinking_tags(text: str) -> str:
-    """Remove <think>...</think> blocks from text, including the tags themselves."""
+    """Remove <think>...</think> or ◁think▷...◁/think▷ blocks from text."""
     import re
-    # Pattern to match <think>...</think> blocks (including nested content and newlines)
-    pattern = r'<think>.*?</think>'
+    # Pattern to match <think>...</think> or ◁think▷...◁/think▷ blocks
+    pattern = r'<think>.*?</think>|◁think▷.*?◁/think▷'
     cleaned = re.sub(pattern, '', text, flags=re.DOTALL)
     # Clean up any extra whitespace/newlines left behind
     cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)  # Replace multiple newlines with double
