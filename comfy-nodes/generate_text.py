@@ -688,7 +688,7 @@ class LLMToolkitTextGeneratorStream:
                 # 2. Apply general settings from the incoming context
                 if context and isinstance(context, dict):
                     for key, value in context.items():
-                        if key in params:
+                        if key in params and value is not None:
                             params[key] = value
 
                 # 3. Apply specific provider_config settings, which take precedence
@@ -700,26 +700,39 @@ class LLMToolkitTextGeneratorStream:
                         provider_config = context
                 
                 if provider_config:
-                    for key, value in provider_config.items():
-                        if key in params:
-                            params[key] = value
-                    # Handle keys with different names
-                    if "api_key" in provider_config:
+                    # First, update all matching keys from provider_config that also exist in params
+                    params.update({k: v for k, v in provider_config.items() if k in params and v is not None})
+                            
+                    # Second, handle specific key name differences. This ensures provider_name is mapped correctly.
+                    if "provider_name" in provider_config and provider_config["provider_name"]:
+                        params["llm_provider"] = provider_config["provider_name"]
+                    elif context and isinstance(context, dict) and context.get("provider_name"):
+                        # Fallback to root-level key if nested provider_config didn't have it
+                        params["llm_provider"] = context["provider_name"]
+
+                    if "api_key" in provider_config and provider_config["api_key"]:
                         params["llm_api_key"] = provider_config["api_key"]
+                    elif context and isinstance(context, dict) and context.get("api_key"):
+                        params["llm_api_key"] = context["api_key"]
+
                     if "llm_model" in provider_config and provider_config["llm_model"]:
                         params["llm_model"] = provider_config["llm_model"]
+                    elif context and isinstance(context, dict) and context.get("llm_model"):
+                        params["llm_model"] = context["llm_model"]
 
                 # 4. The user_message from context or provider_config can be used,
                 #    but the node's prompt input has the final say.
-                if context and isinstance(context, dict) and "user_prompt" in context:
+                if context and isinstance(context, dict) and "user_prompt" in context and context["user_prompt"]:
                     params["user_message"] = context.get("user_prompt")
-                if provider_config and "user_prompt" in provider_config:
+                if provider_config and "user_prompt" in provider_config and provider_config["user_prompt"]:
                      params["user_message"] = provider_config.get("user_prompt")
-                params["user_message"] = prompt # Node input is final override
+                if prompt: # Node input is final override, if provided
+                    params["user_message"] = prompt
 
                 # --- End Corrected Parameter Processing ---
 
                 # Finalize model name fallback
+                provider = "unknown"
                 if params.get("llm_provider"):
                     provider = str(params["llm_provider"]).lower()
                     if not params.get("llm_model"):
