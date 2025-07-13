@@ -18,6 +18,8 @@ pydub
 google-genai
 opencv-python
 tiktoken
+blobfile
+huggingface_hub
 #https://github.com/bitsandbytes-foundation/bitsandbytes/releases/download/continuous-release_main/bitsandbytes-1.33.7.preview-py3-none-win_amd64.whl if you using local transformer provider get bitsandbytes for windows
 #https://github.com/bitsandbytes-foundation/bitsandbytes/releases/download/continuous-release_main/bitsandbytes-1.33.7.preview-py3-none-manylinux_2_24_x86_64.whl if you using local transformer provider get bitsandbytes for linux
 #autoawq #install this if you using local transformer provider AWQ models
