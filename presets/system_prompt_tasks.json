@@ -1,5 +1,10 @@
 [
   {
+    "task": "Integrate Couple",
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided images and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nIntegrate the anime character from the first image with the real person from the second image to create a harmonious couple image. Ensure both characters are styled appropriately as a couple, maintaining their original characteristics and proportions. If the user provides a background prompt, incorporate that into the scene. The final image should seamlessly blend the two characters into a natural and cohesive couple.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
+  },
+  {
     "task": "Relocate Character",
     "num_instructions": 1,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided character image and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nRelocate the character to a new location or situation as specified by the user. The character should remain in its current style. If the user provides a second image with the desired location, integrate the character into that scene. Ensure the character's pose, style, and proportions are maintained while fitting seamlessly into the new background.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
