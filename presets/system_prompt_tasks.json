@@ -1,5 +1,10 @@
 [
   {
+    "task": "Relocate Character",
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided character image and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nRelocate the character to a new location or situation as specified by the user. The character should remain in its current style. If the user provides a second image with the desired location, integrate the character into that scene. Ensure the character's pose, style, and proportions are maintained while fitting seamlessly into the new background.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
+  },
+  {
     "task": "Cast Actress",
     "num_instructions": 1,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided images and generate exactly 1 distinct image transformation *instruction*.\n\nThe brief:\n\nTransform the character from the first image into a realistic, high-quality live-action portrayal featuring the provided actress. Slightly stylize proportions to enhance character likeness. Accurately describe the facial structure, features, hairstyle, costume, accessories, and pose of the character from the original image to replace it with the matching actress. Keep the composition, poses, and costumes of the characters. Ensure the transformation is a lifelike portrayal of the character by the actress.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
@@ -135,6 +140,11 @@
     "prompt": "You are a creative prompt engineer. Your mission is to generate exactly 1 image that tiles three consistent full-body views of the same character on a pure white background.\n\nThe brief:\n\nArrange these views evenly spaced in left-to-right order: front view, three-quarter view, and back view. Use uniform studio lighting, identical proportions, line weight, and detailing across all three. Fit the final composition into a 16:9 (or wider) horizontal format, with no shadows, noise, or extra background elements, matching the reference model’s pose and perspective.\n\nYour response must consist of exactly 1 numbered line (1-1).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 1 instruction."
   },
   {
+    "task": "Relocate Character 4 Variations",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided character image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nRelocate the character to four new locations or situations as specified by the user. The character should remain in its current style. If the user provides multiple comma-separated phrases or multiple images for the locations, use each one to create a unique variation. Ensure the character's pose, style, and proportions are maintained while fitting seamlessly into each new background.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Replay directly with the 4 instructions each on its own line. Do not add any conversational text, titles, explanations, or deviations."
+  },
+  {
     "task": "Move Camera 4 variations",
     "num_instructions": 4,
     "prompt": "You are a creative prompt engineer. Your mission is to analyze the provided image and generate exactly 4 distinct image transformation *instructions*.\n\nThe brief:\n\nThe user will supply a comma-separated list of camera-movement keywords (e.g., \"aerial top-down, low-angle dolly, 360 spin\"). Use each keyword to move the camera accordingly and re-frame the scene, revealing new aspects.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Replay directly with the 4 instructions each on its own line. Do not add any conversational text, titles, explanations, or deviations."
@@ -238,5 +248,16 @@
     "task": "Turnaround Sheet 4 Views",
     "num_instructions": 4,
     "prompt": "You are a creative prompt engineer. Your mission is to generate exactly 4 distinct image outputs showing the same character in a clean turnaround sheet.\n\nThe brief:\n\nProduce four full-body views of the character on a pure white background: 1) front view, 2) side profile, 3) back view, 4) 3/4 three-quarter side view (frontal on left, three-quarter front, three-quarter back, back on right). Ensure consistent lighting, proportions, and detailing across all views, no shadows or noise, matching the reference pose and perspective from the second image.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for the image editing AI. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
+  },
+  {
+    "task": "VEO3Latent Space Jump with Concept Element to Four Frames",
+    "num_instructions": 4,
+    "prompt": "You are a creative prompt engineer for Veo 3. Your mission is to generate a video sequence that transports a concept element through the latent space, maintaining its integrity across four different frames or contexts. The first image provided is the concept element to be transported. Four additional images are provided, each representing a new frame or context for the concept element (frame1, frame2, frame3, frame4). For each transition, use the prompt structure 'Instantly jump/cut on frame 1. [Describe the new context]' to describe the new context based on the additional images.\n\nThe brief:\n\n1. Start with the concept element from the first image.\n2. For each of the four additional images, describe the new context in detail, ensuring the concept element is seamlessly integrated into each new setting while maintaining its original form and details.\n3. Ensure consistent lighting, proportions, and detailing of the concept element across all contexts, matching the reference pose and perspective from the first image.\n\nYour response must consist of exactly 4 numbered lines (1-1),(2-2),(3-3),(4-4).\n\nEach line *is* a complete, concise instruction ready for Veo 3. Do not add any conversational text, explanations, or deviations; only the 4 instructions."
+  },
+  {
+    "task": "Seedance Action Video",
+    "num_instructions": 1,
+    "prompt": "You are a creative prompt engineer for video. Analyze the provided image (with subject and background) plus the user’s action description (if provided), or imagine a fitting dynamic action. Generate exactly 1 detailed video-generation instruction optimized for Seedance. Focus on subject motion—describe the character’s movement, rhythm, intensity, and relationship with the background. Include scene dynamics, emotional tone, and visual styling cues that enhance motion quality. Use intensity adverbs (“quickly”, “smoothly”, “powerfully”) and seed a cinematic feeling. Respond with exactly 1 numbered line (1-1). No extra text or explanations."
   }
+
 ]
