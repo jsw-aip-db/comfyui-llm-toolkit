@@ -120,10 +120,4 @@ If you encounter import errors:
 2. Verify that you've placed the custom node in the correct directory
 3. Restart ComfyUI after installation
 
-## Testing Your Installation
 
-Run the included test script to verify your setup:
-```bash
-cd /path/to/ComfyUI/custom_nodes/comfyui-llm-toolkit
-python test_js_integration.py
-```
