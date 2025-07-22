@@ -7,8 +7,8 @@ import os, sys  # Needed for dynamic path adjustment before importing transforme
 from typing import List, Union, Optional, Dict, Any
 
 # Minimal imports for Ollama & OpenAI only
-from api.ollama_api import send_ollama_request, create_ollama_embedding
-from api.openai_api import (
+from ollama_api import send_ollama_request, create_ollama_embedding
+from openai_api import (
     send_openai_request,
     generate_image,
     generate_image_variations,
@@ -18,14 +18,11 @@ from api.openai_api import (
 from llmtoolkit_utils import convert_images_for_api, ensure_ollama_server, ensure_ollama_model
 
 # Gemini helpers (OpenAI-compat layer)
-from api.gemini_api import (
+from gemini_api import (
     send_gemini_request,
     send_gemini_image_generation_request,
     create_gemini_compatible_embedding,
 )
-
-# Groq helpers (OpenAI-compat layer)
-from api.groq_api import send_groq_request
 
 # Optional: folder_paths may be used elsewhere but isn't necessary here —
 # leave a harmless import to keep previous behaviour for callers that expect
@@ -97,7 +94,6 @@ async def send_request(
     strategy: str = "normal",
     batch_count: int = 1,
     mask: Optional[str] = None,
-    reasoning_format: Optional[str] = None,
 ) -> Union[str, Dict[str, Any]]:
     """
     Sends a request to the specified LLM provider and returns a unified response.
@@ -124,7 +120,6 @@ async def send_request(
         strategy (str): Strategy for image generation.
         batch_count (int): Number of images to generate.
         mask (Optional[str], optional): Mask for image editing.
-        reasoning_format (Optional[str], optional): Format for reasoning.
 
     Returns:
         Union[str, Dict[str, Any]]: Unified response format.
@@ -331,28 +326,6 @@ async def send_request(
                 repeat_penalty=repeat_penalty,
             )
 
-        # ------------------------------------------------------------------
-        #  Groq (OpenAI-compatible) – chat completions (vision handled later)
-        # ------------------------------------------------------------------
-        if llm_provider == "groq":
-            return await send_groq_request(
-                api_url=None,
-                base64_images=formatted_images,
-                model=llm_model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages or [],
-                api_key=llm_api_key or "",
-                seed=seed if random else None,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                reasoning_format=reasoning_format,
-                repeat_penalty=repeat_penalty,
-                tools=None,
-                tool_choice=None,
-            )
-
         return {"error": f"Unsupported llm_provider '{llm_provider}'"}
 
     except Exception as e:
@@ -390,12 +363,6 @@ async def create_embedding(embedding_provider: str, api_base: str, embedding_mod
         except ValueError as e:
             print(f"Error creating embedding: {e}")
             return None
-    
-    elif embedding_provider == "groq":
-        # Currently the Groq API does not expose a public embedding endpoint.
-        # Fall back to None to indicate unsupported.
-        logger.warning("Groq embedding generation is not yet supported – returning None")
-        return None
     
     else:
         raise ValueError(f"Unsupported embedding_provider: {embedding_provider}")

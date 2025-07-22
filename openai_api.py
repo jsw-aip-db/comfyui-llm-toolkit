@@ -127,21 +127,7 @@ async def send_openai_request(api_url, base64_images, model, system_message, use
                 _san["messages"] = f"[{len(_san['messages'])} messages]"
             if base64_images:
                 _san["base64_images"] = f"[{len(base64_images)} base64 image(s) omitted]"
-            # Sanitize Authorization header so the API key is not leaked in logs
-            _san_headers = {}
-            for hk, hv in openai_headers.items():
-                if hk.lower() == "authorization" and isinstance(hv, str):
-                    # Keep scheme and first 5 chars of key, mask the rest
-                    if hv.startswith("Bearer "):
-                        prefix, key_part = hv.split(" ", 1)
-                        masked_key = key_part[:5] + "…"  # first 5 chars, ellipsis
-                        _san_headers[hk] = f"{prefix} {masked_key}"
-                    else:
-                        _san_headers[hk] = hv[:5] + "…"
-                else:
-                    _san_headers[hk] = hv
-
-            logger.debug(f"Request headers: {_san_headers}")
+            logger.debug(f"Request headers: {openai_headers}")
             logger.debug(f"Request data (sanitized): {_san}")
 
         logger.info(f"Sending OpenAI request to {api_url} for model {model}")
