@@ -1312,7 +1312,7 @@ def get_models(engine, base_ip, port, api_key):
         
         # Check if we have a transformers model manager to list models
         try:
-            from transformers_api import _transformers_manager
+            from api.transformers_api import _transformers_manager
             
             # Get list of models from LLM directory
             try:
@@ -1392,6 +1392,25 @@ def get_models(engine, base_ip, port, api_key):
         except Exception as exc:
             logger.error(f"Error fetching Google models: {exc}")
             return fallback_models
+
+    elif engine == "groq":
+        try:
+            if not api_key or api_key == "1234":
+                logger.warning("No valid Groq API key provided. Returning empty model list.")
+                return []
+            list_url = "https://api.groq.com/openai/v1/models"
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            resp = requests.get(list_url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                logger.warning(f"Groq list models failed {resp.status_code}: {resp.text[:120]}")
+                return []
+            data = resp.json()
+            # OpenAI-compatible format: {"data":[{"id":"model"},...]}
+            models = [m.get("id") for m in data.get("data", []) if m.get("id")]
+            return models
+        except Exception as exc:
+            logger.error(f"Error fetching Groq models: {exc}")
+            return []
 
     else:
         print(f"Unsupported engine - {engine}")

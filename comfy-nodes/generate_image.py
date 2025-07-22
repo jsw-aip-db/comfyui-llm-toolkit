@@ -16,11 +16,11 @@ try:
     # Import helpers from send_request
     from send_request import run_async, send_request  # Added send_request for Gemini image generation
     # Import the specific API call function from root directory
-    from openai_api import send_openai_image_generation_request
+    from api.openai_api import send_openai_image_generation_request
     # Import new Gemini image generation functions
-    from gemini_image_api import send_gemini_image_generation_unified
+    from api.gemini_image_api import send_gemini_image_generation_unified
     # Import new WaveSpeed image generation functions
-    from wavespeed_image_api import send_wavespeed_image_edit_request
+    from api.wavespeed_image_api import send_wavespeed_image_edit_request
 except ImportError:
     logger = logging.getLogger(__name__)
     logger.error("Failed relative imports in generate_image.py. Check file structure and __init__.py.")
@@ -28,9 +28,9 @@ except ImportError:
     try:
         from llmtoolkit_utils import tensor_to_base64, process_images_for_comfy, TENSOR_SUPPORT, get_api_key
         from send_request import run_async
-        from openai_api import send_openai_image_generation_request
-        from gemini_image_api import send_gemini_image_generation_unified
-        from wavespeed_image_api import send_wavespeed_image_edit_request
+        from api.openai_api import send_openai_image_generation_request
+        from api.gemini_image_api import send_gemini_image_generation_unified
+        from api.wavespeed_image_api import send_wavespeed_image_edit_request
     except ImportError:
         logging.error("Failed to import required modules for generate_image.py")
         TENSOR_SUPPORT = False
@@ -391,7 +391,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 #  WaveSpeed Provider (various models)
                 # ------------------------------------------------------------------
                 if llm_model in {"bytedance/seededit-v3", "bytedance/portrait"}:
-                    from wavespeed_image_api import send_wavespeed_image_edit_request
+                    from api.wavespeed_image_api import send_wavespeed_image_edit_request
                     # This model is specifically for editing
                     if not edit_mode:
                         logger.error(f"WaveSpeed model {llm_model} only supports 'edit' mode.")
@@ -419,7 +419,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                     "wavespeed-ai/flux-kontext-dev/multi-ultra-fast",
                     "wavespeed-ai/flux-kontext-dev-ultra-fast"
                 }:
-                    from wavespeed_image_api import send_wavespeed_flux_request
+                    from api.wavespeed_image_api import send_wavespeed_flux_request
 
                     # This model supports generate, edit, and variation based on inputs
                     # Determine which image parameter to use
@@ -467,7 +467,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 # ------------------------------------------------------------------
                 #  BFL (Flux Kontext MAX) provider
                 # ------------------------------------------------------------------
-                from bfl_api import send_bfl_image_generation_request
+                from api.bfl_api import send_bfl_image_generation_request
 
                 # Convert OpenAI-style size (e.g. "1024x1024") to aspect ratio "1:1"
                 def _size_to_aspect(sz: str) -> str:

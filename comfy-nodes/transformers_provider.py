@@ -22,9 +22,9 @@ import folder_paths  # Provided by ComfyUI runtime
 # *transformers_api.py* located at the repository root.  We simply re-export its
 # main coroutine so callers can `from transformers_provider import
 # send_transformers_request`.
-from transformers_api import send_transformers_request  # type: ignore
-from transformers_api import send_transformers_request as _hf_send_transformers_request  # type: ignore
-from transformers_api import send_transformers_request_stream as _hf_send_transformers_request_stream  # type: ignore
+from api.transformers_api import send_transformers_request  # type: ignore
+from api.transformers_api import send_transformers_request as _hf_send_transformers_request  # type: ignore
+from api.transformers_api import send_transformers_request_stream as _hf_send_transformers_request_stream  # type: ignore
 
 logger = logging.getLogger(__name__)
 
