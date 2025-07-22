@@ -21,7 +21,7 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from suno_api import (
+from api.suno_api import (
     send_suno_music_generation_request,
     send_suno_lyrics_generation_request,
     get_suno_remaining_credits,

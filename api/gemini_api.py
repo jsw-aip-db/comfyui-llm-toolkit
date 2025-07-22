@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 # centralised in one place.  If the import fails we fall back to a local
 # minimal implementation.
 try:
-    from openai_api import prepare_openai_messages  # type: ignore
+    from .openai_api import prepare_openai_messages  # type: ignore
 except (ImportError, ModuleNotFoundError):
 
     def prepare_openai_messages(

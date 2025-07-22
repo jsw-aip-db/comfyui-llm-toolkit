@@ -336,33 +336,90 @@ async def send_request_stream(
             logger.error(f"An unexpected error occurred during streaming request: {e}", exc_info=True)
             yield f"[Unexpected Error: {e}]"
 
-    # ------------------------------------------------------------------
-    #  Local HuggingFace Transformers – streaming
-    # ------------------------------------------------------------------
-    if llm_provider.lower() in {"transformers", "hf", "local"} and send_transformers_request_stream is not None:
+    if llm_provider.lower() == "groq":
+        # --- Groq Specific Streaming Logic ---
+        if not llm_api_key:
+            logger.error("Groq streaming requested but no API key supplied.")
+            # Fallback could be added here if desired, for now just yield error
+            yield "[Groq Error: API key missing]"
+            return
+
+        groq_url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {llm_api_key}",
+            "Content-Type": "application/json",
+        }
+
+        # Handle multimodal user content (text + images)
+        is_vision_model = "scout" in llm_model or "maverick" in llm_model
+        images_to_send = base64_images
+        if images_to_send and not is_vision_model:
+            logger.warning("Groq stream: Model '%s' may not support images. Sending without.", llm_model)
+            images_to_send = None
+        elif images_to_send and len(images_to_send) > 5:
+            logger.warning("Groq stream: Taking first 5 of %s images for vision model.", len(images_to_send))
+            images_to_send = images_to_send[:5]
+
+        # Build message list if not provided
+        if not messages:
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+
+            if images_to_send:
+                content_blocks = [{"type": "text", "text": user_message}]
+                for img_b64 in images_to_send:
+                    content_blocks.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"},
+                    })
+                messages.append({"role": "user", "content": content_blocks})
+            else:
+                if user_message:
+                    messages.append({"role": "user", "content": user_message})
+
+        payload = {
+            "model": llm_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_completion_tokens": max_tokens, # Use correct Groq param
+            "top_p": top_p,
+            "stream": True,
+        }
+        # Remove None values
+        payload = {k: v for k, v in payload.items() if v is not None}
+
+        logger.info(f"Streaming request to Groq: model={llm_model}")
         try:
-            async for chunk in send_transformers_request_stream(
-                base64_images=base64_images or [],
-                base64_audio=[],
-                model=llm_model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                repeat_penalty=repeat_penalty,
-                precision="fp16",
-            ):
-                if chunk:
-                    yield chunk
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+                async with session.post(groq_url, headers=headers, json=payload) as response:
+                    response.raise_for_status()
+                    async for raw_line in response.content:
+                        line = raw_line.decode("utf-8").strip()
+                        if not line: continue
+                        if line.startswith("data: "):
+                            data_str = line[len("data: ") :].strip()
+                        else:
+                            data_str = line
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            choices = data_json.get("choices", [])
+                            if choices:
+                                delta = choices[0].get("delta", {})
+                                content_piece = delta.get("content")
+                                if content_piece:
+                                    yield content_piece
+                        except json.JSONDecodeError:
+                            logger.warning(f"Could not decode JSON line from Groq stream: {data_str}")
         except Exception as e:
-            logger.error(f"Transformers streaming error: {e}", exc_info=True)
-            yield f"[Error: {e}]"
+            logger.error(f"Error during Groq streaming: {e}", exc_info=True)
+            yield f"[Groq streaming error: {e}]"
         return
 
     # Existing fallback logic for other providers
-    if llm_provider.lower() not in ["ollama", "openai", "transformers", "hf", "local"]:
+    if llm_provider.lower() not in ["ollama", "openai", "transformers", "hf", "local", "groq"]:
         logger.warning(f"Streaming not implemented for provider '{llm_provider}'. Falling back to non-streaming.")
         try:
             full_response_data = await send_request(
@@ -449,7 +506,7 @@ class LLMToolkitTextGenerator:
                 "repeat_penalty": 1.1,
                 "stop": None,
                 "keep_alive": True,
-                "messages": []
+                "messages": [],
             }
 
             provider_config = None
@@ -480,6 +537,11 @@ class LLMToolkitTextGenerator:
                     PROVIDER_DEFAULTS = {"openai": "gpt-4o-mini", "anthropic": "claude-3-opus-20240229"}
                     fallback = PROVIDER_DEFAULTS.get(provider)
                     if fallback: params["llm_model"] = fallback
+
+                # --- Groq reasoning-format handling ---
+                if provider == "groq":
+                    # Hide thinking via API when requested to avoid post-processing.
+                    params["reasoning_format"] = "hidden" if hide_thinking else "raw"
 
             # Auto-fetch API key for OpenAI if missing/placeholder
             if provider == "openai" and (not params.get("llm_api_key") or params["llm_api_key"] in {"", "1234", None}):
@@ -559,6 +621,7 @@ class LLMToolkitTextGenerator:
                         stop=params.get("stop"),
                         keep_alive=params.get("keep_alive", True),
                         llm_api_key=params.get("llm_api_key"),
+                        reasoning_format=params.get("reasoning_format") # Pass reasoning_format
                     )
                 )
                 # --- END NON-STREAMING CALL ---
@@ -609,14 +672,29 @@ def _sanitize_params_for_log(d: dict) -> dict:
     """Return a shallow copy with huge fields replaced by short placeholders."""
     out = {}
     for k, v in d.items():
+        # Hide large binary blobs (images, video frames)
         if k in {"images", "video_frames", "base64_images"} and v:
-            # Strings or list → replace with length info
+            # Replace with concise placeholder
             if isinstance(v, (list, tuple)):
                 out[k] = f"[{len(v)} item(s) base64 omitted]"
             elif isinstance(v, str):
                 out[k] = "[base64 string omitted]"
             else:
                 out[k] = "[data omitted]"
+            continue
+
+        # Mask any values that look like API keys so we never log them in full
+        key_lc = k.lower()
+        if "api_key" in key_lc or key_lc.endswith("_key") or key_lc.endswith("key"):
+            if isinstance(v, str) and v:
+                # Keep first 5 chars for debugging, mask the rest
+                masked = v[:5] + "…" if len(v) > 5 else "***"
+                out[k] = masked
+            else:
+                out[k] = "[key hidden]"
+            continue
+
+        # Default passthrough
         else:
             out[k] = v
     return out
@@ -682,7 +760,7 @@ class LLMToolkitTextGeneratorStream:
                     "base_ip": "localhost", "port": "11434",
                     "temperature": 0.7, "max_tokens": 1024, "top_p": 0.9, "top_k": 40,
                     "repeat_penalty": 1.1, "stop": None, "keep_alive": "5m",
-                    "messages": [], "llm_api_key": None
+                    "messages": [], "llm_api_key": None,
                 }
 
                 # 2. Apply general settings from the incoming context
@@ -739,6 +817,10 @@ class LLMToolkitTextGeneratorStream:
                         PROVIDER_DEFAULTS = {"openai": "gpt-4o-mini", "anthropic": "claude-3-opus-20240229"}
                         fallback = PROVIDER_DEFAULTS.get(provider)
                         params["llm_model"] = fallback or self.DEFAULT_MODEL
+
+                        # Groq reasoning format
+                        if provider == "groq":
+                            params["reasoning_format"] = "hidden" if hide_thinking else "raw"
 
                 # Auto-fetch API key for OpenAI if missing/placeholder
                 if provider == "openai" and (not params.get("llm_api_key") or params["llm_api_key"] in {"", "1234", None}):
