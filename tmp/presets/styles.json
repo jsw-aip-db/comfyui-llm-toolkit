@@ -1,0 +1,1471 @@
+[
+	{
+		"style": "Neutral",
+		"material": "",
+		"surface_texture": "",
+		"lighting": {},
+		"color_scheme": {},
+		"background": {},
+		"post_processing": {}
+	},
+	{
+		"style": "Vaporwave retro digital art",
+		"material": "chrome-plated plastic and marble bust elements",
+		"surface_texture": "glossy with pastel gradient banding and subtle VHS scanlines",
+		"lighting": {
+			"type": "studio neon",
+			"intensity": "medium-high",
+			"direction": "frontal fill with low-angle magenta key",
+			"accent_colors": ["magenta", "cyan", "pastel peach"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "neon magenta and cyan",
+			"secondary": "soft pastel peach",
+			"highlights": "white glow accents",
+			"rim_light": "soft magenta edge"
+		},
+		"background": {
+			"color": "deep indigo to black gradient",
+			"vignette": true,
+			"texture": "retro grid floor"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Cyberpunk neon cityscape",
+		"material": "glossy carbon fiber, smoked glass, and neon tubing",
+		"surface_texture": "slick, rain-soaked with reflective puddles",
+		"lighting": {
+			"type": "urban neon signage",
+			"intensity": "high",
+			"direction": "scattered multicolor signs and overhead streetlights",
+			"accent_colors": ["electric blue", "hot pink", "acid green"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "electric blue",
+			"secondary": "hot pink with touches of violet",
+			"highlights": "acid green accents",
+			"rim_light": "cyan edge light"
+		},
+		"background": {
+			"color": "nighttime city skyline",
+			"vignette": false,
+			"texture": "hazy smog with light rain"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Solarpunk eco utopia",
+		"material": "recycled bioplastic and brushed copper",
+		"surface_texture": "smooth matte with organic leaf embossing",
+		"lighting": {
+			"type": "golden hour sunlight",
+			"intensity": "medium",
+			"direction": "warm backlight with soft fill",
+			"accent_colors": ["sunlit amber", "sage green", "sky blue"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "warm amber",
+			"secondary": "sage green and sky blue",
+			"highlights": "soft white glow",
+			"rim_light": "warm sunlight edge"
+		},
+		"background": {
+			"color": "soft sunrise gradient",
+			"vignette": false,
+			"texture": "subtle clouds"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": true,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Dark Academia library",
+		"material": "aged leather, mahogany wood, and brass fittings",
+		"surface_texture": "worn matte with fine grain",
+		"lighting": {
+			"type": "candle and tungsten",
+			"intensity": "low-medium",
+			"direction": "side-lit from desk lamp",
+			"accent_colors": ["burnt umber", "olive", "antique gold"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "deep brown",
+			"secondary": "olive and burgundy",
+			"highlights": "antique gold accents",
+			"rim_light": "subtle warm edge"
+		},
+		"background": {
+			"color": "shadowy bookshelves",
+			"vignette": true,
+			"texture": "dust motes in air"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Steampunk brass clockwork",
+		"material": "polished brass, patinated steel, and leather",
+		"surface_texture": "aged metal with rivets and gears",
+		"lighting": {
+			"type": "warm tungsten industrial",
+			"intensity": "medium-high",
+			"direction": "angled top key",
+			"accent_colors": ["brass gold", "copper", "verdigris"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "brass gold",
+			"secondary": "rich copper",
+			"highlights": "verdigris green",
+			"rim_light": "warm orange edge"
+		},
+		"background": {
+			"color": "dark workshop brown",
+			"vignette": true,
+			"texture": "subtle smoke"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Synthwave grid sunset",
+		"material": "reflective chrome and neon-lit wireframe grid",
+		"surface_texture": "mirror-finish with glowing grid lines",
+		"lighting": {
+			"type": "sunset horizon neon",
+			"intensity": "high",
+			"direction": "backlit sun with low frontal fill",
+			"accent_colors": ["hot pink", "electric orange", "deep purple"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "hot pink",
+			"secondary": "electric orange gradient",
+			"highlights": "deep purple shadows",
+			"rim_light": "cyan outline"
+		},
+		"background": {
+			"color": "sunset gradient from orange to purple",
+			"vignette": false,
+			"texture": "infinite grid floor"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Afrofuturism chrome tribal",
+		"material": "iridescent anodized metal and patterned textiles",
+		"surface_texture": "smooth chrome with etched tribal motifs",
+		"lighting": {
+			"type": "spotlit stage",
+			"intensity": "medium-high",
+			"direction": "top spotlight with colored rim lights",
+			"accent_colors": ["gold", "turquoise", "scarlet"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "iridescent gold",
+			"secondary": "turquoise accents",
+			"highlights": "scarlet highlights",
+			"rim_light": "turquoise edge glow"
+		},
+		"background": {
+			"color": "deep space black",
+			"vignette": false,
+			"texture": "subtle starfield"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Cottagecore rustic pastel",
+		"material": "weathered oak wood and floral cotton fabric",
+		"surface_texture": "matte, slightly rough with natural grain",
+		"lighting": {
+			"type": "soft overcast daylight",
+			"intensity": "low",
+			"direction": "diffuse skylight",
+			"accent_colors": ["sage", "dusty rose", "buttercream"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "sage green",
+			"secondary": "dusty rose",
+			"highlights": "buttercream highlights",
+			"rim_light": "soft warm edge"
+		},
+		"background": {
+			"color": "pale parchment beige",
+			"vignette": false,
+			"texture": "subtle floral pattern"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Minimalist monochrome concrete",
+		"material": "raw concrete and matte black steel",
+		"surface_texture": "rough concrete with subtle pores",
+		"lighting": {
+			"type": "studio softbox",
+			"intensity": "medium",
+			"direction": "top-left soft key",
+			"accent_colors": ["white", "charcoal"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "cool gray",
+			"secondary": "charcoal",
+			"highlights": "bright white edges",
+			"rim_light": "white edge light"
+		},
+		"background": {
+			"color": "mid-gray",
+			"vignette": true,
+			"texture": "concrete wall"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Neon noir rainy alley",
+		"material": "wet asphalt, steaming vents, and neon signage",
+		"surface_texture": "slick reflective surfaces with raindrops",
+		"lighting": {
+			"type": "street neon",
+			"intensity": "high",
+			"direction": "side neon signs and overhead lamp",
+			"accent_colors": ["purple", "cyan", "amber"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "deep purple",
+			"secondary": "cyan reflections",
+			"highlights": "amber glows",
+			"rim_light": "blue edge"
+		},
+		"background": {
+			"color": "nighttime city shadows",
+			"vignette": true,
+			"texture": "rain streaks"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Retro futurism jet age",
+		"material": "brushed aluminum and fiberglass panels",
+		"surface_texture": "sleek, polished with rivet lines",
+		"lighting": {
+			"type": "studio high-key",
+			"intensity": "medium-high",
+			"direction": "top-left key",
+			"accent_colors": ["aqua", "sunset orange", "cream"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "aqua blue",
+			"secondary": "sunset orange",
+			"highlights": "cream highlights",
+			"rim_light": "soft white edge"
+		},
+		"background": {
+			"color": "light teal gradient",
+			"vignette": false,
+			"texture": "diamond pattern"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Brutalist 3D geometry",
+		"material": "raw cast concrete slabs",
+		"surface_texture": "rough, pitted with sharp edges",
+		"lighting": {
+			"type": "directional skylight",
+			"intensity": "high",
+			"direction": "hard side light",
+			"accent_colors": ["cool gray", "steel"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "concrete gray",
+			"secondary": "steel blue-gray",
+			"highlights": "white edge specular",
+			"rim_light": "hard white contrast"
+		},
+		"background": {
+			"color": "pale gray sky",
+			"vignette": false,
+			"texture": "grainy noise"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Biopunk organic tech",
+		"material": "translucent bio-gel and titanium cybernetics",
+		"surface_texture": "semi-gelatinous with embedded circuitry",
+		"lighting": {
+			"type": "lab fluorescents",
+			"intensity": "medium",
+			"direction": "overhead cool white",
+			"accent_colors": ["neon green", "magenta", "cyan"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "neon green",
+			"secondary": "magenta veins",
+			"highlights": "cyan luminescence",
+			"rim_light": "magenta edge glow"
+		},
+		"background": {
+			"color": "white sterile lab",
+			"vignette": false,
+			"texture": "holographic displays"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Art Deco Miami pastel",
+		"material": "lacquered black enamel and gold leaf accents",
+		"surface_texture": "smooth, glossy with geometric inlays",
+		"lighting": {
+			"type": "sunny coastal daylight",
+			"intensity": "high",
+			"direction": "frontal sun with soft bounce",
+			"accent_colors": ["mint", "peach", "gold"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "mint green",
+			"secondary": "peach pink",
+			"highlights": "metallic gold highlights",
+			"rim_light": "warm sunlight edge"
+		},
+		"background": {
+			"color": "pastel gradient sky",
+			"vignette": false,
+			"texture": "Art Deco fan pattern"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": true,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Memphis design pop geometric",
+		"material": "laminated plastic with vibrant geometric prints",
+		"surface_texture": "smooth glossy with bold patterns",
+		"lighting": {
+			"type": "studio flat",
+			"intensity": "medium-high",
+			"direction": "even frontal",
+			"accent_colors": ["yellow", "cyan", "magenta"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "white base",
+			"secondary": "bright yellow and cyan shapes",
+			"highlights": "magenta accents",
+			"rim_light": "neutral edge"
+		},
+		"background": {
+			"color": "white",
+			"vignette": false,
+			"texture": "scattered black squiggles"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Glitchcore RGB shift",
+		"material": "pixelated acrylic panels and holographic film",
+		"surface_texture": "irregular with digital noise artifacts",
+		"lighting": {
+			"type": "strobe RGB",
+			"intensity": "high",
+			"direction": "multi-angle flashes",
+			"accent_colors": ["red", "green", "blue"],
+			"reflections": true,
+			"refractions": false,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "RGB split tones",
+			"secondary": "black background",
+			"highlights": "white static noise",
+			"rim_light": "color-shift edge"
+		},
+		"background": {
+			"color": "black",
+			"vignette": false,
+			"texture": "scanline static"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Anime cel-shade vibrant",
+		"material": "flat-tone inked surfaces on cel layers",
+		"surface_texture": "smooth with hard color boundaries",
+		"lighting": {
+			"type": "bright skylight",
+			"intensity": "high",
+			"direction": "top-left anime key",
+			"accent_colors": ["bright cyan", "orange", "pink"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "bold cel colors",
+			"secondary": "simple gradients",
+			"highlights": "white shine spots",
+			"rim_light": "thin white outline"
+		},
+		"background": {
+			"color": "hand-painted sky blue",
+			"vignette": false,
+			"texture": "watercolor clouds"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": true,
+			"sharp_details": false
+		}
+	},
+	{
+		"style": "Ukiyo-e neo woodblock",
+		"material": "carved cherry wood blocks and washi paper",
+		"surface_texture": "fibrous paper with ink bleed",
+		"lighting": {
+			"type": "flat daylight",
+			"intensity": "medium",
+			"direction": "even front",
+			"accent_colors": ["indigo", "vermilion", "gold"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "natural indigo",
+			"secondary": "vermilion red",
+			"highlights": "metallic gold accents",
+			"rim_light": "none"
+		},
+		"background": {
+			"color": "off-white paper",
+			"vignette": false,
+			"texture": "subtle paper fibers"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Low-poly isometric toy",
+		"material": "matte plastic polygon facets",
+		"surface_texture": "flat shading with hard edges",
+		"lighting": {
+			"type": "three-point studio",
+			"intensity": "medium",
+			"direction": "key left, fill right, back rim",
+			"accent_colors": ["primary red", "blue", "yellow"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": false
+		},
+		"color_scheme": {
+			"primary": "pastel blue",
+			"secondary": "pastel pink",
+			"highlights": "white specular dots",
+			"rim_light": "soft white edge"
+		},
+		"background": {
+			"color": "light pastel gradient",
+			"vignette": false,
+			"texture": "none"
+		},
+		"post_processing": {
+			"chromatic_aberration": false,
+			"glow": false,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "Rococo cyber baroque",
+		"material": "gilded resin with holographic crystal inlays",
+		"surface_texture": "ornate, high-gloss with intricate scrolls",
+		"lighting": {
+			"type": "chandelier LED mix",
+			"intensity": "medium-high",
+			"direction": "overhead chandelier and colored uplights",
+			"accent_colors": ["rose gold", "lavender", "aqua"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "pastel pink",
+			"secondary": "lavender",
+			"highlights": "aqua holographic gleam",
+			"rim_light": "rose gold edge"
+		},
+		"background": {
+			"color": "midnight blue",
+			"vignette": true,
+			"texture": "subtle damask pattern"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": false,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "photorealistic 3D render",
+		"material": "glass with transparent and iridescent effects",
+		"surface_texture": "smooth, polished with subtle reflections and refractive effects",
+		"lighting": {
+			"type": "studio HDRI",
+			"intensity": "high",
+			"direction": "angled top-left key light and ambient fill",
+			"accent_colors": ["blue", "green", "purple"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "transparent with iridescent blue, green, and purple hues",
+			"secondary": "crystal-clear with subtle chromatic shifts",
+			"highlights": "soft, glowing accents reflecting rainbow-like effects",
+			"rim_light": "soft reflective light around edges"
+		},
+		"background": {
+			"color": "black",
+			"vignette": true,
+			"texture": "none"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+		"style": "stylized 3D overlay",
+		"material": "neon wireframe mesh",
+		"surface_texture": "glossy with visible polygonal edges",
+		"lighting": {
+			"type": "urban neon",
+			"intensity": "medium-high",
+			"direction": "backlit with edge glows",
+			"accent_colors": ["magenta", "cyan", "electric blue"],
+			"reflections": false,
+			"refractions": false,
+			"dispersion_effects": false,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "dark metallic base",
+			"secondary": "neon edge highlights",
+			"highlights": "animated light trails",
+			"rim_light": "magenta glow outline"
+		},
+		"background": {
+			"color": "deep black with subtle gradient",
+			"vignette": true,
+			"texture": "urban digital noise"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"grid_overlay": true,
+			"depth_of_field": true
+		}
+	},
+	{
+		"style": "glass iridiescense effect",
+		"material": "glass with transparent and iridescent effects",
+		"surface_texture": "smooth, polished with subtle reflections and refractive effects",
+		"lighting": {
+			"type": "studio HDRI",
+			"intensity": "high",
+			"direction": "angled top-left key light and ambient fill",
+			"accent_colors": ["blue", "green", "purple"],
+			"reflections": true,
+			"refractions": true,
+			"dispersion_effects": true,
+			"bloom": true
+		},
+		"color_scheme": {
+			"primary": "transparent with iridescent blue, green, and purple hues",
+			"secondary": "crystal-clear with subtle chromatic shifts",
+			"highlights": "soft, glowing accents reflecting rainbow-like effects",
+			"rim_light": "soft reflective light around edges"
+		},
+		"background": {
+			"color": "black",
+			"vignette": true,
+			"texture": "none"
+		},
+		"post_processing": {
+			"chromatic_aberration": true,
+			"glow": true,
+			"high_contrast": true,
+			"sharp_details": true
+		}
+	},
+	{
+        "style": "Psychedelic Kaleidoscope",
+        "material": "liquid metal with prism facets",
+        "surface_texture": "swirling reflective with color distortions",
+        "lighting": {
+            "type": "multi-directional LED",
+            "intensity": "high",
+            "direction": "rotating pattern",
+            "accent_colors": ["fuchsia", "lime", "turquoise"],
+            "reflections": true,
+            "refractions": true,
+            "dispersion_effects": true,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "prismatic spectrum",
+            "secondary": "deep violet",
+            "highlights": "white flares",
+            "rim_light": "neon outline"
+        },
+        "background": {
+            "color": "black",
+            "vignette": false,
+            "texture": "kaleidoscopic pattern"
+        },
+        "post_processing": {
+            "chromatic_aberration": true,
+            "glow": true,
+            "high_contrast": true,
+            "sharp_details": false
+        }
+    },
+    {
+        "style": "Bioluminescent Deep Sea",
+        "material": "translucent gel with embedded bio-lights",
+        "surface_texture": "smooth with glowing veins",
+        "lighting": {
+            "type": "subaquatic biolights",
+            "intensity": "medium",
+            "direction": "bottom-up",
+            "accent_colors": ["electric blue", "luminescent green"],
+            "reflections": false,
+            "refractions": true,
+            "dispersion_effects": true,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "deep navy",
+            "secondary": "bioluminescent cyan",
+            "highlights": "glowing green",
+            "rim_light": "soft blue edge"
+        },
+        "background": {
+            "color": "dark water gradient",
+            "vignette": true,
+            "texture": "bubbles"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": true,
+            "high_contrast": false,
+            "sharp_details": true
+        }
+    },
+    {
+        "style": "Galactic Starfield Hologram",
+        "material": "holographic film and dark matter dust",
+        "surface_texture": "grainy with twinkling specs",
+        "lighting": {
+            "type": "cosmic ambient",
+            "intensity": "low",
+            "direction": "omnidirectional",
+            "accent_colors": ["silver", "midnight blue"],
+				"reflections": true,
+				"refractions": true,
+            "dispersion_effects": true,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "midnight blue",
+            "secondary": "starlight silver",
+            "highlights": "white sparkles",
+            "rim_light": "soft silver halo"
+        },
+        "background": {
+            "color": "space black",
+            "vignette": true,
+            "texture": "starfield"
+        },
+        "post_processing": {
+            "chromatic_aberration": true,
+            "glow": true,
+            "high_contrast": true,
+            "sharp_details": false
+        }
+    },
+    {
+        "style": "Retro Pixel Art 8-bit",
+        "material": "pixel blocks in plastic tiles",
+        "surface_texture": "pixelated grid",
+        "lighting": {
+            "type": "flat VGA",
+            "intensity": "medium",
+            "direction": "even frontal",
+            "accent_colors": ["red", "green", "blue"],
+            "reflections": false,
+            "refractions": false,
+            "dispersion_effects": false,
+            "bloom": false
+        },
+        "color_scheme": {
+            "primary": "8-bit palette",
+            "secondary": "black outlines",
+            "highlights": "white pixels",
+            "rim_light": "none"
+        },
+        "background": {
+            "color": "solid cyan",
+            "vignette": false,
+            "texture": "pixel grid"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": false,
+            "high_contrast": true,
+            "sharp_details": true
+        }
+    },
+    {
+        "style": "Comic Book Halftone Pop",
+        "material": "glossy ink on paper",
+        "surface_texture": "halftone dots",
+        "lighting": {
+            "type": "flashbulb",
+            "intensity": "high",
+            "direction": "side slam",
+            "accent_colors": ["yellow", "red", "blue"],
+            "reflections": false,
+            "refractions": false,
+            "dispersion_effects": false,
+            "bloom": false
+        },
+        "color_scheme": {
+            "primary": "bold primaries",
+            "secondary": "black outlines",
+            "highlights": "white speckles",
+            "rim_light": "none"
+        },
+        "background": {
+            "color": "halftone gradient",
+            "vignette": false,
+            "texture": "comic dots"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": false,
+            "high_contrast": true,
+            "sharp_details": true
+        }
+    },
+    {
+        "style": "Glow-in-the-dark UV Neon",
+        "material": "fluorescent paint on matte plastic",
+        "surface_texture": "matte with neon glow",
+        "lighting": {
+            "type": "UV blacklight",
+            "intensity": "high",
+            "direction": "overhead strip",
+            "accent_colors": ["neon yellow", "neon pink", "neon green"],
+            "reflections": false,
+            "refractions": false,
+            "dispersion_effects": false,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "neon yellow",
+            "secondary": "neon pink",
+            "highlights": "neon green glints",
+            "rim_light": "bright neon edge"
+        },
+        "background": {
+            "color": "dark charcoal",
+            "vignette": true,
+            "texture": "neon streaks"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": true,
+            "high_contrast": true,
+            "sharp_details": false
+        }
+    },
+    {
+        "style": "Organic Mushroom Spore",
+        "material": "bioplastic mycelium",
+        "surface_texture": "porous and spongy",
+        "lighting": {
+            "type": "forest dappled",
+            "intensity": "low",
+            "direction": "through canopy",
+            "accent_colors": ["forest green", "earth brown"],
+            "reflections": false,
+            "refractions": false,
+            "dispersion_effects": false,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "mushroom brown",
+            "secondary": "moss green",
+            "highlights": "ivory speckles",
+            "rim_light": "soft green glow"
+        },
+        "background": {
+            "color": "leaf litter gradient",
+            "vignette": true,
+            "texture": "spore dust"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": false,
+            "high_contrast": false,
+            "sharp_details": true
+        }
+    },
+    {
+        "style": "Futuristic Neon Circuit",
+        "material": "transparent PCB with copper traces",
+        "surface_texture": "smooth with raised circuits",
+        "lighting": {
+            "type": "edge-lit neon",
+            "intensity": "medium-high",
+            "direction": "from edges",
+            "accent_colors": ["electric cyan", "hot magenta"],
+            "reflections": true,
+            "refractions": true,
+            "dispersion_effects": false,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "transparent",
+            "secondary": "copper orange",
+            "highlights": "cyan neon",
+            "rim_light": "magenta edge"
+        },
+        "background": {
+            "color": "matte black",
+            "vignette": false,
+            "texture": "circuit pattern"
+        },
+        "post_processing": {
+            "chromatic_aberration": true,
+            "glow": true,
+            "high_contrast": true,
+            "sharp_details": true
+        }
+    },
+    {
+        "style": "Candy Pop Bubblegum",
+        "material": "translucent gum resin",
+        "surface_texture": "squishy glossy",
+        "lighting": {
+            "type": "carnival spotlights",
+            "intensity": "medium",
+            "direction": "multi-point",
+            "accent_colors": ["bubblegum pink", "cotton candy blue"],
+            "reflections": true,
+            "refractions": true,
+            "dispersion_effects": false,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "pink",
+            "secondary": "light blue",
+            "highlights": "white gloss",
+            "rim_light": "pink rim"
+        },
+        "background": {
+            "color": "pastel swirl",
+            "vignette": false,
+            "texture": "candy bubbles"
+        },
+			"post_processing": {
+				"chromatic_aberration": false,
+            "glow": true,
+            "high_contrast": false,
+            "sharp_details": false
+        }
+    },
+    {
+        "style": "Futuristic Samurai Neon",
+        "material": "carbon fiber sword and neon silk",
+        "surface_texture": "brushed metal with glowing threads",
+        "lighting": {
+            "type": "dojo neon",
+            "intensity": "medium",
+            "direction": "side-lit blades",
+            "accent_colors": ["neon red", "neon blue"],
+            "reflections": true,
+            "refractions": false,
+            "dispersion_effects": false,
+            "bloom": true
+        },
+        "color_scheme": {
+            "primary": "sleek black",
+            "secondary": "neon red",
+            "highlights": "electric blue accents",
+            "rim_light": "glowing red edge"
+        },
+        "background": {
+            "color": "dark dojo gradient",
+            "vignette": true,
+            "texture": "smoke tendrils"
+        },
+        "post_processing": {
+            "chromatic_aberration": false,
+            "glow": true,
+            "high_contrast": true,
+            "sharp_details": true
+        }
+    },
+	{
+		"style": "Ghibli Pastel Watercolor",
+		"material": "hand-painted watercolor textures",
+		"surface_texture": "soft pastel wash with visible brushstrokes",
+		"lighting": {
+		  "type": "diffuse daylight",
+		  "intensity": "medium",
+		  "direction": "soft fill",
+		  "accent_colors": ["pastel green", "blush pink"],
+		  "reflections": false,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "muted pastel",
+		  "secondary": "light cream",
+		  "highlights": "warm white",
+		  "rim_light": "soft golden edge"
+		},
+		"background": {
+		  "color": "sky blue wash",
+		  "vignette": false,
+		  "texture": "minimal paper grain"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": true,
+		  "high_contrast": false,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Pop Art Primary Bold",
+		"material": "screen-printed ink layers",
+		"surface_texture": "halftone dots and bold outlines",
+		"lighting": {
+		  "type": "studio flat",
+		  "intensity": "high",
+		  "direction": "even frontal",
+		  "accent_colors": ["red", "yellow", "blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "saturated primaries",
+		  "secondary": "white negative space",
+		  "highlights": "bright white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "solid primary",
+		  "vignette": false,
+		  "texture": "polka dot pattern"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Art Nouveau Organic Line",
+		"material": "lithograph ink on parchment",
+		"surface_texture": "smooth with flowing linework",
+		"lighting": {
+		  "type": "soft natural light",
+		  "intensity": "low-medium",
+		  "direction": "side-lit",
+		  "accent_colors": ["olive green", "golden amber"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "earthy green",
+		  "secondary": "warm gold",
+		  "highlights": "rosy pink",
+		  "rim_light": "gentle amber edge"
+		},
+		"background": {
+		  "color": "cream floral motif",
+		  "vignette": false,
+		  "texture": "fine line ornament"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": false,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Bauhaus Minimal Geometry",
+		"material": "matte concrete and steel",
+		"surface_texture": "smooth, unadorned",
+		"lighting": {
+		  "type": "directional skylight",
+		  "intensity": "high",
+		  "direction": "top-down",
+		  "accent_colors": ["primary red", "primary blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "neutral gray",
+		  "secondary": "primary yellow",
+		  "highlights": "white edge",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "monochrome gray",
+		  "vignette": false,
+		  "texture": "diagonal line grid"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Y2K Digital Chrome",
+		"material": "polished chrome plastic",
+		"surface_texture": "mirror-finish with subtle digital noise",
+		"lighting": {
+		  "type": "strobe RGB",
+		  "intensity": "high",
+		  "direction": "multi-angle flashes",
+		  "accent_colors": ["silver", "cyan", "magenta"],
+		  "reflections": true,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "chrome silver",
+		  "secondary": "neon teal",
+		  "highlights": "white glare",
+		  "rim_light": "neon pink edge"
+		},
+		"background": {
+		  "color": "black-to-silver gradient",
+		  "vignette": true,
+		  "texture": "glitch pattern"
+		},
+		"post_processing": {
+		  "chromatic_aberration": true,
+		  "glow": true,
+		  "high_contrast": true,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Memphis Typography",
+		"material": "laminated plastic",
+		"surface_texture": "smooth with bold geometrics",
+		"lighting": {
+		  "type": "studio even",
+		  "intensity": "medium-high",
+		  "direction": "frontal",
+		  "accent_colors": ["yellow", "cyan", "magenta"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "white base",
+		  "secondary": "bright shapes",
+		  "highlights": "black outlines",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "white",
+		  "vignette": false,
+		  "texture": "scattered black squiggles"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "Impressionist Brush Stroke",
+		"material": "oil paint on canvas",
+		"surface_texture": "short, visible brushstrokes",
+		"lighting": {
+		  "type": "natural outdoor",
+		  "intensity": "medium",
+		  "direction": "ambient daylight",
+		  "accent_colors": ["amber", "sky blue"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "soft pastel",
+		  "secondary": "earth tones",
+		  "highlights": "bright white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "loose landscape wash",
+		  "vignette": false,
+		  "texture": "canvas grain"
+		},
+		"post_processing": {
+		  "chromatic_aberration": false,
+		  "glow": false,
+		  "high_contrast": false,
+		  "sharp_details": false
+		}
+	  },
+	  {
+		"style": "Cyberpunk Neon Noir",
+		"material": "slick glass and neon tubing",
+		"surface_texture": "rain-soaked reflective",
+		"lighting": {
+		  "type": "neon signage",
+		  "intensity": "high",
+		  "direction": "city-lit overhead",
+		  "accent_colors": ["electric blue", "hot pink"],
+		  "reflections": true,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "deep black",
+		  "secondary": "neon accents",
+		  "highlights": "cyan edge",
+		  "rim_light": "magenta glow"
+		},
+		"background": {
+		  "color": "dark wet alley",
+		  "vignette": true,
+		  "texture": "rain streaks"
+		},
+		"post_processing": {
+		  "chromatic_aberration": true,
+		  "glow": true,
+		  "high_contrast": true,
+		  "sharp_details": true
+		}
+	  },
+	  {
+		"style": "GTA Pricedown Collage",
+		"material": "vector panels with solid fills",
+		"surface_texture": "flat with halftone gradients",
+		"lighting": {
+		  "type": "high-contrast comic shading",
+		  "intensity": "strong",
+		  "direction": "varied per panel",
+		  "accent_colors": ["black", "white"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "strong primaries",
+		  "secondary": "muted grays and tans",
+		  "highlights": "white stroke",
+		  "rim_light": "thick black outline"
+		},
+		"background": {
+		  "color": "solid pastel",
+		  "texture": "none"
+		},
+		"post_processing": {
+		  "halftone": true,
+		  "outline": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Simpsons Cel-Animation",
+		"material": "hand-drawn line art",
+		"surface_texture": "smooth flat fill",
+		"lighting": {
+		  "type": "flat cel light",
+		  "intensity": "uniform",
+		  "direction": "none",
+		  "accent_colors": ["yellow skin", "bright blues", "reds", "greens"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "Simpsons yellow",
+		  "secondary": "bold primary costumes",
+		  "highlights": "white",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "solid pastel",
+		  "texture": "none"
+		},
+		"post_processing": {
+		  "antialias": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Saved by the Bell Neon Title",
+		"material": "vector geometric shapes",
+		"surface_texture": "flat with halftone accents",
+		"lighting": {
+		  "type": "clean drop shadows",
+		  "intensity": "medium",
+		  "direction": "offset",
+		  "accent_colors": ["turquoise", "hot pink", "sunshine yellow"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "bright pastels",
+		  "secondary": "white or black backdrop",
+		  "highlights": "none",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "white or black",
+		  "texture": "geometric motifs"
+		},
+		"post_processing": {
+		  "halftone": true,
+		  "outline": false
+		}
+	  },
+	  {
+		"style": "SimCity Isometric Playful",
+		"material": "3D isometric blocks",
+		"surface_texture": "soft cell-shaded",
+		"lighting": {
+		  "type": "ambient soft",
+		  "intensity": "medium",
+		  "direction": "top-down",
+		  "accent_colors": ["sky blue", "grass green", "brick red"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "vibrant harmonies",
+		  "secondary": "neutral grays",
+		  "highlights": "white edges",
+		  "rim_light": "none"
+		},
+		"background": {
+		  "color": "sky gradient",
+		  "texture": "minimal"
+		},
+		"post_processing": {
+		  "antialias": true,
+		  "grain": false
+		}
+	  },
+	  {
+		"style": "Wallace & Gromit Claymation",
+		"material": "digital clay textures",
+		"surface_texture": "irregular tactile shading",
+		"lighting": {
+		  "type": "soft warm fill",
+		  "intensity": "low-medium",
+		  "direction": "camera frontal",
+		  "accent_colors": ["warm ochre", "slate gray", "muted green"],
+		  "reflections": false,
+		  "bloom": false
+		},
+		"color_scheme": {
+		  "primary": "earthy neutrals",
+		  "secondary": "muted accents",
+		  "highlights": "soft white",
+		  "rim_light": "slight vignette"
+		},
+		"background": {
+		  "color": "studio set",
+		  "texture": "film grain overlay"
+		},
+		"post_processing": {
+		  "film_grain": true,
+		  "vignette": true
+		}
+	  },
+	  {
+		"style": "Betamax Retro VHS",
+		"material": "glossy neon ribbons",
+		"surface_texture": "flat with scanline artifacts",
+		"lighting": {
+		  "type": "UV neon",
+		  "intensity": "high",
+		  "direction": "linear streaks",
+		  "accent_colors": ["cyan", "magenta", "yellow"],
+		  "reflections": false,
+		  "bloom": true
+		},
+		"color_scheme": {
+		  "primary": "neon cyan",
+		  "secondary": "deep charcoal",
+		  "highlights": "white noise",
+		  "rim_light": "glitch edges"
+		},
+		"background": {
+		  "color": "black",
+		  "texture": "VHS static"
+		},
+		"post_processing": {
+		  "glitch": true,
+		  "chromatic_aberration": true,
+		  "scanlines": true
+		}
+	  }
+]
