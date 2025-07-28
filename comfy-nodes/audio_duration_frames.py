@@ -22,13 +22,13 @@ class AudioDurationFrames:
     @classmethod
     def INPUT_TYPES(cls):
         """Define node inputs.
-        `fps` is presented as a switch with two allowed values: 16 fps or 25 fps.
+        `fps` is an integer slider ranging from 8 to 30 frames-per-second.
         """
         return {
             "required": {
                 "audio": ("AUDIO", {}),
-                # present fps as a drop-down with the two allowed values
-                "fps": (["16", "25"], {"default": "25", "tooltip": "Frames-per-second to use in the a/1000*b equation."}),
+                # fps slider: integer between 8 and 30
+                "fps": ("INT", {"default": 25, "min": 8, "max": 30, "step": 1, "tooltip": "Frames-per-second to use in the a/1000*b equation."}),
                 "num_frames": ("INT", {"default": 1, "min": 1, "max": 10000, "tooltip": "Value used to divide total frames (context = frames / num_frames)."}),
             }
         }
@@ -52,7 +52,7 @@ class AudioDurationFrames:
 
         Args:
             audio: Dict produced by LoadAudio (expects keys `waveform` and `sample_rate`).
-            fps:   Selected frame-rate – either "16" or "25" (string or int).
+            fps:   Selected frame-rate – integer between 8 and 30 (frames-per-second).
             num_frames: Value used to divide total frames (context = frames / num_frames).
 
         Returns:

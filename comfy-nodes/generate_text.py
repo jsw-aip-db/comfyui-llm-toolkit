@@ -141,11 +141,18 @@ async def send_request_stream(
         payload = {k: v for k, v in payload.items() if v is not None}
 
         logger.info(f"Streaming request to OpenAI: model={llm_model}")
+        session = None
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
-                async with session.post(openai_url, headers=headers, json=payload) as response:
-                    response.raise_for_status()
-                    async for raw_line in response.content:
+            # Create session with custom connector for Windows
+            connector = aiohttp.TCPConnector(force_close=True) if sys.platform == 'win32' else None
+            session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=timeout),
+                connector=connector
+            )
+            
+            async with session.post(openai_url, headers=headers, json=payload) as response:
+                response.raise_for_status()
+                async for raw_line in response.content:
                         if not raw_line:
                             continue
                         line = raw_line.decode("utf-8").strip()
@@ -171,6 +178,13 @@ async def send_request_stream(
         except Exception as e:
             logger.error(f"Error during OpenAI streaming: {e}", exc_info=True)
             yield f"[OpenAI streaming error: {e}]"
+        finally:
+            # Ensure session is properly closed
+            if session and not session.closed:
+                await session.close()
+                # Small delay to allow cleanup on Windows
+                if sys.platform == 'win32':
+                    await asyncio.sleep(0.1)
         return
 
     if llm_provider.lower() == "ollama":
@@ -326,12 +340,25 @@ async def send_request_stream(
         except aiohttp.ClientResponseError as e:
             logger.error(f"HTTP error {e.status} from {url}: {e.message}")
             # Attempt to read error details from response body
-            error_body = await e.response.text() if hasattr(e, 'response') else 'No details'
-            logger.error(f"Error Body: {error_body}")
-            yield f"[HTTP Error {e.status}: {e.message} - {error_body[:100]}]"
+            try:
+                error_body = await e.response.text() if hasattr(e, 'response') else 'No details'
+                logger.error(f"Error Body: {error_body}")
+                yield f"[HTTP Error {e.status}: {e.message} - {error_body[:100]}]"
+            except:
+                yield f"[HTTP Error {e.status}: {e.message}]"
         except asyncio.TimeoutError:
             logger.error(f"Request timed out after {timeout} seconds to {url}")
             yield f"[Timeout Error]"
+        except ConnectionResetError as e:
+            logger.warning(f"Connection reset by peer: {e}")
+            yield f"[Connection Reset: The server closed the connection]"
+        except OSError as e:
+            if e.errno == 10054:  # Windows specific: connection forcibly closed
+                logger.warning("Connection forcibly closed by remote host")
+                yield f"[Connection closed by server]"
+            else:
+                logger.error(f"OS Error during streaming: {e}")
+                yield f"[Network Error: {e}]"
         except Exception as e:
             logger.error(f"An unexpected error occurred during streaming request: {e}", exc_info=True)
             yield f"[Unexpected Error: {e}]"
@@ -390,9 +417,16 @@ async def send_request_stream(
         payload = {k: v for k, v in payload.items() if v is not None}
 
         logger.info(f"Streaming request to Groq: model={llm_model}")
+        session = None
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
-                async with session.post(groq_url, headers=headers, json=payload) as response:
+            # Create session with custom connector for Windows
+            connector = aiohttp.TCPConnector(force_close=True) if sys.platform == 'win32' else None
+            session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=timeout),
+                connector=connector
+            )
+            
+            async with session.post(groq_url, headers=headers, json=payload) as response:
                     response.raise_for_status()
                     async for raw_line in response.content:
                         line = raw_line.decode("utf-8").strip()
@@ -416,6 +450,13 @@ async def send_request_stream(
         except Exception as e:
             logger.error(f"Error during Groq streaming: {e}", exc_info=True)
             yield f"[Groq streaming error: {e}]"
+        finally:
+            # Ensure session is properly closed
+            if session and not session.closed:
+                await session.close()
+                # Small delay to allow cleanup on Windows
+                if sys.platform == 'win32':
+                    await asyncio.sleep(0.1)
         return
 
     # Existing fallback logic for other providers
@@ -461,7 +502,7 @@ def _remove_thinking_tags(text: str) -> str:
 class LLMToolkitTextGenerator:
     DEFAULT_PROVIDER = "openai"
     
-    DEFAULT_MODEL: str = "gpt-4.1-mini"
+    DEFAULT_MODEL: str = "gpt-4o-mini"
 
     MODEL_LIST: List[str] = [DEFAULT_MODEL]
 
@@ -469,12 +510,14 @@ class LLMToolkitTextGenerator:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
                 "prompt": ("STRING", {"multiline": False, "default": "Write a short story about a robot learning to paint."}),
                 "hide_thinking": ("BOOLEAN", {"default": True, "tooltip": "Hide model thinking process (content between <think> tags)"})
             },
             "optional": {
                 "context": ("*", {})
+            },
+            "hidden": {
+                "llm_model": ("STRING", {"default": cls.DEFAULT_MODEL})
             }
         }
 
@@ -484,7 +527,7 @@ class LLMToolkitTextGenerator:
     CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True # Keeps the text widget for non-streaming version
 
-    def generate(self, llm_model, prompt, hide_thinking, context=None):
+    def generate(self, prompt, hide_thinking, llm_model=None, context=None):
         # ... (original generate logic using run_async(send_request(...))) ...
         # This function remains mostly the same as the user provided,
         # calling the original non-streaming send_request.
@@ -494,7 +537,7 @@ class LLMToolkitTextGenerator:
             # Base parameter defaults
             params = {
                 "llm_provider": self.DEFAULT_PROVIDER,
-                "llm_model": llm_model,
+                "llm_model": llm_model or self.DEFAULT_MODEL,
                 "system_message": "You are a helpful, creative, and concise assistant.",
                 "user_message": prompt,
                 "base_ip": "localhost",
@@ -703,7 +746,7 @@ def _sanitize_params_for_log(d: dict) -> dict:
 class LLMToolkitTextGeneratorStream:
     DEFAULT_PROVIDER = "openai"
 
-    DEFAULT_MODEL: str = "gpt-4.1-mini"
+    DEFAULT_MODEL: str = "gpt-4o-mini"
 
     MODEL_LIST: List[str] = [DEFAULT_MODEL]
 
@@ -711,7 +754,6 @@ class LLMToolkitTextGeneratorStream:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "llm_model": (cls.MODEL_LIST, {"default": cls.DEFAULT_MODEL}),
                 "prompt": ("STRING", {"multiline": False, "default": "Write a detailed description of a futuristic city."}),
                 "hide_thinking": ("BOOLEAN", {"default": True, "tooltip": "Hide model thinking process (content between <think> tags)"})
             },
@@ -719,7 +761,8 @@ class LLMToolkitTextGeneratorStream:
                 "context": ("*", {})
             },
             "hidden": { # <-- Add hidden inputs
-                "unique_id": "UNIQUE_ID"
+                "unique_id": "UNIQUE_ID",
+                "llm_model": ("STRING", {"default": cls.DEFAULT_MODEL})
             },
         }
 
@@ -729,7 +772,7 @@ class LLMToolkitTextGeneratorStream:
     CATEGORY = "llm_toolkit/generators"
     OUTPUT_NODE = True # Keep the JS widget logic
 
-    def generate_stream(self, llm_model, prompt, hide_thinking, unique_id, context=None, **kwargs):
+    def generate_stream(self, prompt, hide_thinking, unique_id, llm_model=None, context=None, **kwargs):
         """
         Generates text using the specified provider and streams the response back
         to the UI via websocket messages.  (synchronous wrapper)
@@ -754,7 +797,7 @@ class LLMToolkitTextGeneratorStream:
                 # 1. Start with node defaults
                 params = {
                     "llm_provider": self.DEFAULT_PROVIDER,
-                    "llm_model": llm_model,
+                    "llm_model": llm_model or self.DEFAULT_MODEL,
                     "system_message": "You are a helpful, creative, and concise assistant.",
                     "user_message": prompt,
                     "base_ip": "localhost", "port": "11434",
