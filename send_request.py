@@ -57,19 +57,41 @@ def run_async(coroutine):
             logger.error(f"run_async received non-coroutine object: {type(coroutine)}")
             return None
             
-        # Get or create event loop
+        # Check if there's already a running event loop
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            loop = asyncio.get_running_loop()
+            # If we get here, there's already a running loop
+            # We need to use asyncio.create_task() or run in a thread pool
+            import concurrent.futures
+            import threading
             
-        # Run the coroutine with proper error handling
-        try:
-            return loop.run_until_complete(coroutine)
-        except Exception as e:
-            logger.error(f"Error in run_async while executing coroutine: {str(e)}", exc_info=True)
-            return None
+            # Create a new event loop in a separate thread
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(coroutine)
+                finally:
+                    new_loop.close()
+            
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                return future.result()
+                
+        except RuntimeError:
+            # No running event loop, create a new one
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+            # Run the coroutine with proper error handling
+            try:
+                return loop.run_until_complete(coroutine)
+            except Exception as e:
+                logger.error(f"Error in run_async while executing coroutine: {str(e)}", exc_info=True)
+                return None
             
     except Exception as e:
         logger.error(f"Unexpected error in run_async: {str(e)}", exc_info=True)
