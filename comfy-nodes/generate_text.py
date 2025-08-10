@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import base64
 import asyncio
 import logging
 from typing import Dict, Any, List, Optional, Union, Tuple, AsyncGenerator
@@ -48,6 +49,89 @@ except ImportError:
 
 # Payload helper to embed context into a string subclass
 from context_payload import ContextPayload
+
+# -----------------------------------------------------------------------------
+# Helpers: Lazy OpenCV import and video -> base64 frame extraction
+# -----------------------------------------------------------------------------
+_cv2_ref = None
+
+def _get_cv2():
+    global _cv2_ref
+    if _cv2_ref is None:
+        try:
+            import cv2 as _cv2  # type: ignore
+            _cv2_ref = _cv2
+        except Exception:
+            _cv2_ref = None
+            logger.warning("cv2 not available. Video file frame extraction disabled.")
+    return _cv2_ref
+
+
+def _is_video_file(path: str) -> bool:
+    try:
+        ext = os.path.splitext(path)[1].lower()
+    except Exception:
+        return False
+    return ext in {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v"}
+
+
+def _extract_video_file_frames_as_b64(
+    video_path: str,
+    max_frames: int = 5,
+    stride: int = 16,
+) -> List[str]:
+    """Extract up to `max_frames` JPEG base64 frames from a local video file.
+
+    - Uses a simple stride to subsample frames.
+    - Falls back to the first N frames if the video is very short.
+    - Returns an empty list on any error or if cv2 is unavailable.
+    """
+    cv2 = _get_cv2()
+    if cv2 is None:
+        return []
+
+    try:
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            logger.warning("Could not open video file: %s", video_path)
+            return []
+
+        frames: List[str] = []
+        frame_index = 0
+        picked = 0
+
+        # Try stride sampling first
+        while picked < max_frames:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+            ok, frame = cap.read()
+            if not ok:
+                break
+            success, buf = cv2.imencode(".jpg", frame)
+            if success:
+                frames.append(base64.b64encode(buf.tobytes()).decode("ascii"))
+                picked += 1
+            frame_index += stride
+
+        # If we got nothing with stride, try the first sequential frames
+        if not frames:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            count = 0
+            while count < max_frames:
+                ok, frame = cap.read()
+                if not ok:
+                    break
+                success, buf = cv2.imencode(".jpg", frame)
+                if success:
+                    frames.append(base64.b64encode(buf.tobytes()).decode("ascii"))
+                    count += 1
+
+        cap.release()
+        if frames:
+            logger.debug("Extracted %d frame(s) from video file %s", len(frames), video_path)
+        return frames
+    except Exception as e:
+        logger.warning("Error extracting frames from %s: %s", video_path, e, exc_info=True)
+        return []
 
 # --- NEW STREAMING REQUEST FUNCTION (Example for Ollama) ---
 # IMPORTANT: This needs to be adapted based on the actual API structure of the provider!
@@ -639,6 +723,32 @@ class LLMToolkitTextGenerator:
             else:
                 params["images"] = None
 
+            # --- New: If file_paths contain local video files, extract a few frames ---
+            try:
+                file_paths_value = params.get("file_paths")
+                candidate_paths: List[str] = []
+                if isinstance(file_paths_value, str) and file_paths_value.strip():
+                    candidate_paths = [file_paths_value.strip()]
+                elif isinstance(file_paths_value, list):
+                    candidate_paths = [p for p in file_paths_value if isinstance(p, str) and p.strip()]
+
+                extracted_from_files: List[str] = []
+                for p in candidate_paths:
+                    if _is_video_file(p) and os.path.isfile(p):
+                        extracted_from_files.extend(_extract_video_file_frames_as_b64(p))
+
+                if extracted_from_files:
+                    if params.get("images") is None:
+                        params["images"] = []
+                    if not isinstance(params["images"], list):
+                        params["images"] = [params["images"]]  # normalize
+                    # cap total images to 8 to avoid huge payloads
+                    remaining = max(0, 8 - len(params["images"]))
+                    params["images"].extend(extracted_from_files[:remaining])
+                    logger.info("Added %d frame(s) extracted from video file paths to images payload.", min(len(extracted_from_files), remaining))
+            except Exception as e:
+                logger.warning("Failed to process video file paths for frame extraction: %s", e, exc_info=True)
+
             log_params = _sanitize_params_for_log(params)
             logger.info(f"[Non-Streaming] Making LLM request with params: {log_params}")
 
@@ -917,6 +1027,39 @@ class LLMToolkitTextGeneratorStream:
                         params["audio_path"] = prompt_cfg["audio_path"]
                 else:
                     params["images"] = None
+
+                # --- New: If file_paths contain local video files, extract a few frames ---
+                try:
+                    file_paths_value = params.get("file_paths")
+                    candidate_paths: List[str] = []
+                    if isinstance(file_paths_value, str) and file_paths_value.strip():
+                        candidate_paths = [file_paths_value.strip()]
+                    elif isinstance(file_paths_value, list):
+                        candidate_paths = [p for p in file_paths_value if isinstance(p, str) and p.strip()]
+
+                    extracted_from_files: List[str] = []
+                    for p in candidate_paths:
+                        if _is_video_file(p) and os.path.isfile(p):
+                            extracted_from_files.extend(_extract_video_file_frames_as_b64(p))
+
+                    if extracted_from_files:
+                        if params.get("images") is None:
+                            params["images"] = []
+                        if not isinstance(params["images"], list):
+                            params["images"] = [params["images"]]  # normalize
+                        # cap total images to 8 to avoid huge payloads
+                        remaining = max(0, 8 - len(params["images"]))
+                        params["images"].extend(extracted_from_files[:remaining])
+                        logger.info(
+                            "[Streaming] Added %d frame(s) extracted from video file paths to images payload.",
+                            min(len(extracted_from_files), remaining),
+                        )
+                except Exception as e:
+                    logger.warning(
+                        "[Streaming] Failed to process video file paths for frame extraction: %s",
+                        e,
+                        exc_info=True,
+                    )
 
                 log_params = _sanitize_params_for_log(params)
                 logger.info(
