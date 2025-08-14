@@ -7,7 +7,305 @@ import asyncio
 import requests 
 import base64
 import os
+import re
 logger = logging.getLogger(__name__)
+ 
+# --------------------------------------------------------------------------------------
+# New: OpenAI Responses API helpers for GPT-5 family (gpt-5, gpt-5-mini, gpt-5-nano)
+# --------------------------------------------------------------------------------------
+
+def _build_responses_input(base64_images: Optional[List[str]], system_message: str, user_message: str, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Construct the Responses API payload for GPT-5.
+    
+    For GPT-5, we can use either:
+    1. Simple string input: {"input": "text"}
+    2. Message array: {"input": [{"role": "system", "content": "..."}, ...]}
+    
+    Images require the message array format.
+    """
+    
+    # If we have images, use the message array format
+    if base64_images:
+        input_messages = []
+        
+        if system_message:
+            input_messages.append({"role": "system", "content": system_message})
+        
+        # Add conversation history
+        if messages:
+            input_messages.extend(messages)
+        
+        # Build user message with text and images
+        user_content = []
+        if user_message:
+            user_content.append({"type": "input_text", "text": user_message})
+        
+        for b64 in base64_images:
+            if not b64:
+                continue
+            # Strip any existing data URI prefix
+            if isinstance(b64, str) and b64.startswith("data:"):
+                # Already has data URI format
+                url = b64
+            else:
+                # Add data URI prefix
+                url = f"data:image/jpeg;base64,{b64}"
+            # Responses API expects image_url to be a STRING, not an object
+            user_content.append({"type": "input_image", "image_url": url})
+        
+        if user_content:
+            input_messages.append({"role": "user", "content": user_content})
+        
+        return {"input": input_messages}
+    
+    # For text-only, use simple string format when possible
+    if not messages and system_message and user_message:
+        # Combine system and user message for simple format
+        combined_input = f"{system_message}\n\n{user_message}" if system_message else user_message
+        return {"input": combined_input}
+    
+    # Fall back to message array format for complex conversations
+    input_messages = []
+    if system_message:
+        input_messages.append({"role": "system", "content": system_message})
+    
+    if messages:
+        input_messages.extend(messages)
+    
+    if user_message:
+        input_messages.append({"role": "user", "content": user_message})
+    
+    return {"input": input_messages}
+
+async def send_openai_responses_request(
+    api_url: Optional[str],
+    base64_images: Optional[List[str]],
+    model: str,
+    system_message: str,
+    user_message: str,
+    messages: List[Dict[str, Any]],
+    api_key: Optional[str],
+    temperature: float = 0.7,
+    max_tokens: int = 1024,
+    top_p: float = 0.9,
+    use_chat_completions_fallback: bool = True,
+) -> Dict[str, Any]:
+    """Call OpenAI Responses API and return a legacy-compatible dict with choices/message/content.
+
+    For GPT-5 models we migrate to POST /v1/responses with the new input schema.
+    """
+    if not api_key:
+        return {"choices": [{"message": {"content": "Error: API key is required for OpenAI requests"}}]}
+    if not model:
+        return {"choices": [{"message": {"content": "Error: Model parameter is required for OpenAI requests"}}]}
+
+    endpoint = api_url or "https://api.openai.com/v1/responses"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    # Build base body; GPT-5 does not support temperature/top_p
+    body: Dict[str, Any] = {"model": model}
+    if not str(model).startswith("gpt-5"):
+        body["temperature"] = temperature
+        body["top_p"] = top_p
+    if max_tokens is not None:
+        # New Responses API param name
+        body["max_output_tokens"] = max_tokens
+
+    # Add GPT-5 specific parameters only if not causing issues
+    # Comment out for now as they might be causing the timeout
+    # body["reasoning"] = {"effort": "minimal"}  # Use minimal for faster responses
+    # body["text"] = {"verbosity": "medium"}     # Medium verbosity as default
+
+    body.update(_build_responses_input(base64_images, system_message, user_message, messages))
+
+    try:
+        # Create session with timeout
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(endpoint, headers=headers, json=body) as response:
+                if response.status != 200:
+                    err_txt = await response.text()
+                    logger.error(f"OpenAI Responses API error: {response.status} - {err_txt}")
+                    # Sanitize request body for logging to avoid huge base64 strings
+                    sanitized_body = json.dumps(body, indent=2)
+                    if len(sanitized_body) > 2000:
+                        # Replace image data with placeholders
+                        sanitized_body = re.sub(r'"data:image/[^"]+base64,[^"]+"', '"<BASE64_IMAGE_DATA_OMITTED>"', sanitized_body)
+                        sanitized_body = re.sub(r'base64,[A-Za-z0-9+/=]{100,}', 'base64,<DATA_OMITTED>', sanitized_body)
+                    logger.error(f"Request body: {sanitized_body}")
+                    return {"choices": [{"message": {"content": f"OpenAI API error: {response.status}. {err_txt}"}}]}
+                data = await response.json()
+                # Attempt to extract text: prefer output_text if present
+                text = None
+                if isinstance(data, dict):
+                    text = data.get("output_text")
+                    if not text:
+                        # Try extracting from output array parts
+                        output = data.get("output") or data.get("response")
+                        if isinstance(output, list):
+                            chunks: List[str] = []
+                            for item in output:
+                                # Parts may be dicts with type:text or content blocks
+                                if isinstance(item, dict):
+                                    if item.get("type") in {"output_text", "text"} and item.get("text"):
+                                        chunks.append(item.get("text"))
+                                    elif "content" in item and isinstance(item["content"], list):
+                                        for c in item["content"]:
+                                            if isinstance(c, dict) and c.get("type") in {"output_text", "text"} and c.get("text"):
+                                                chunks.append(c.get("text"))
+                            if chunks:
+                                text = "".join(chunks)
+                if text is None:
+                    # Fallback to raw data string
+                    text = json.dumps(data)
+                return {"choices": [{"message": {"content": text}}]}
+    except asyncio.TimeoutError:
+        logger.error("OpenAI Responses API timeout after 30 seconds")
+        if use_chat_completions_fallback:
+            logger.info("Falling back to Chat Completions API due to timeout")
+            # Use Chat Completions API as fallback
+            return await send_openai_request(
+                api_url="https://api.openai.com/v1/chat/completions",
+                base64_images=base64_images,
+                model=model,
+                system_message=system_message,
+                user_message=user_message,
+                messages=messages,
+                api_key=api_key,
+                seed=None,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                repeat_penalty=1.0
+            )
+        return {"choices": [{"message": {"content": "OpenAI Responses API timeout - please try again or use a different model"}}]}
+    except Exception as e:
+        logger.error(f"Exception during OpenAI Responses API call: {e}", exc_info=True)
+        if use_chat_completions_fallback and "400" not in str(e):
+            logger.info("Falling back to Chat Completions API due to error")
+            # Use Chat Completions API as fallback
+            return await send_openai_request(
+                api_url="https://api.openai.com/v1/chat/completions",
+                base64_images=base64_images,
+                model=model,
+                system_message=system_message,
+                user_message=user_message,
+                messages=messages,
+                api_key=api_key,
+                seed=None,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                repeat_penalty=1.0
+            )
+        return {"choices": [{"message": {"content": f"Exception during OpenAI Responses API call: {str(e)}"}}]}
+
+async def send_openai_responses_stream(
+    api_url: Optional[str],
+    base64_images: Optional[List[str]],
+    model: str,
+    system_message: str,
+    user_message: str,
+    messages: List[Dict[str, Any]],
+    api_key: str,
+    temperature: float = 0.7,
+    max_tokens: int = 1024,
+    top_p: float = 0.9,
+):
+    """Yield text deltas from OpenAI Responses API stream.
+
+    The Responses stream emits SSE lines with JSON objects including
+    types like "response.output_text.delta" and a "delta" field.
+    """
+    if not api_key:
+        yield "[OpenAI Responses stream error: API key missing]"
+        return
+
+    endpoint = api_url or "https://api.openai.com/v1/responses"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    body: Dict[str, Any] = {"model": model, "stream": True}
+    if not str(model).startswith("gpt-5"):
+        body["temperature"] = temperature
+        body["top_p"] = top_p
+    if max_tokens is not None:
+        body["max_output_tokens"] = max_tokens
+
+    # Add GPT-5 specific parameters only if not causing issues
+    # Comment out for now as they might be causing the timeout
+    # body["reasoning"] = {"effort": "minimal"}  # Use minimal for faster responses
+    # body["text"] = {"verbosity": "medium"}     # Medium verbosity as default
+
+    body.update(_build_responses_input(base64_images, system_message, user_message, messages))
+
+    try:
+        # Create session with timeout
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout instead of default 5 minutes
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(endpoint, headers=headers, json=body) as response:
+                if response.status != 200:
+                    err_txt = await response.text()
+                    logger.error(f"OpenAI Responses streaming error: {response.status} - {err_txt}")
+                    # Sanitize request body for logging
+                    sanitized_body = json.dumps(body, indent=2)
+                    if len(sanitized_body) > 2000:
+                        sanitized_body = re.sub(r'"data:image/[^"]+base64,[^"]+"', '"<BASE64_IMAGE_DATA_OMITTED>"', sanitized_body)
+                        sanitized_body = re.sub(r'base64,[A-Za-z0-9+/=]{100,}', 'base64,<DATA_OMITTED>', sanitized_body)
+                    logger.error(f"Request body: {sanitized_body}")
+                    yield f"[OpenAI Responses stream error: {response.status} - {err_txt}]"
+                    return
+                async for raw_line in response.content:
+                    if not raw_line:
+                        continue
+                    line = raw_line.decode("utf-8", errors="ignore").strip()
+                    if not line:
+                        continue
+                    if line.startswith("data: "):
+                        data_str = line[len("data: "):].strip()
+                    else:
+                        data_str = line
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        evt = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        # Not a JSON line; ignore
+                        continue
+                    # Expect event types like response.output_text.delta; handle other shapes too
+                    evt_type = evt.get("type") or evt.get("event")
+                    text_emitted = False
+                    if evt_type and ("output_text.delta" in evt_type or evt_type == "response.delta"):
+                        delta = evt.get("delta") or evt.get("text_delta") or evt.get("content")
+                        if isinstance(delta, str) and delta:
+                            yield delta
+                            text_emitted = True
+                    # Some implementations send the whole text in 'output_text' or nested under 'response'
+                    if not text_emitted:
+                        whole = evt.get("output_text")
+                        if isinstance(whole, str) and whole:
+                            yield whole
+                            text_emitted = True
+                        else:
+                            resp_obj = evt.get("response")
+                            if isinstance(resp_obj, dict):
+                                w2 = resp_obj.get("output_text")
+                                if isinstance(w2, str) and w2:
+                                    yield w2
+                                    text_emitted = True
+                    if evt_type and (evt_type.endswith(".completed") or evt_type == "response.completed"):
+                        break
+    except asyncio.TimeoutError:
+        logger.error("OpenAI Responses API timeout after 30 seconds")
+        yield "[OpenAI Responses stream timeout - falling back to Chat Completions API]"
+    except Exception as e:
+        logger.error(f"OpenAI Responses streaming error: {e}", exc_info=True)
+        yield f"[OpenAI Responses stream error: {e}]"
 
 async def create_openai_compatible_embedding(api_base: str, model: str, input: Union[str, List[str]], api_key: Optional[str] = None) -> List[float]:
     """

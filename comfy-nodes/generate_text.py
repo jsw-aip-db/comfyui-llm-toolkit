@@ -39,6 +39,7 @@ if missing_deps:
 
 # Import utility functions (assuming they exist)
 from send_request import send_request, run_async # Keep non-streaming version if needed
+from api.openai_api import send_openai_responses_stream
 from llmtoolkit_utils import query_local_ollama_models, ensure_ollama_server, ensure_ollama_model, get_api_key
 
 # Local transformers streaming (optional)
@@ -1070,26 +1071,66 @@ class LLMToolkitTextGeneratorStream:
                 server.send_sync("llmtoolkit.stream.start", {"node": unique_id}, sid=server.client_id)
 
                 # --- Initiate and process the stream ---
-                stream_generator = send_request_stream(
-                    llm_provider=params["llm_provider"],
-                    base_ip=params.get("base_ip", "localhost"),
-                    port=params.get("port", "11434"),
-                    llm_model=params["llm_model"],
-                    system_message=params["system_message"],
-                    user_message=params["user_message"],
-                    messages=params["messages"],
-                    seed=params.get("seed"),
-                    temperature=params["temperature"],
-                    max_tokens=params["max_tokens"],
-                    random=params.get("random", False),
-                    top_k=params["top_k"],
-                    top_p=params["top_p"],
-                    repeat_penalty=params["repeat_penalty"],
-                    stop=params.get("stop"),
-                    keep_alive=params.get("keep_alive", True),
-                    llm_api_key=params.get("llm_api_key"),
-                    base64_images=params.get("images"),
-                )
+                # Use Responses stream for GPT-5 models, otherwise the provider-specific stream
+                if params["llm_provider"] == "openai" and str(params["llm_model"]).startswith("gpt-5") and params.get("llm_api_key"):
+                    async def _responses_stream_wrapper():
+                        try:
+                            async for chunk in send_openai_responses_stream(
+                                api_url="https://api.openai.com/v1/responses",
+                                base64_images=params.get("images"),
+                                model=params["llm_model"],
+                                system_message=params["system_message"],
+                                user_message=params["user_message"],
+                                messages=params["messages"],
+                                api_key=params.get("llm_api_key"),
+                                # GPT-5 does not support temperature/top_p
+                                max_tokens=params["max_tokens"],
+                                top_p=None,
+                            ):
+                                yield chunk
+                        except (Exception, asyncio.TimeoutError) as e:
+                            if "timeout" in str(e).lower() or isinstance(e, asyncio.TimeoutError):
+                                logger.warning(f"GPT-5 Responses stream timed out, falling back to Chat Completions stream")
+                            else:
+                                logger.warning(f"GPT-5 Responses stream failed ({e}), falling back to Chat Completions stream")
+                            # Fallback to regular OpenAI streaming
+                            async for chunk in send_request_stream(
+                                llm_provider="openai",
+                                base_ip="",  # Not used for OpenAI
+                                port="",     # Not used for OpenAI
+                                llm_model=params["llm_model"],
+                                system_message=params["system_message"],
+                                user_message=params["user_message"],
+                                messages=params["messages"],
+                                temperature=params["temperature"],
+                                max_tokens=params["max_tokens"],
+                                top_p=params["top_p"],
+                                llm_api_key=params.get("llm_api_key"),
+                                base64_images=params.get("images"),
+                            ):
+                                yield chunk
+                    stream_generator = _responses_stream_wrapper()
+                else:
+                    stream_generator = send_request_stream(
+                        llm_provider=params["llm_provider"],
+                        base_ip=params.get("base_ip", "localhost"),
+                        port=params.get("port", "11434"),
+                        llm_model=params["llm_model"],
+                        system_message=params["system_message"],
+                        user_message=params["user_message"],
+                        messages=params["messages"],
+                        seed=params.get("seed"),
+                        temperature=params["temperature"],
+                        max_tokens=params["max_tokens"],
+                        random=params.get("random", False),
+                        top_k=params["top_k"],
+                        top_p=params["top_p"],
+                        repeat_penalty=params["repeat_penalty"],
+                        stop=params.get("stop"),
+                        keep_alive=params.get("keep_alive", True),
+                        llm_api_key=params.get("llm_api_key"),
+                        base64_images=params.get("images"),
+                    )
 
                 async for chunk in stream_generator:
                     if chunk:

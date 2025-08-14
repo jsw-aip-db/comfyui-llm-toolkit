@@ -49,13 +49,28 @@ try:
 
             models = get_models(OpenAIProviderNode.PROVIDER_NAME, None, None, api_key)
 
-            # Ensure GPT-Image-1 is always present in the dropdown, even if the
-            # account list endpoint does not yet expose it (common while the
-            # model is still in limited beta).
+            # Ensure some useful defaults are present for visibility
+            extra_defaults = [
+                "gpt-5",
+                "gpt-5-mini",
+                "gpt-5-nano",
+                "chatgpt-5-latest",
+                "gpt-image-1",
+            ]
             if not models:
-                models = ["gpt-image-1"]
-            elif "gpt-image-1" not in models:
-                models.insert(0, "gpt-image-1")  # prepend for visibility
+                models = extra_defaults
+            else:
+                for m in reversed(extra_defaults):
+                    if m not in models:
+                        models.insert(0, m)
+
+            # Sort models alphabetically (case-insensitive) for deterministic ordering
+            try:
+                # Deduplicate and filter non-string entries
+                models = [m for m in models if isinstance(m, str) and m.strip()]
+                models = sorted(set(models), key=lambda s: s.lower())
+            except Exception as _e:
+                logger.debug("Model sorting failed: %s", _e)
 
             return web.json_response(models)
         except Exception as e:

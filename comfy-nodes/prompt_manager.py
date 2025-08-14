@@ -109,6 +109,10 @@ class PromptManager:
             prompt_config["text"] = text_prompt
             logger.debug(f"PromptManager: Added text_prompt (length: {len(text_prompt)}).")
 
+        # Mark content style hint for GPT-5 Responses API if used downstream
+        # Downstream code will detect gpt-5* models and consume images accordingly.
+        prompt_config["content_style"] = "responses_api"
+
         # --- Helper to process tensor or list of tensors into b64 list ---
         def _tensor_or_list_to_b64(tensor_or_list, max_items: int = 16):
             """Return list of base64 strings given tensor or list of tensors."""
