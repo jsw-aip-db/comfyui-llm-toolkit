@@ -14,6 +14,7 @@ from api.openai_api import (
     generate_image_variations,
     edit_image,
     create_openai_compatible_embedding,
+    send_openai_responses_request,
 )
 from llmtoolkit_utils import convert_images_for_api, ensure_ollama_server, ensure_ollama_model
 
@@ -300,23 +301,47 @@ async def send_request(
                 return {"images": result_imgs}
 
             # Regular chat models
-            api_url = "https://api.openai.com/v1/chat/completions"
-            return await send_openai_request(
-                api_url=api_url,
-                base64_images=formatted_images,
-                model=llm_model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages or [],
-                api_key=llm_api_key,
-                seed=seed if random else None,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                repeat_penalty=repeat_penalty,
-                tools=None,
-                tool_choice=None,
-            )
+            # GPT-5 family uses the Responses API; older models use chat/completions
+            if str(llm_model).startswith("gpt-5"):
+                try:
+                    return await send_openai_responses_request(
+                        api_url="https://api.openai.com/v1/responses",
+                        base64_images=formatted_images,
+                        model=llm_model,
+                        system_message=system_message,
+                        user_message=user_message,
+                        messages=messages or [],
+                        api_key=llm_api_key,
+                        # GPT-5 does not support temperature/top_p with Responses API
+                        max_tokens=max_tokens,
+                        top_p=None,
+                    )
+                except Exception as e:
+                    logger.warning(f"GPT-5 Responses API failed ({e}), falling back to Chat Completions API")
+                    # Fallback to chat/completions for GPT-5
+                    api_url = "https://api.openai.com/v1/chat/completions"
+                    return await send_openai_request(
+                        api_url, formatted_images, llm_model, system_message, user_message, messages,
+                        llm_api_key, seed, temperature, max_tokens, top_p, repeat_penalty
+                    )
+            else:
+                api_url = "https://api.openai.com/v1/chat/completions"
+                return await send_openai_request(
+                    api_url=api_url,
+                    base64_images=formatted_images,
+                    model=llm_model,
+                    system_message=system_message,
+                    user_message=user_message,
+                    messages=messages or [],
+                    api_key=llm_api_key,
+                    seed=seed if random else None,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                    repeat_penalty=repeat_penalty,
+                    tools=None,
+                    tool_choice=None,
+                )
 
         # ------------------------------------------------------------------
         #  Local HuggingFace Transformers (offline)

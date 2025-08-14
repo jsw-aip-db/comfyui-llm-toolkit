@@ -1233,7 +1233,13 @@ def get_models(engine, base_ip, port, api_key):
             "gpt-4.5-preview",
             "gpt-4.5-preview-2025-02-27",
             "o3-mini",
-            "o3-mini-2025-01-31"
+            "o3-mini-2025-01-31",
+
+            # GPT-5 Models (new family)
+            "gpt-5",
+            "gpt-5-mini",
+            "gpt-5-nano",
+            "chatgpt-5-latest",
         ]
 
         #api_key = get_api_key("OPENAI_API_KEY", engine)
