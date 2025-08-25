@@ -77,7 +77,11 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         # For square resolutions, find size where lat_dim^2 // 4 % block_size == 0
         target_lat = width // VAE_STRIDE[1]
         
-        for offset in range(-8, 9):  # Search around target
+        # Always prefer higher values - search upward first
+        candidates = []
+        
+        # Search upward for compatible sizes
+        for offset in range(0, 16):  # Search upward from target
             test_lat = target_lat + offset
             if test_lat <= 0:
                 continue
@@ -86,17 +90,32 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
             if patches_per_frame % block_size == 0:
                 test_size = test_lat * VAE_STRIDE[1]
                 distance = abs(test_size - width)
-                
-                if mode == "upscale" and test_size >= width:
-                    return test_size, test_size
-                elif mode == "downscale" and test_size <= width:
-                    return test_size, test_size
-                elif mode == "closest":
-                    # Check if this is closer than the original
-                    orig_lat = width // VAE_STRIDE[1]
-                    orig_patches = (orig_lat * orig_lat) // 4
-                    if orig_patches % block_size != 0 or distance == 0:
-                        return test_size, test_size
+                candidates.append((distance, test_size, test_size >= width))
+        
+        # If no upward candidates, search downward
+        if not candidates:
+            for offset in range(-1, -16, -1):  # Search downward from target
+                test_lat = target_lat + offset
+                if test_lat <= 0:
+                    continue
+                    
+                patches_per_frame = (test_lat * test_lat) // (PATCH_SIZE[1] * PATCH_SIZE[2])
+                if patches_per_frame % block_size == 0:
+                    test_size = test_lat * VAE_STRIDE[1]
+                    distance = abs(test_size - width)
+                    candidates.append((distance, test_size, test_size >= width))
+        
+        if candidates:
+            # Always prefer higher values (>= original size)
+            higher_candidates = [c for c in candidates if c[2]]  # c[2] is "is_higher_or_equal"
+            if higher_candidates:
+                # Sort by distance and return the closest higher value
+                higher_candidates.sort(key=lambda x: x[0])
+                return higher_candidates[0][1], higher_candidates[0][1]
+            else:
+                # Fallback to closest if no higher candidates
+                candidates.sort(key=lambda x: x[0])
+                return candidates[0][1], candidates[0][1]
         
         # If no perfect match found, use the original if it's already compatible
         orig_lat = width // VAE_STRIDE[1]
@@ -217,7 +236,6 @@ class ResolutionSelector:
             },
             "optional": {
                 "enable_radial_attention": ("BOOLEAN", {"default": False, "tooltip": "Enable radial attention compatibility"}),
-                "radial_mode": (["upscale", "downscale", "closest"], {"default": "upscale", "tooltip": "How to adjust resolutions for radial attention"}),
                 "block_size": ([128, 64], {"default": 128, "tooltip": "Radial attention block size"}),
             }
         }
@@ -227,7 +245,7 @@ class ResolutionSelector:
     FUNCTION = "get_resolution"
     CATEGORY = "llm_toolkit/utils"
 
-    def get_resolution(self, mode, aspect_ratio, quality, enable_radial_attention=False, radial_mode="upscale", block_size=128):
+    def get_resolution(self, mode, aspect_ratio, quality, enable_radial_attention=False, block_size=128):
         try:
             # Check if the aspect ratio is valid for this mode
             if aspect_ratio not in self.RESOLUTIONS[mode]:
@@ -239,9 +257,9 @@ class ResolutionSelector:
             
             w, h = self.RESOLUTIONS[mode][aspect_ratio][quality]
             
-            # Apply radial attention compatibility if enabled
+            # Apply radial attention compatibility if enabled (always prefer higher values)
             if enable_radial_attention:
-                w, h = calculate_radial_compatible_resolution(w, h, radial_mode, block_size)
+                w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size)
             
             return (w, h)
         except KeyError:
