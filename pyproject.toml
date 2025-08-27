@@ -1,7 +1,7 @@
 [project]
 name = "llm-toolkit"
 description = "A custom node collection for integrating various LLM (Large Language Model) providers with ComfyUI."
-version = "1.1.7"
+version = "1.1.8"
 license = {file = "LICENSE"}
 dependencies = [
     "aiohttp>=3.8.0",
