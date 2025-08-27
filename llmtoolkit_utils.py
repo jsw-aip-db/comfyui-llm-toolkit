@@ -1274,7 +1274,13 @@ def get_models(engine, base_ip, port, api_key):
     elif engine == "gemini":
         # Attempt live fetch via Google Gemini API; fallback to hard-coded list on error.
         fallback_models = [
-            "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-pro", "gemini-2.0-flash",
+            # Latest text models (2025)
+            "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-pro",
+            # Latest image generation models (2025)
+            "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation",
+            # Imagen models (stable versions)
+            "imagen-4.0-generate-001", "imagen-4.0-ultra-generate-001", "imagen-3.0-generate-002",
+            # Legacy models (for compatibility)
             "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro", "gemini-pro-vision",
             "imagen-3-light-alpha",
         ]
