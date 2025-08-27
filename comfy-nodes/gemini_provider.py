@@ -36,24 +36,29 @@ class GeminiProviderNode:
 
     # Fallback list used when live fetching fails or no API key is present.
     _DEFAULT_MODELS: List[str] = [
-        # Text models
-        "gemini-2.5-pro",
+        # Latest Text models (as of 2025)
         "gemini-2.5-flash",
-        "gemini-2.0-pro",
+        "gemini-2.5-pro", 
         "gemini-2.0-flash",
+        "gemini-2.0-pro",
+        
+        # Native Gemini image generation models (2025 latest)
+        "gemini-2.5-flash-image-preview",  # Latest image generation model
+        "gemini-2.0-flash-preview-image-generation",  # Previous generation
+        
+        # Imagen models (stable versions as per latest docs)
+        "imagen-4.0-generate-001",  # Imagen 4 - recommended for quality
+        "imagen-4.0-ultra-generate-001",  # Imagen 4 Ultra - best quality (1 image at a time)
+        "imagen-3.0-generate-002",  # Imagen 3 - stable
+        
+        # Legacy text models (for compatibility)
         "gemini-pro",
         "gemini-pro-vision",
-        # Native Gemini image generation
-        "gemini-2.0-flash-preview-image-generation",
-        # Imagen models (stable versions as per docs)
-        "imagen-3.0-generate-002",
-        # Imagen models (preview versions)
+        
+        # Legacy Imagen models (for compatibility)
         "imagen-4.0-generate-preview-06-06",
         "imagen-4.0-ultra-generate-preview-06-06",
-        # Legacy naming (for compatibility)
         "imagen-3.0-generate-001",
-        "imagen-4.0-generate-001",
-        "imagen-4.0-ultra-generate-001",
         "imagen-3.0-generate-preview-06-06",
         "imagen-3-light-alpha",
     ]
@@ -133,7 +138,9 @@ class GeminiProviderNode:
         if external_api_key:
             if validate_gemini_key(external_api_key):
                 final_api_key = external_api_key
-                logger.info("GeminiProviderNode: using valid external API key")
+                # Secure logging: only show first 5 characters of API key
+                masked_key = external_api_key[:5] + "..." if len(external_api_key) > 5 else "..."
+                logger.info(f"GeminiProviderNode: using valid external API key ({masked_key})")
             else:
                 logger.warning(
                     "GeminiProviderNode: provided external API key failed validation"
@@ -143,6 +150,10 @@ class GeminiProviderNode:
         if not final_api_key:
             try:
                 final_api_key = get_api_key("GEMINI_API_KEY", "gemini")
+                # Secure logging: only show first 5 characters of API key
+                if final_api_key and len(final_api_key) > 5:
+                    masked_key = final_api_key[:5] + "..."
+                    logger.info(f"GeminiProviderNode: using environment API key ({masked_key})")
             except ValueError:
                 final_api_key = ""
 

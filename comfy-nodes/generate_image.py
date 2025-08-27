@@ -119,7 +119,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
             elif llm_provider == "bfl":
                 llm_model = "flux-kontext-max"
             elif llm_provider in {"gemini", "google"}:
-                llm_model = "gemini-2.0-flash-preview-image-generation"
+                llm_model = "gemini-2.5-flash-image-preview"  # Latest Gemini image generation model
             elif llm_provider == "wavespeed":
                 llm_model = self.DEFAULT_MODEL # Use the class default
 
@@ -178,9 +178,14 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
             # For providers that support only single image, use the first one
             primary_image_b64 = image_b64[0]
             all_images_b64 = image_b64
+            logger.info(f"GenerateImage: Found {len(image_b64)} input images from context")
         else:
             primary_image_b64 = image_b64
             all_images_b64 = [image_b64] if image_b64 else []
+            if primary_image_b64:
+                logger.info("GenerateImage: Found 1 input image from context")
+            else:
+                logger.info("GenerateImage: No input images found in context")
 
         if not prompt_text and not primary_image_b64:
             logger.error("GenerateImage: Requires at least a text prompt or an input image.")
@@ -363,6 +368,11 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 # Get aspect ratio (prefer explicit over size conversion)
                 aspect_ratio = generation_config.get("aspect_ratio", None)
                 
+                # Pass input images to Gemini if they exist (for any mode including generate)
+                input_images_to_pass = all_images_b64 if all_images_b64 and all_images_b64[0] else None
+                
+                logger.info(f"GenerateImage: Passing {len(all_images_b64) if all_images_b64 else 0} images to Gemini API")
+                
                 raw_api_response = run_async(
                     send_gemini_image_generation_unified(
                         api_key=api_key,
@@ -374,7 +384,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                         seed=seed,
                         edit_mode=edit_mode,
                         variation_mode=variation_mode,
-                        input_image_base64=all_images_b64 if (edit_mode or variation_mode) else None,
+                        input_image_base64=input_images_to_pass,
                         mask_base64=mask_b64,
                         **kwargs
                     )
