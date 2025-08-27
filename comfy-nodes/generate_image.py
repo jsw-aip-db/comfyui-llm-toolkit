@@ -165,6 +165,9 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 except Exception:
                     pass
 
+            # Ensure UI dict is properly formatted
+            if not isinstance(ui_dict, dict):
+                ui_dict = {}
             return {"ui": ui_dict, "result": (context, placeholder_img,)}
 
         # --- Get Prompt Details ---
@@ -201,6 +204,9 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 except Exception:
                     pass
 
+            # Ensure UI dict is properly formatted
+            if not isinstance(ui_dict, dict):
+                ui_dict = {}
             return {"ui": ui_dict, "result": (context, placeholder_img,)}
 
         # --- Get Generation Settings (with defaults) ---
@@ -391,7 +397,15 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                 )
                 
                 if raw_api_response and raw_api_response.get("data"):
+                    logger.info(f"GenerateImage: Processing Gemini API response with {len(raw_api_response['data'])} image(s)")
                     output_image_tensor, _ = process_images_for_comfy(raw_api_response)
+                    
+                    # Validate the processed tensor
+                    if output_image_tensor is not None:
+                        logger.info(f"GenerateImage: Successfully processed tensor shape: {output_image_tensor.shape}")
+                    else:
+                        error_message = "Failed to process Gemini image data into valid tensor"
+                        logger.error(error_message)
                 else:
                     error_message = "Gemini/Imagen API response did not contain expected image data."
                     logger.error("%s Response: %s", error_message, raw_api_response)
@@ -553,12 +567,23 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
             ui_dict = {}
             if PreviewImage is not None:
                 try:
-                    preview_node = PreviewImage()
-                    preview_res = preview_node.save_images(output_image_tensor, filename_prefix="GenerateImage")
-                    ui_dict = preview_res.get("ui", {})
+                    # Validate tensor before passing to preview
+                    if output_image_tensor is not None and hasattr(output_image_tensor, 'shape'):
+                        logger.info(f"GenerateImage: Creating preview for tensor shape: {output_image_tensor.shape}")
+                        preview_node = PreviewImage()
+                        preview_res = preview_node.save_images(output_image_tensor, filename_prefix="GenerateImage")
+                        ui_dict = preview_res.get("ui", {})
+                    else:
+                        logger.warning("GenerateImage: Invalid tensor for preview, skipping UI preview")
                 except Exception as e:
                     logger.warning("GenerateImage: Failed to create preview image – %s", e, exc_info=True)
+                    # Clear UI dict to prevent invalid data from being passed
+                    ui_dict = {}
 
+            # Ensure UI dict is properly formatted
+            if not isinstance(ui_dict, dict):
+                ui_dict = {}
+            
             return {"ui": ui_dict, "result": (output_context, output_image_tensor,)}
         else:
             # Return placeholder image if generation failed
