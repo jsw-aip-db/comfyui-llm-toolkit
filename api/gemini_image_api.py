@@ -35,13 +35,14 @@ def _convert_size_to_aspect_ratio(size: str) -> str:
 async def send_gemini_native_image_request(
     api_key: str,
     prompt: str,
-    model: str = "gemini-2.0-flash-preview-image-generation",
+    model: str = "gemini-2.5-flash-image-preview",  # Updated to latest model
     n: int = 1,
     size: Optional[str] = None,
     aspect_ratio: Optional[str] = None,
     seed: Optional[int] = None,
     temperature: float = 0.7,
     max_tokens: int = 8192,
+    input_images_base64: Optional[List[str]] = None,  # NEW: Support for input images
     **kwargs
 ) -> Dict[str, Any]:
     """Generate images using Gemini native multimodal capabilities"""
@@ -62,9 +63,34 @@ async def send_gemini_native_image_request(
     target_width, target_height = ASPECT_RATIO_DIMENSIONS.get(aspect_ratio, (1024, 1024))
     logger.info(f"Using resolution {target_width}x{target_height} for aspect ratio {aspect_ratio}")
     
-    # Include dimensions in the prompt
-    prompt_with_dimensions = f"Generate a detailed, high-quality image with dimensions {target_width}x{target_height} of: {prompt}"
+    # Build content list with prompt and optional input images
+    contents = []
     
+    # Add input images first if provided (for image editing/variations)
+    if input_images_base64:
+        from PIL import Image
+        import base64
+        from io import BytesIO
+        
+        for img_b64 in input_images_base64:
+            try:
+                # Convert base64 to PIL Image (Gemini SDK format)
+                image_bytes = base64.b64decode(img_b64)
+                pil_image = Image.open(BytesIO(image_bytes))
+                contents.append(pil_image)
+            except Exception as e:
+                logger.error(f"Error processing input image: {e}")
+                continue
+    
+    # Prepare text prompt with dimensions
+    if input_images_base64:
+        # For image editing/variation, modify the prompt approach
+        prompt_text = f"Based on the provided image(s), {prompt}. Generate a high-quality {target_width}x{target_height} image."
+    else:
+        # For text-to-image generation
+        prompt_text = f"Generate a detailed, high-quality image with dimensions {target_width}x{target_height} of: {prompt}"
+    
+    contents.append(prompt_text)
     all_images = []
     
     for i in range(n):
@@ -82,10 +108,10 @@ async def send_gemini_native_image_request(
             
             generation_config = types.GenerateContentConfig(**config_args)
             
-            # Generate content
+            # Generate content with images and prompt
             response = client.models.generate_content(
                 model=model,
-                contents=prompt_with_dimensions,
+                contents=contents,
                 config=generation_config
             )
             
@@ -312,6 +338,7 @@ async def send_gemini_image_generation_unified(
     model_mapping = {
         "imagen-3.0-generate-preview-06-06": "imagen-3.0-generate-002",
         "imagen-3-light-alpha": "imagen-3.0-generate-002",  # Legacy naming
+        "gemini-2.0-flash-preview-image-generation": "gemini-2.5-flash-image-preview",  # Upgrade to latest
     }
     
     if model in model_mapping:
@@ -333,7 +360,18 @@ async def send_gemini_image_generation_unified(
             seed=seed,
         )
     else:
-        # Gemini native models (including the preview image generation model)
+        # Gemini native models (including image generation models)
+        # Support for both gemini-2.5-flash-image-preview and gemini-2.0-flash-preview-image-generation
+        
+        # Prepare input images for any mode (generate, edit, variation)
+        input_images_for_native = None
+        if input_image_base64:
+            if isinstance(input_image_base64, list):
+                input_images_for_native = input_image_base64
+            else:
+                input_images_for_native = [input_image_base64]
+            logger.info(f"Gemini native: Using {len(input_images_for_native)} input images")
+        
         return await send_gemini_native_image_request(
             api_key=api_key,
             prompt=prompt,
@@ -344,4 +382,5 @@ async def send_gemini_image_generation_unified(
             seed=seed,
             temperature=kwargs.get("temperature", 0.7),
             max_tokens=kwargs.get("max_tokens", 8192),
+            input_images_base64=input_images_for_native,
         ) 
