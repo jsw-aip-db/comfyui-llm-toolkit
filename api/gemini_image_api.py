@@ -126,12 +126,23 @@ async def send_gemini_native_image_request(
                                     # The image data is already in bytes
                                     image_bytes = part.inline_data.data
                                     
+                                    # Validate image data
+                                    if not image_bytes or len(image_bytes) == 0:
+                                        logger.warning("Received empty image data from Gemini")
+                                        continue
+                                    
                                     # Convert to base64
                                     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-                                    all_images.append({"b64_json": image_base64})
+                                    
+                                    # Validate base64 encoding
+                                    if image_base64 and len(image_base64) > 100:  # Basic sanity check
+                                        all_images.append({"b64_json": image_base64})
+                                        logger.info(f"Successfully processed Gemini image (size: {len(image_bytes)} bytes)")
+                                    else:
+                                        logger.warning("Generated invalid or too small base64 image data")
                                     
                                 except Exception as e:
-                                    logger.error(f"Error processing image data: {e}")
+                                    logger.error(f"Error processing Gemini image data: {e}")
             
             # Add small delay between requests if generating multiple
             if i < n - 1:
