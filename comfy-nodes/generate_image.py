@@ -127,6 +127,23 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
 
         # --- Get API Key ---
         api_key = provider_config.get("api_key", "")
+        
+        # Check for context-based API keys (higher priority than provider config)
+        context_api_keys = context.get("api_keys", {})
+        if context_api_keys:
+            # Try exact provider match first
+            context_key = context_api_keys.get(llm_provider)
+            # Handle google/gemini alias
+            if not context_key and llm_provider == "google":
+                context_key = context_api_keys.get("gemini")
+            elif not context_key and llm_provider == "gemini":
+                context_key = context_api_keys.get("google")
+            
+            if context_key and context_key.strip():
+                api_key = context_key.strip()
+                # Secure logging: only show first 5 characters
+                masked_key = api_key[:5] + "..." if len(api_key) > 5 else "..."
+                logger.info(f"GenerateImage: Using context API key for {llm_provider} ({masked_key})")
 
         # If API key is missing or placeholder, attempt automatic resolution via utils.get_api_key
         if (
@@ -151,7 +168,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                     logger.warning("GenerateImage: get_api_key failed – %s", _e)
 
         # After retries, ensure we have a usable key for providers that need one
-        if llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"} and not api_key:
+        if llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"} and (not api_key or api_key == "1234"):
             logger.error(f"GenerateImage: Missing API key for provider '{llm_provider}'.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = f"Missing API key for {llm_provider}"
