@@ -73,7 +73,6 @@ for file in files:
                 NODE_DISPLAY_NAME_MAPPINGS[name] = display_name
 
 # WEB_DIRECTORY points to the directory where your frontend files should be served from
-# WEB_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)), "js") # Old path
-WEB_DIRECTORY = "web/js" # Correct path
+WEB_DIRECTORY = os.path.join(os.path.dirname(os.path.realpath(__file__)), "web", "js")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

@@ -34,9 +34,18 @@ app.registerExtension({
                 this.widgets.splice(0, 0, combo);
             }
 
-            // Fetch OpenAI models once
+            // Track if models have been fetched
+            this._modelsFetched = false;
+            this._fetchingModels = false;
+
+            // Fetch OpenAI models only when needed
             const fetchModels = async () => {
+                if (this._fetchingModels) return; // Prevent duplicate fetches
+                this._fetchingModels = true;
+
                 try {
+                    combo.options.values = ["Fetching models…"];
+                    combo.value = "Fetching models…";
                     const res = await fetch("/ComfyLLMToolkit/get_openai_models");
                     if (!res.ok) throw new Error(res.statusText);
                     const models = await res.json();
@@ -44,6 +53,7 @@ app.registerExtension({
                         combo.options.values = models;
                         combo.value = models[0];
                         this.properties.llm_model = combo.value;
+                        this._modelsFetched = true;
                     } else {
                         combo.options.values = ["No models"];
                         combo.value = "No models";
@@ -53,11 +63,36 @@ app.registerExtension({
                     combo.options.values = ["Error fetching models"];
                     combo.value = "Error fetching models";
                 } finally {
+                    this._fetchingModels = false;
                     this.setDirtyCanvas(true, true);
                 }
             };
 
-            setTimeout(fetchModels, 100);
+            // Set initial state
+            combo.options.values = ["Click to load models…"];
+            combo.value = "Click to load models…";
+
+            // Fetch models when user interacts with the widget
+            const originalCallback = combo.callback;
+            combo.callback = async function(v) {
+                if (!this._modelsFetched && !this._fetchingModels) {
+                    await fetchModels();
+                }
+                if (originalCallback) {
+                    originalCallback.call(combo, v);
+                }
+            }.bind(this);
+
+            // Also fetch when the node is selected (user clicks on it)
+            const originalOnSelected = this.onSelected;
+            this.onSelected = async function() {
+                if (!this._modelsFetched && !this._fetchingModels) {
+                    await fetchModels();
+                }
+                if (originalOnSelected) {
+                    originalOnSelected.apply(this, arguments);
+                }
+            }.bind(this);
         };
     },
 }); 
