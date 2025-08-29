@@ -37,73 +37,315 @@ def get_cv2():
             logger.warning("cv2 not available. Video frame extraction disabled.")
     return cv2
 
-class PromptManager:
+class LLMPromptManager:
     """
-    Manages and structures prompt components (text, image, mask, paths)
-    into a prompt_config dictionary within the main context object.
-    Accepts various optional inputs and adds them to the context if provided.
+    Universal prompt manager with dynamic inputs.
+    Automatically adds new input ports as you connect nodes.
+    Auto-detects input types and merges them into a unified context.
     """
+    
     @classmethod
     def INPUT_TYPES(cls):
+        # Start with a single context input - JavaScript will add more dynamically
         inputs = {
             "optional": {
-                "context": ("*", {}),
-                "text_prompt": ("STRING", {"multiline": True, "default": ""}),
+                "context": ("*", {
+                    "tooltip": "Universal input - connect any type. New inputs appear automatically as you connect nodes."
+                }),
             }
         }
-        # Conditionally add image/mask inputs if torch is available
-        if TENSOR_SUPPORT:
-            inputs["optional"]["image"] = ("IMAGE",)
-            inputs["optional"]["mask"] = ("MASK",)
-            # Allow connecting video tensors (e.g., from LoadVideo nodes)
-            inputs["optional"]["video"] = ("IMAGE",)
-        else:
-             logger.warning("PromptManager: Torch/Numpy/PIL not found. IMAGE and MASK inputs disabled.")
-
-        # Add path inputs (always available)
-        inputs["optional"]["audio_path"] = ("STRING", {"multiline": False, "default": ""})
-        inputs["optional"]["file_path"] = ("STRING", {"multiline": False, "default": "", "placeholder": "/path/to/file1.pdf, /path/to/video.mp4"})
-        inputs["optional"]["url"]       = ("STRING", {"multiline": False, "default": "", "placeholder": "https://example.com, https://foo.bar/audio.mp3"})
-
         return inputs
+    
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        # Always reprocess to handle accumulation
+        return float("nan")
 
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "manage_prompt"
     CATEGORY = "llm_toolkit/prompt"
 
-    def manage_prompt(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
-        """
-        Assembles prompt components into a dictionary within the context.
-        """
-        logger.info("PromptManager executing...")
+    def _detect_tensor_type(self, tensor) -> str:
+        """Detect if a tensor is an image, video, or mask based on its shape and values."""
+        if not torch.is_tensor(tensor):
+            return "unknown"
+        
+        # Check dimensions
+        if tensor.dim() == 2:
+            # 2D tensor is likely a mask (H, W)
+            return "mask"
+        elif tensor.dim() == 3:
+            # Could be single image (H, W, C) or mask (B, H, W)
+            if tensor.shape[-1] in [1, 3, 4]:
+                # Last dimension is channels - it's an image
+                return "image"
+            else:
+                # Likely batch of masks
+                return "mask"
+        elif tensor.dim() == 4:
+            # Check if it's video frames or batch of images
+            if tensor.shape[0] > 1:
+                # Multiple frames - could be video or image batch
+                # Check if values suggest it's a mask (typically 0-1 range, single channel)
+                if tensor.shape[-1] == 1 or (tensor.min() >= 0 and tensor.max() <= 1 and tensor.shape[-1] not in [3, 4]):
+                    return "mask"
+                # Assume video if more than 8 frames, otherwise image batch
+                return "video" if tensor.shape[0] > 8 else "image"
+            else:
+                return "image"
+        return "unknown"
 
-        # Initialize or copy the context
-        if context is None:
-            output_context = {}
-            logger.debug("PromptManager: Initializing new context.")
-        elif isinstance(context, dict):
-            output_context = context.copy()
-            logger.debug("PromptManager: Copied input context.")
+    def _process_string_input(self, text: str, context: Dict[str, Any]) -> None:
+        """Process string input - detect if it's text, file path, or URL."""
+        text = text.strip()
+        if not text:
+            return
+        
+        prompt_config = context.setdefault("prompt_config", {})
+        
+        # Check if it's a URL
+        if text.startswith(("http://", "https://", "ftp://", "file://")):
+            urls = [u.strip() for u in text.split(",") if u.strip()]
+            # Append to existing URLs if present
+            if "urls" in prompt_config:
+                existing = prompt_config["urls"]
+                if isinstance(existing, list):
+                    existing.extend(urls)
+                else:
+                    prompt_config["urls"] = [existing] + urls
+            else:
+                prompt_config["urls"] = urls if len(urls) > 1 else urls[0]
+            logger.debug(f"LLMPromptManager: Detected URL input: {text[:50]}...")
+        # Check if it's a file path
+        elif any(text.startswith(p) for p in ["/", "./", "../", "~/"]) or \
+             any(ext in text.lower() for ext in [".mp4", ".avi", ".mov", ".pdf", ".txt", ".mp3", ".wav", ".png", ".jpg"]):
+            paths = [p.strip() for p in text.split(",") if p.strip()]
+            # Check if any are video files
+            video_exts = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"}
+            audio_exts = {".mp3", ".wav", ".ogg", ".m4a", ".flac"}
+            
+            if any(any(ext in p.lower() for ext in video_exts) for p in paths):
+                # Append to existing file paths
+                if "file_paths" in prompt_config:
+                    existing = prompt_config["file_paths"]
+                    if isinstance(existing, list):
+                        existing.extend(paths)
+                    else:
+                        prompt_config["file_paths"] = [existing] + paths
+                else:
+                    prompt_config["file_paths"] = paths if len(paths) > 1 else paths[0]
+                logger.debug(f"LLMPromptManager: Detected video file path: {text[:50]}...")
+            elif any(any(ext in p.lower() for ext in audio_exts) for p in paths):
+                prompt_config["audio_path"] = paths[0] if paths else ""
+                logger.debug(f"LLMPromptManager: Detected audio file path: {text[:50]}...")
+            else:
+                # Append to existing file paths
+                if "file_paths" in prompt_config:
+                    existing = prompt_config["file_paths"]
+                    if isinstance(existing, list):
+                        existing.extend(paths)
+                    else:
+                        prompt_config["file_paths"] = [existing] + paths
+                else:
+                    prompt_config["file_paths"] = paths if len(paths) > 1 else paths[0]
+                logger.debug(f"LLMPromptManager: Detected file path: {text[:50]}...")
         else:
-            # Handle non-dict context input gracefully
-            output_context = {"passthrough_data": context}
-            logger.warning("PromptManager: Received non-dict context input. Wrapping it.")
+            # It's regular text/prompt - combine multiple text inputs
+            if "text" in prompt_config:
+                # Append to existing text with a newline
+                prompt_config["text"] = prompt_config["text"] + "\n" + text
+            else:
+                prompt_config["text"] = text
+            logger.debug(f"LLMPromptManager: Detected text prompt (length: {len(text)})")
 
-        # Initialize prompt_config dictionary (get existing if present, else create)
+    def _process_tensor_input(self, tensor, context: Dict[str, Any]) -> None:
+        """Process tensor input - detect if it's image, video, or mask."""
+        if not TENSOR_SUPPORT or tensor is None:
+            return
+        
+        tensor_type = self._detect_tensor_type(tensor)
+        logger.debug(f"LLMPromptManager: Detected tensor type: {tensor_type}, shape: {tensor.shape}")
+        
+        if tensor_type == "image":
+            # Handle multiple images - combine into batch if needed
+            if "IMAGE" in context:
+                existing = context["IMAGE"]
+                if torch.is_tensor(existing):
+                    # Concatenate along batch dimension
+                    if existing.dim() == tensor.dim():
+                        context["IMAGE"] = torch.cat([existing, tensor], dim=0)
+                    else:
+                        context["IMAGE"] = tensor
+                else:
+                    context["IMAGE"] = tensor
+            else:
+                context["IMAGE"] = tensor
+        elif tensor_type == "video":
+            # Handle multiple videos - combine frames if needed
+            if "VIDEO" in context:
+                existing = context["VIDEO"]
+                if torch.is_tensor(existing) and torch.is_tensor(tensor):
+                    # Concatenate video frames
+                    if existing.dim() == 4 and tensor.dim() == 4:
+                        context["VIDEO"] = torch.cat([existing, tensor], dim=0)
+                    else:
+                        context["VIDEO"] = tensor
+                elif isinstance(existing, list):
+                    existing.append(tensor)
+                else:
+                    context["VIDEO"] = [existing, tensor]
+            else:
+                context["VIDEO"] = tensor
+        elif tensor_type == "mask":
+            # Handle multiple masks
+            if "MASK" in context:
+                existing = context["MASK"]
+                if torch.is_tensor(existing) and torch.is_tensor(tensor):
+                    if existing.dim() == tensor.dim():
+                        context["MASK"] = torch.cat([existing, tensor], dim=0)
+                    else:
+                        context["MASK"] = tensor
+                else:
+                    context["MASK"] = tensor
+            else:
+                context["MASK"] = tensor
+        else:
+            logger.warning(f"LLMPromptManager: Unknown tensor type with shape {tensor.shape}")
+
+    def _process_list_input(self, input_list, context: Dict[str, Any]) -> None:
+        """Process list/tuple input - could be multiple frames, multiple contexts, etc."""
+        if not input_list:
+            return
+        
+        # Check if all items are tensors (likely video frames)
+        if all(torch.is_tensor(item) for item in input_list) and TENSOR_SUPPORT:
+            # Assume it's video frames
+            logger.debug(f"PromptManager: Detected list of {len(input_list)} tensors, treating as video frames")
+            context["VIDEO"] = input_list
+        # Check if all items are strings
+        elif all(isinstance(item, str) for item in input_list):
+            # Multiple strings - could be multiple prompts or paths
+            combined = ", ".join(input_list)
+            self._process_string_input(combined, context)
+        # Check if all items are dicts (multiple contexts to merge)
+        elif all(isinstance(item, dict) for item in input_list):
+            # Merge all contexts
+            for item_dict in input_list:
+                self._merge_contexts(context, item_dict)
+        else:
+            # Mixed types - store as is
+            context["mixed_input"] = input_list
+            logger.debug(f"PromptManager: Received mixed-type list with {len(input_list)} items")
+
+    def _merge_contexts(self, target: Dict[str, Any], source: Dict[str, Any]) -> None:
+        """Deep merge source context into target context."""
+        for key, value in source.items():
+            if key in target:
+                if isinstance(target[key], dict) and isinstance(value, dict):
+                    # Recursively merge nested dicts
+                    self._merge_contexts(target[key], value)
+                elif key == "prompt_config" and isinstance(target[key], dict) and isinstance(value, dict):
+                    # Special handling for prompt_config - merge instead of replace
+                    target[key].update(value)
+                else:
+                    # For other types, source overwrites target
+                    target[key] = value
+            else:
+                target[key] = value
+
+    def manage_prompt(self, context=None, **kwargs) -> Tuple[Dict[str, Any]]:
+        """
+        Assembles prompt components from a single universal input into a unified context.
+        The input can be a single item OR a list of items of ANY type.
+        Automatically detects and processes each item type.
+        """
+        logger.info("LLMPromptManager executing with dynamic inputs")
+
+        # Initialize output context
+        output_context = {}
+        
+        # Collect all inputs - JavaScript sends them as a list in context
+        # or they come through kwargs for additional dynamic inputs
+        items = []
+        
+        # Handle the main context input
+        if context is not None:
+            if isinstance(context, (list, tuple)):
+                # JavaScript collected multiple inputs into a list
+                items.extend(context)
+                logger.debug(f"Processing {len(context)} items from dynamic inputs")
+            else:
+                # Single input
+                items.append(context)
+                logger.debug(f"Processing single {type(context).__name__} input")
+        
+        # Also check kwargs for any additional context_N inputs
+        # (in case JavaScript passes them separately)
+        for key, value in kwargs.items():
+            if key.startswith('context_') and value is not None:
+                if isinstance(value, (list, tuple)):
+                    items.extend(value)
+                else:
+                    items.append(value)
+                logger.debug(f"Added {key}: {type(value).__name__}")
+        
+        if not items:
+            logger.debug("No inputs provided")
+        
+        # Process each item
+        for idx, item in enumerate(items, 1):
+            if item is None:
+                continue
+                
+            logger.debug(f"Processing item {idx}/{len(items)}: type={type(item).__name__}")
+            
+            # Auto-detect and handle each item type
+            if isinstance(item, dict):
+                # Context dictionary - merge it
+                self._merge_contexts(output_context, item)
+                logger.debug(f"Item {idx}: Merged dictionary context")
+            elif isinstance(item, str):
+                # String - could be text, file path, or URL
+                self._process_string_input(item, output_context)
+                logger.debug(f"Item {idx}: Processed string")
+            elif TENSOR_SUPPORT and torch.is_tensor(item):
+                # Tensor - detect if image, video, or mask
+                self._process_tensor_input(item, output_context)
+                logger.debug(f"Item {idx}: Processed tensor")
+            elif isinstance(item, (list, tuple)):
+                # Nested list - recursively process
+                for nested_item in item:
+                    if isinstance(nested_item, dict):
+                        self._merge_contexts(output_context, nested_item)
+                    elif isinstance(nested_item, str):
+                        self._process_string_input(nested_item, output_context)
+                    elif TENSOR_SUPPORT and torch.is_tensor(nested_item):
+                        self._process_tensor_input(nested_item, output_context)
+                    else:
+                        output_context[f"nested_data_{idx}"] = nested_item
+            else:
+                # Unknown type - store it
+                output_context[f"passthrough_data_{idx}"] = item
+                logger.warning(f"Item {idx}: Unknown type {type(item)}, storing as passthrough")
+
+        # Initialize prompt_config dictionary (preserve existing if present)
         prompt_config = output_context.get("prompt_config", {})
         if not isinstance(prompt_config, dict):
-            logger.warning("PromptManager: Existing 'prompt_config' in context is not a dict. Overwriting.")
             prompt_config = {}
 
-        # Process optional inputs using kwargs
-        text_prompt = kwargs.get("text_prompt", "").strip()
-        image_tensor = kwargs.get("image", None)
-        mask_tensor = kwargs.get("mask", None)
-        video_tensor = kwargs.get("video", None)
-        audio_path = kwargs.get("audio_path", "").strip()
-        file_path_str = kwargs.get("file_path", "").strip()
-        url_str       = kwargs.get("url", "").strip()
+        # Extract any data that was already detected and stored
+        text_prompt = prompt_config.get("text", "")
+        image_tensor = output_context.get("IMAGE", None)
+        mask_tensor = output_context.get("MASK", None)
+        video_tensor = output_context.get("VIDEO", None)
+        audio_path = prompt_config.get("audio_path", "")
+        file_path_str = prompt_config.get("file_paths", "")
+        if isinstance(file_path_str, list):
+            file_path_str = ", ".join(file_path_str)
+        url_str = prompt_config.get("urls", "")
+        if isinstance(url_str, list):
+            url_str = ", ".join(url_str)
 
         if text_prompt:
             prompt_config["text"] = text_prompt
@@ -199,32 +441,67 @@ class PromptManager:
         # for APIs like OpenAI that only support images.
         # This is different from video file paths which are kept intact.
         if video_tensor is not None and TENSOR_SUPPORT:
-            logger.debug("PromptManager: Processing video tensor for frame extraction...")
+            logger.debug(f"PromptManager: Processing video tensor with shape: {video_tensor.shape if torch.is_tensor(video_tensor) else 'non-tensor'}")
             # Extract frames at intervals (every 16th frame, max 5 frames)
             extracted_frames = []
             
             if torch.is_tensor(video_tensor):
-                # Video tensor shape is typically [frames, H, W, C]
+                # Video tensor shape is typically [frames, H, W, C] from LoadVideo
+                # or [B, H, W, C] for batched images that could represent video frames
                 if video_tensor.dim() == 4:
                     frame_count = video_tensor.shape[0]
-                    interval = 16
-                    max_frames = 5
+                    # Adaptive interval based on frame count
+                    max_frames = 10  # Increased for better coverage
+                    if frame_count <= max_frames:
+                        # If we have fewer frames than max, take all
+                        interval = 1
+                        frames_to_extract = frame_count
+                    else:
+                        # Calculate interval to get evenly spaced frames
+                        interval = max(1, frame_count // max_frames)
+                        frames_to_extract = min(frame_count, max_frames)
                     
-                    for i in range(0, min(frame_count, interval * max_frames), interval):
+                    for i in range(0, min(frame_count, interval * frames_to_extract), interval):
                         frame = video_tensor[i:i+1]  # Keep batch dim
                         b64 = tensor_to_base64(frame, image_format="JPEG")
                         if b64:
                             extracted_frames.append(b64)
                     
-                    logger.debug(f"PromptManager: Extracted {len(extracted_frames)} frames from video tensor (every {interval}th frame).")
+                    logger.debug(f"PromptManager: Extracted {len(extracted_frames)} frames from video tensor (every {interval}th frame from {frame_count} total).")
+                elif video_tensor.dim() == 3:
+                    # Single frame without batch dimension - add batch dim and treat as single frame
+                    frame = video_tensor.unsqueeze(0)
+                    b64 = tensor_to_base64(frame, image_format="JPEG")
+                    if b64:
+                        extracted_frames.append(b64)
+                    logger.debug("PromptManager: Processed single video frame (3D tensor).")
                 else:
-                    # Single frame or unexpected shape - treat as image
+                    # Unexpected shape - try to handle as image
                     b64 = tensor_to_base64(video_tensor, image_format="JPEG")
                     if b64:
                         extracted_frames.append(b64)
+                    logger.debug(f"PromptManager: Processed video tensor with unexpected dims: {video_tensor.dim()}")
+            elif isinstance(video_tensor, (list, tuple)):
+                # Handle list of frames
+                for idx, frame in enumerate(video_tensor[:10]):  # Limit to 10 frames
+                    if torch.is_tensor(frame):
+                        if frame.dim() == 3:
+                            frame = frame.unsqueeze(0)
+                        b64 = tensor_to_base64(frame, image_format="JPEG")
+                        if b64:
+                            extracted_frames.append(b64)
+                logger.debug(f"PromptManager: Extracted {len(extracted_frames)} frames from video list/tuple.")
             
             if extracted_frames:
                 prompt_config["video_frames_base64"] = extracted_frames
+                # Also store metadata about the video
+                if torch.is_tensor(video_tensor) and video_tensor.dim() == 4:
+                    prompt_config["video_metadata"] = {
+                        "frame_count": video_tensor.shape[0],
+                        "height": video_tensor.shape[1],
+                        "width": video_tensor.shape[2],
+                        "extracted_frames": len(extracted_frames)
+                    }
                 logger.debug(f"PromptManager: Added {len(extracted_frames)} extracted video frame(s).")
             else:
                 logger.warning("PromptManager: Failed to convert video input to base64.")
@@ -257,12 +534,20 @@ class PromptManager:
         else:
              logger.info("PromptManager: No prompt components provided.")
 
+        # Add metadata about processed items
+        if items:
+            output_context["_processed_info"] = {
+                "count": len(items),
+                "types": [type(item).__name__ for item in items]
+            }
+            logger.info(f"Processed {len(items)} inputs")
+
         return (output_context,)
 
 # --- Node Mappings ---
 NODE_CLASS_MAPPINGS = {
-    "PromptManager": PromptManager
+    "LLMPromptManager": LLMPromptManager
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "PromptManager": "Prompt Manager (LLMToolkit)"
+    "LLMPromptManager": "LLM Prompt Manager"
 } 

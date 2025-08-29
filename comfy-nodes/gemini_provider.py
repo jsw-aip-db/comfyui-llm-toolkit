@@ -24,6 +24,41 @@ except ImportError as e:
 
 logger = logging.getLogger(__name__)
 
+# -------------------------------------------------------------------------
+# ComfyUI Server Endpoint for Model List (for dynamic loading)
+# -------------------------------------------------------------------------
+try:
+    from server import PromptServer
+    from aiohttp import web
+
+    @PromptServer.instance.routes.get("/ComfyLLMToolkit/get_gemini_models")
+    async def get_gemini_models_endpoint(request):
+        """Return the list of available Gemini models for the account."""
+        try:
+            api_key = ""
+            try:
+                api_key = get_api_key("GEMINI_API_KEY", "gemini")
+            except ValueError:
+                logger.warning("get_gemini_models_endpoint: GEMINI_API_KEY not set; returning defaults")
+            
+            # Only fetch models if we have a valid API key
+            if api_key and api_key != "1234":
+                models = get_models("gemini", "localhost", "0", api_key)
+                if models and isinstance(models, list):
+                    return web.json_response(models)
+            
+            # Return default models if no key or fetch failed
+            return web.json_response(GeminiProviderNode._DEFAULT_MODELS)
+        except Exception as e:
+            logger.error("get_gemini_models_endpoint: error %s", e, exc_info=True)
+            return web.json_response(GeminiProviderNode._DEFAULT_MODELS, status=500)
+    
+    logger.info("GeminiProviderNode: /ComfyLLMToolkit/get_gemini_models endpoint registered")
+
+except (ImportError, AttributeError) as e:
+    # Running outside ComfyUI server context; skip endpoint.
+    logger.debug("GeminiProviderNode: PromptServer not available (%s); endpoint not registered", e)
+
 
 class GeminiProviderNode:
     """Dedicated ComfyUI node that prepares *provider_config* for Gemini.
@@ -82,10 +117,9 @@ class GeminiProviderNode:
     # ------------------------------------------------------------------
     @classmethod
     def INPUT_TYPES(cls):
-        # Attempt to fetch models using env key at import time so the dropdown
-        # has a useful list even before the user enters a key in the UI.
-        api_key_env = os.getenv("GEMINI_API_KEY", "").strip()
-        model_list = cls._fetch_models(api_key_env) or cls._DEFAULT_MODELS
+        # Don't fetch models at startup - just use the default list
+        # Models will be fetched dynamically when the node is actually used
+        model_list = cls._DEFAULT_MODELS
         default_model = model_list[0] if model_list else "gemini-pro"
         return {
             "required": {

@@ -21,7 +21,7 @@ class ConfigGenerateImageGemini:
     # Gemini/Imagen specific options
     ASPECT_RATIO_OPTIONS = ["1:1", "3:4", "4:3", "9:16", "16:9"]
     PERSON_GENERATION_OPTIONS = ["dont_allow", "allow_adult", "allow_all"]
-    SAFETY_FILTER_OPTIONS = ["block_few", "block_some", "block_most"]
+    SAFETY_FILTER_OPTIONS = ["block_low_and_above", "block_medium_and_above", "block_high_and_above"]
     LANGUAGE_OPTIONS = ["auto", "en", "es-MX", "ja-JP", "zh-CN", "hi-IN"]
 
     @classmethod
@@ -36,7 +36,7 @@ class ConfigGenerateImageGemini:
                 
                 # Imagen specific
                 "person_generation": (cls.PERSON_GENERATION_OPTIONS, {"default": "allow_adult", "tooltip": "Policy for generating people in images."}),
-                "safety_filter_level": (cls.SAFETY_FILTER_OPTIONS, {"default": "block_some", "tooltip": "Content safety filter level."}),
+                "safety_filter_level": (cls.SAFETY_FILTER_OPTIONS, {"default": "block_medium_and_above", "tooltip": "Content safety filter level."}),
                 "language": (cls.LANGUAGE_OPTIONS, {"default": "auto", "tooltip": "Language hint for generation (best results with listed languages)."}),
                 
                 # Gemini native specific

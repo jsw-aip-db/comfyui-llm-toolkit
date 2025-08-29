@@ -166,7 +166,7 @@ async def send_imagen_image_request(
     n: int = 1,
     aspect_ratio: str = "1:1",
     person_generation: str = "allow_adult",
-    safety_filter_level: str = "block_some", 
+    safety_filter_level: str = "block_medium_and_above", 
     language: Optional[str] = None,
     seed: Optional[int] = None,
     **kwargs
@@ -366,7 +366,7 @@ async def send_gemini_image_generation_unified(
             n=n,
             aspect_ratio=aspect_ratio or _convert_size_to_aspect_ratio(size or "1024x1024"),
             person_generation=kwargs.get("person_generation", "allow_adult"),
-            safety_filter_level=kwargs.get("safety_filter_level", "block_low_and_above"),
+            safety_filter_level=kwargs.get("safety_filter_level", "block_medium_and_above"),
             language=kwargs.get("language"),
             seed=seed,
         )

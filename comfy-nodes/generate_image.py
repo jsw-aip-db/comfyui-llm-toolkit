@@ -381,7 +381,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                     "temperature": generation_config.get("temperature_gemini", 0.7),
                     "max_tokens": generation_config.get("max_tokens_gemini", 8192),
                     "person_generation": generation_config.get("person_generation", "allow_adult"),
-                    "safety_filter_level": generation_config.get("safety_filter_level", "block_some"),
+                    "safety_filter_level": generation_config.get("safety_filter_level", "block_medium_and_above"),
                     "language": generation_config.get("language"),
                 }
                 
