@@ -42,62 +42,76 @@ const RESOLUTIONS = {
         "UltraWide": {"HQ": [1792, 768], "MQ": [1536, 640], "LQ": [1280, 544]},
         "UltraTall": {"HQ": [768, 1792], "MQ": [640, 1536], "LQ": [544, 1280]},
     },
+    "GPT_IMAGE_1": {
+        "Square":   {"HQ": [1024, 1024], "MQ": [1024, 1024], "LQ": [1024, 1024]},
+        "Portrait": {"HQ": [1024, 1536], "MQ": [1024, 1536], "LQ": [1024, 1536]},
+        "Landscape":{"HQ": [1536, 1024], "MQ": [1536, 1024], "LQ": [1536, 1024]},
+    },
+    "GEMINI_IMAGEN": {
+        "Square (1:1)":      {"HQ": [1024, 1024], "MQ": [1024, 1024], "LQ": [1024, 1024]},
+        "Portrait (3:4)":    {"HQ": [896, 1200],  "MQ": [768, 1024],  "LQ": [672, 896]},
+        "Landscape (4:3)":   {"HQ": [1200, 896],  "MQ": [1024, 768],  "LQ": [896, 672]},
+        "Portrait (9:16)":   {"HQ": [864, 1536],  "MQ": [720, 1280], "LQ": [576, 1024]},
+        "Landscape (16:9)":  {"HQ": [1536, 864],  "MQ": [1280, 720], "LQ": [1024, 576]},
+    },
+    "NANO_BANANA": {
+        "Square (1:1)":      {"HQ": [1024, 1024], "MQ": [1024, 1024], "LQ": [1024, 1024]},
+        "Portrait (3:4)":    {"HQ": [896, 1200],  "MQ": [768, 1024],  "LQ": [672, 896]},
+        "Landscape (4:3)":   {"HQ": [1200, 896],  "MQ": [1024, 768],  "LQ": [896, 672]},
+        "Portrait (9:16)":   {"HQ": [864, 1536],  "MQ": [720, 1280], "LQ": [576, 1024]},
+        "Landscape (16:9)":  {"HQ": [1536, 864],  "MQ": [1280, 720], "LQ": [1024, 576]},
+    },
+    "BFL_FLUX": {
+        "Square (1:1)":      {"HQ": [1024, 1024], "MQ": [1024, 1024], "LQ": [1024, 1024]},
+        "Portrait (3:4)":    {"HQ": [896, 1200],  "MQ": [768, 1024],  "LQ": [672, 896]},
+        "Landscape (4:3)":   {"HQ": [1200, 896],  "MQ": [1024, 768],  "LQ": [896, 672]},
+        "Portrait (9:16)":   {"HQ": [864, 1536],  "MQ": [720, 1280], "LQ": [576, 1024]},
+        "Landscape (16:9)":  {"HQ": [1536, 864],  "MQ": [1280, 720], "LQ": [1024, 576]},
+    },
 };
 
 app.registerExtension({
-    name: "ResolutionSelector.DynamicFiltering",
+    name: "ComfyLLMToolkit.ResolutionSelector",
     
-    async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name === "ResolutionSelector") {
-            const onNodeCreated = nodeType.prototype.onNodeCreated;
-            
-            nodeType.prototype.onNodeCreated = function() {
-                if (onNodeCreated) {
-                    onNodeCreated.apply(this, arguments);
+    async nodeCreated(node) {
+        if (node.comfyClass === "ResolutionSelector") {
+            const modeWidget = node.widgets.find(w => w.name === "mode");
+            const aspectWidget = node.widgets.find(w => w.name === "aspect_ratio");
+
+            if (!modeWidget || !aspectWidget) return;
+
+            const updateAspectRatios = (mode) => {
+                const aspects = Object.keys(RESOLUTIONS[mode] || {});
+                aspectWidget.options.values = aspects;
+                if (!aspects.includes(aspectWidget.value)) {
+                    aspectWidget.value = aspects[0];
                 }
-                
-                this.updateAspectRatioOptions = () => {
-                    const modeWidget = this.widgets.find(w => w.name === "mode");
-                    const aspectRatioWidget = this.widgets.find(w => w.name === "aspect_ratio");
-                    
-                    if (modeWidget && aspectRatioWidget) {
-                        const selectedMode = modeWidget.value;
-                        const validAspectRatios = Object.keys(RESOLUTIONS[selectedMode] || {});
-                        
-                        // Store current value
-                        const currentValue = aspectRatioWidget.value;
-                        
-                        // Update options
-                        aspectRatioWidget.options.values = validAspectRatios;
-                        
-                        // Reset to first valid option if current value is not valid
-                        if (!validAspectRatios.includes(currentValue)) {
-                            aspectRatioWidget.value = validAspectRatios[0] || "Horizontal";
-                        }
-                        
-                        // Force widget to update its display
-                        this.setDirtyCanvas(true, true);
-                    }
-                };
-                
-                // Set up the mode widget callback
-                const modeWidget = this.widgets.find(w => w.name === "mode");
-                if (modeWidget) {
-                    const originalCallback = modeWidget.callback;
-                    modeWidget.callback = (value, graphCanvas, node, pos, event) => {
-                        // Call original callback first
-                        if (originalCallback) {
-                            originalCallback.call(this, value, graphCanvas, node, pos, event);
-                        }
-                        
-                        // Update aspect ratio options
-                        this.updateAspectRatioOptions();
-                    };
-                }
-                
-                // Initialize aspect ratio options on creation
-                this.updateAspectRatioOptions();
             };
+
+            const originalModeCallback = modeWidget.callback;
+            modeWidget.callback = function() {
+                if (originalModeCallback) {
+                    originalModeCallback.apply(this, arguments);
+                }
+                updateAspectRatios(this.value);
+            };
+
+            // Initial setup
+            setTimeout(() => updateAspectRatios(modeWidget.value), 0);
+        }
+    },
+    
+    async loadedGraphNode(node) {
+        if (node.comfyClass === "ResolutionSelector") {
+            const modeWidget = node.widgets.find(w => w.name === "mode");
+            const aspectWidget = node.widgets.find(w => w.name === "aspect_ratio");
+            if (modeWidget && aspectWidget) {
+                const aspects = Object.keys(RESOLUTIONS[modeWidget.value] || {});
+                aspectWidget.options.values = aspects;
+                if (!aspects.includes(aspectWidget.value)) {
+                    aspectWidget.value = aspects[0];
+                }
+            }
         }
     }
 });

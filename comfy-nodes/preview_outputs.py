@@ -8,10 +8,6 @@ import urllib.parse
 import folder_paths
 from typing import Any, Dict, Optional, Tuple
 
-import torch
-import torchaudio
-import numpy as np
-from PIL import Image
 from io import BytesIO
 
 # Ensure parent directory (project root) is on sys.path for imports
@@ -40,7 +36,7 @@ class PreviewOutputs:  # noqa: N801 – stay consistent with other nodes
     RETURN_TYPES = ("*", "AUDIO", "IMAGE", "STRING")
     RETURN_NAMES = ("context", "audio", "image", "lyrics")
     FUNCTION = "preview"
-    CATEGORY = "llm_toolkit/utils/audio"
+    CATEGORY = "🔗llm_toolkit/utils/audio"
     OUTPUT_NODE = True
 
     # ------------------------------------------------------------------
@@ -48,18 +44,24 @@ class PreviewOutputs:  # noqa: N801 – stay consistent with other nodes
     # ------------------------------------------------------------------
     def _load_audio_tensor(self, filepath: str) -> Dict[str, Any]:
         try:
+            import torchaudio
             waveform, sample_rate = torchaudio.load(filepath)
             if waveform.dim() == 2:
                 waveform = waveform.unsqueeze(0)
             return {"waveform": waveform, "sample_rate": sample_rate}
         except Exception as e:
             logger.error("PreviewOutputs: Failed to load audio %s – %s", filepath, e)
+            import torch
             return {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
 
     def _load_image_tensor(self, filepath: str):
         try:
             if not TENSOR_SUPPORT:
                 raise RuntimeError("tensor support disabled")
+            from PIL import Image
+            import numpy as np
+            import torch
+            
             img = Image.open(filepath).convert("RGB")
             img_np = np.array(img).astype(np.float32) / 255.0
             img_tensor = torch.from_numpy(img_np)
@@ -68,6 +70,7 @@ class PreviewOutputs:  # noqa: N801 – stay consistent with other nodes
             return img_tensor
         except Exception as e:
             logger.error("PreviewOutputs: Failed to load image %s – %s", filepath, e)
+            import torch
             return torch.zeros((1, 64, 64, 3))
 
     # ------------------------------------------------------------------
@@ -149,11 +152,13 @@ class PreviewOutputs:  # noqa: N801 – stay consistent with other nodes
         if audio_files:
             audio_tensor = self._load_audio_tensor(audio_files[0])
         else:
+            import torch
             audio_tensor = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
 
         if image_files:
             image_tensor = self._load_image_tensor(image_files[0])
         else:
+            import torch
             image_tensor = torch.zeros((1, 64, 64, 3))
 
         combined_lyrics = f"{title}\n\n{lyrics}" if title or lyrics else ""
@@ -168,5 +173,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "PreviewOutputs": "Preview Audio/Image Outputs (LLMToolkit)",
+    "PreviewOutputs": "Preview Audio/Image Outputs (🔗LLMToolkit)",
 } 

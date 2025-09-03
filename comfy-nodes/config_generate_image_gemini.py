@@ -51,7 +51,7 @@ class ConfigGenerateImageGemini:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/gemini"
+    CATEGORY = "🔗llm_toolkit/config/image/gemini"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """
@@ -79,21 +79,22 @@ class ConfigGenerateImageGemini:
             generation_config = {}
 
         # Add Gemini/Imagen parameters
-        generation_config['n'] = kwargs.get('n', 1)
-        generation_config['aspect_ratio'] = kwargs.get('aspect_ratio', '1:1')
-        generation_config['person_generation'] = kwargs.get('person_generation', 'allow_adult')
-        generation_config['safety_filter_level'] = kwargs.get('safety_filter_level', 'block_some')
+        # Context values from upstream nodes (like ResolutionSelector) take precedence
+        generation_config['n'] = generation_config.get('n', kwargs.get('n', 1))
+        generation_config['aspect_ratio'] = generation_config.get('aspect_ratio', kwargs.get('aspect_ratio', '1:1'))
+        generation_config['person_generation'] = generation_config.get('person_generation', kwargs.get('person_generation', 'allow_adult'))
+        generation_config['safety_filter_level'] = generation_config.get('safety_filter_level', kwargs.get('safety_filter_level', 'block_some'))
         
-        language = kwargs.get('language', 'auto')
+        language = generation_config.get('language', kwargs.get('language', 'auto'))
         if language != 'auto':
             generation_config['language'] = language
         
         # Gemini native specific (store with _gemini suffix for clarity)
-        generation_config['temperature_gemini'] = kwargs.get('temperature', 0.7)
-        generation_config['max_tokens_gemini'] = kwargs.get('max_tokens', 8192)
+        generation_config['temperature_gemini'] = generation_config.get('temperature_gemini', kwargs.get('temperature', 0.7))
+        generation_config['max_tokens_gemini'] = generation_config.get('max_tokens_gemini', kwargs.get('max_tokens', 8192))
         
         # Seed handling
-        seed_val = kwargs.get('seed', -1)
+        seed_val = generation_config.get('seed', kwargs.get('seed', -1))
         if seed_val != -1:
             generation_config['seed'] = seed_val
 
@@ -108,5 +109,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImageGemini": ConfigGenerateImageGemini
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageGemini": "Configure Image Generation - Gemini (LLMToolkit)"
+    "ConfigGenerateImageGemini": "Configure Image Generation - Gemini (🔗LLMToolkit)"
 } 

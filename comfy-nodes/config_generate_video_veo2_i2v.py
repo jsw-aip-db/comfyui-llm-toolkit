@@ -54,7 +54,7 @@ class ConfigGenerateVideoVeo2I2V:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/video/veo"
+    CATEGORY = "🔗llm_toolkit/config/video/veo"
 
     def configure(
         self,
@@ -98,5 +98,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateVideoVeo2I2V": ConfigGenerateVideoVeo2I2V
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateVideoVeo2I2V": "Configure Veo2 I2V (LLMToolkit)"
+    "ConfigGenerateVideoVeo2I2V": "Configure Veo2 I2V (🔗LLMToolkit)"
 } 

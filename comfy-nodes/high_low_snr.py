@@ -30,7 +30,7 @@ class HighLowSNR:
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("HighSteps",)
     FUNCTION = "map"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "🔗llm_toolkit/utils"
 
     def map(self, TotalSteps: int) -> Tuple[int]:
         mapping = {
@@ -53,6 +53,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "HighLowSNR": "High/Low SNR Mapper (LLMToolkit)",
+    "HighLowSNR": "High/Low SNR Mapper (🔗LLMToolkit)",
 }
 

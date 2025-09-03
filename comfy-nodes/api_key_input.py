@@ -53,7 +53,7 @@ class APIKeyInput:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "set_api_key"
-    CATEGORY = "llm_toolkit/config"
+    CATEGORY = "🔗llm_toolkit/config"
 
     def set_api_key(
         self, 
@@ -138,5 +138,5 @@ NODE_CLASS_MAPPINGS = {
     "APIKeyInput": APIKeyInput
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "APIKeyInput": "API Key Input (LLMToolkit)"
+    "APIKeyInput": "API Key Input (🔗LLMToolkit)"
 }

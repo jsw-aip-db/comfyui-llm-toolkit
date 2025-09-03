@@ -3,7 +3,6 @@ import os
 import sys
 import logging
 from typing import Any, Dict, Optional, Tuple
-import torch
 from llmtoolkit_utils import tensor_to_base64, TENSOR_SUPPORT, ensure_rgba_mask, resize_mask_to_match_image
 
 # Ensure parent directory is in path if running standalone for testing
@@ -37,6 +36,15 @@ def get_cv2():
             logger.warning("cv2 not available. Video frame extraction disabled.")
     return cv2
 
+# Lazy loading for torch
+_torch = None
+def get_torch():
+    global _torch
+    if _torch is None:
+        import torch
+        _torch = torch
+    return _torch
+
 class LLMPromptManager:
     """
     Universal prompt manager with dynamic inputs.
@@ -64,11 +72,11 @@ class LLMPromptManager:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "manage_prompt"
-    CATEGORY = "llm_toolkit/prompt"
+    CATEGORY = "🔗llm_toolkit/prompt"
 
     def _detect_tensor_type(self, tensor) -> str:
         """Detect if a tensor is an image, video, or mask based on its shape and values."""
-        if not torch.is_tensor(tensor):
+        if not get_torch().is_tensor(tensor):
             return "unknown"
         
         # Check dimensions
@@ -171,10 +179,10 @@ class LLMPromptManager:
             # Handle multiple images - combine into batch if needed
             if "IMAGE" in context:
                 existing = context["IMAGE"]
-                if torch.is_tensor(existing):
+                if get_torch().is_tensor(existing):
                     # Concatenate along batch dimension
                     if existing.dim() == tensor.dim():
-                        context["IMAGE"] = torch.cat([existing, tensor], dim=0)
+                        context["IMAGE"] = get_torch().cat([existing, tensor], dim=0)
                     else:
                         context["IMAGE"] = tensor
                 else:
@@ -185,10 +193,10 @@ class LLMPromptManager:
             # Handle multiple videos - combine frames if needed
             if "VIDEO" in context:
                 existing = context["VIDEO"]
-                if torch.is_tensor(existing) and torch.is_tensor(tensor):
+                if get_torch().is_tensor(existing) and get_torch().is_tensor(tensor):
                     # Concatenate video frames
                     if existing.dim() == 4 and tensor.dim() == 4:
-                        context["VIDEO"] = torch.cat([existing, tensor], dim=0)
+                        context["VIDEO"] = get_torch().cat([existing, tensor], dim=0)
                     else:
                         context["VIDEO"] = tensor
                 elif isinstance(existing, list):
@@ -201,9 +209,9 @@ class LLMPromptManager:
             # Handle multiple masks
             if "MASK" in context:
                 existing = context["MASK"]
-                if torch.is_tensor(existing) and torch.is_tensor(tensor):
+                if get_torch().is_tensor(existing) and get_torch().is_tensor(tensor):
                     if existing.dim() == tensor.dim():
-                        context["MASK"] = torch.cat([existing, tensor], dim=0)
+                        context["MASK"] = get_torch().cat([existing, tensor], dim=0)
                     else:
                         context["MASK"] = tensor
                 else:
@@ -219,7 +227,7 @@ class LLMPromptManager:
             return
         
         # Check if all items are tensors (likely video frames)
-        if all(torch.is_tensor(item) for item in input_list) and TENSOR_SUPPORT:
+        if all(get_torch().is_tensor(item) for item in input_list) and TENSOR_SUPPORT:
             # Assume it's video frames
             logger.debug(f"PromptManager: Detected list of {len(input_list)} tensors, treating as video frames")
             context["VIDEO"] = input_list
@@ -253,6 +261,15 @@ class LLMPromptManager:
                     target[key] = value
             else:
                 target[key] = value
+        
+        # Special handling: If provider_config has a system_message but prompt_config doesn't have text,
+        # copy the system_message to prompt_config.text so downstream nodes can use it as the prompt
+        if "provider_config" in target and "system_message" in target["provider_config"]:
+            if "prompt_config" not in target:
+                target["prompt_config"] = {}
+            if "text" not in target.get("prompt_config", {}):
+                target["prompt_config"]["text"] = target["provider_config"]["system_message"]
+                logger.debug("Copied system_message to prompt_config.text for downstream compatibility")
 
     def manage_prompt(self, context=None, **kwargs) -> Tuple[Dict[str, Any]]:
         """
@@ -309,7 +326,7 @@ class LLMPromptManager:
                 # String - could be text, file path, or URL
                 self._process_string_input(item, output_context)
                 logger.debug(f"Item {idx}: Processed string")
-            elif TENSOR_SUPPORT and torch.is_tensor(item):
+            elif TENSOR_SUPPORT and get_torch().is_tensor(item):
                 # Tensor - detect if image, video, or mask
                 self._process_tensor_input(item, output_context)
                 logger.debug(f"Item {idx}: Processed tensor")
@@ -320,7 +337,7 @@ class LLMPromptManager:
                         self._merge_contexts(output_context, nested_item)
                     elif isinstance(nested_item, str):
                         self._process_string_input(nested_item, output_context)
-                    elif TENSOR_SUPPORT and torch.is_tensor(nested_item):
+                    elif TENSOR_SUPPORT and get_torch().is_tensor(nested_item):
                         self._process_tensor_input(nested_item, output_context)
                     else:
                         output_context[f"nested_data_{idx}"] = nested_item
@@ -359,7 +376,7 @@ class LLMPromptManager:
         def _tensor_or_list_to_b64(tensor_or_list, max_items: int = 16):
             """Return list of base64 strings given tensor or list of tensors."""
             b64_list = []
-            if torch.is_tensor(tensor_or_list):
+            if get_torch().is_tensor(tensor_or_list):
                 if tensor_or_list.dim() == 4 and tensor_or_list.shape[0] > 1:
                     sample_count = min(tensor_or_list.shape[0], max_items)
                     for idx in range(sample_count):
@@ -373,7 +390,7 @@ class LLMPromptManager:
             elif isinstance(tensor_or_list, list):
                 sample_items = tensor_or_list[:max_items]
                 for t in sample_items:
-                    if torch.is_tensor(t):
+                    if get_torch().is_tensor(t):
                         # Ensure has batch dim
                         if t.dim() == 3:
                             t = t.unsqueeze(0)
@@ -417,6 +434,7 @@ class LLMPromptManager:
                     logger.warning("PromptManager: Failed to convert batch masks to base64.")
             else:
                 # Resize mask if needed to match image dimensions
+                torch = get_torch()
                 if image_tensor is not None and isinstance(image_tensor, torch.Tensor):
                     mask_tensor = resize_mask_to_match_image(mask_tensor, image_tensor)
 
@@ -441,11 +459,11 @@ class LLMPromptManager:
         # for APIs like OpenAI that only support images.
         # This is different from video file paths which are kept intact.
         if video_tensor is not None and TENSOR_SUPPORT:
-            logger.debug(f"PromptManager: Processing video tensor with shape: {video_tensor.shape if torch.is_tensor(video_tensor) else 'non-tensor'}")
+            logger.debug(f"PromptManager: Processing video tensor with shape: {video_tensor.shape if get_torch().is_tensor(video_tensor) else 'non-tensor'}")
             # Extract frames at intervals (every 16th frame, max 5 frames)
             extracted_frames = []
             
-            if torch.is_tensor(video_tensor):
+            if get_torch().is_tensor(video_tensor):
                 # Video tensor shape is typically [frames, H, W, C] from LoadVideo
                 # or [B, H, W, C] for batched images that could represent video frames
                 if video_tensor.dim() == 4:
@@ -484,7 +502,7 @@ class LLMPromptManager:
             elif isinstance(video_tensor, (list, tuple)):
                 # Handle list of frames
                 for idx, frame in enumerate(video_tensor[:10]):  # Limit to 10 frames
-                    if torch.is_tensor(frame):
+                    if get_torch().is_tensor(frame):
                         if frame.dim() == 3:
                             frame = frame.unsqueeze(0)
                         b64 = tensor_to_base64(frame, image_format="JPEG")
@@ -495,7 +513,7 @@ class LLMPromptManager:
             if extracted_frames:
                 prompt_config["video_frames_base64"] = extracted_frames
                 # Also store metadata about the video
-                if torch.is_tensor(video_tensor) and video_tensor.dim() == 4:
+                if get_torch().is_tensor(video_tensor) and video_tensor.dim() == 4:
                     prompt_config["video_metadata"] = {
                         "frame_count": video_tensor.shape[0],
                         "height": video_tensor.shape[1],
@@ -533,6 +551,15 @@ class LLMPromptManager:
              logger.info("PromptManager: Updated context with prompt_config.")
         else:
              logger.info("PromptManager: No prompt components provided.")
+        
+        # Final check: If provider_config has a system_message but prompt_config doesn't have text,
+        # copy the system_message to prompt_config.text so downstream nodes can use it as the prompt
+        if "provider_config" in output_context and "system_message" in output_context["provider_config"]:
+            if "prompt_config" not in output_context:
+                output_context["prompt_config"] = {}
+            if "text" not in output_context.get("prompt_config", {}) or not output_context["prompt_config"]["text"]:
+                output_context["prompt_config"]["text"] = output_context["provider_config"]["system_message"]
+                logger.info("Copied system_message to prompt_config.text for downstream compatibility")
 
         # Add metadata about processed items
         if items:

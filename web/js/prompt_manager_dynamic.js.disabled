@@ -1,0 +1,249 @@
+// Dynamic input ports for LLMPromptManager node
+import { app } from "../../../scripts/app.js";
+
+app.registerExtension({
+    name: "LLMToolkit.PromptManagerDynamic",
+    
+    async beforeRegisterNodeDef(nodeType, nodeData, app) {
+        if (nodeData.name === "LLMPromptManager") {
+            const origOnNodeCreated = nodeType.prototype.onNodeCreated;
+            
+            nodeType.prototype.onNodeCreated = function() {
+                const ret = origOnNodeCreated ? origOnNodeCreated.apply(this, arguments) : undefined;
+                
+                // Initialize with just one context input
+                this.inputs = [];
+                this.addInput("context", "*");
+                
+                // Track state
+                this.isProcessing = false;
+                this.cleanupScheduled = false;
+                
+                return ret;
+            };
+            
+            // Override onConnectionsChange to handle dynamic inputs
+            const origOnConnectionsChange = nodeType.prototype.onConnectionsChange;
+            nodeType.prototype.onConnectionsChange = function(type, index, connected, link_info) {
+                if (origOnConnectionsChange) {
+                    origOnConnectionsChange.apply(this, arguments);
+                }
+                
+                // Prevent recursive calls
+                if (this.isProcessing) {
+                    return;
+                }
+                
+                if (type === 1) { // Input connection
+                    this.isProcessing = true;
+                    
+                    try {
+                        if (connected) {
+                            // Check if this is the last available input
+                            const lastInputIndex = this.inputs.length - 1;
+                            if (index === lastInputIndex) {
+                                // Add a new input port
+                                const nextIndex = this.inputs.length;
+                                this.addInput(`context_${nextIndex}`, "*");
+                                
+                                // Update size to accommodate new input
+                                if (this.size && this.size[1] < (80 + (this.inputs.length * 25))) {
+                                    this.size[1] = 80 + (this.inputs.length * 25);
+                                }
+                            }
+                        } else {
+                            // Input disconnected - schedule cleanup
+                            this.scheduleCleanup();
+                        }
+                    } finally {
+                        this.isProcessing = false;
+                    }
+                }
+            };
+            
+            // Schedule cleanup to avoid rapid changes
+            nodeType.prototype.scheduleCleanup = function() {
+                if (this.cleanupScheduled) {
+                    return;
+                }
+                
+                this.cleanupScheduled = true;
+                setTimeout(() => {
+                    this.cleanupScheduled = false;
+                    this.cleanupEmptyInputs();
+                }, 250); // Delay cleanup by 250ms
+            };
+            
+            // Add method to clean up empty trailing inputs
+            nodeType.prototype.cleanupEmptyInputs = function() {
+                // Prevent cleanup during processing
+                if (this.isProcessing) {
+                    return;
+                }
+                
+                this.isProcessing = true;
+                
+                try {
+                    // Find the highest connected input index
+                    let highestConnected = -1;
+                    for (let i = 0; i < this.inputs.length; i++) {
+                        if (this.inputs[i] && this.inputs[i].link !== null) {
+                            highestConnected = i;
+                        }
+                    }
+                    
+                    // Remove inputs after the highest connected one, keeping at least one extra
+                    const targetLength = Math.max(highestConnected + 2, 1);
+                    
+                    // Limit removal to prevent infinite loops
+                    let removals = 0;
+                    const maxRemovals = 10;
+                    
+                    while (this.inputs.length > targetLength && this.inputs.length > 1 && removals < maxRemovals) {
+                        this.removeInput(this.inputs.length - 1);
+                        removals++;
+                    }
+                    
+                    // Ensure we always have at least one unconnected input at the end
+                    if (this.inputs.length > 0) {
+                        const lastInput = this.inputs[this.inputs.length - 1];
+                        const hasUnconnectedAtEnd = !lastInput || lastInput.link === null;
+                        
+                        if (!hasUnconnectedAtEnd && this.inputs.length < 20) { // Limit max inputs
+                            const nextIndex = this.inputs.length;
+                            this.addInput(`context_${nextIndex}`, "*");
+                        }
+                    }
+                } finally {
+                    this.isProcessing = false;
+                }
+            };
+            
+            // Override the execution to collect all inputs
+            const origOnExecute = nodeType.prototype.onExecute;
+            nodeType.prototype.onExecute = function() {
+                // Clear previous data to prevent memory buildup
+                this.inputData = null;
+                
+                // Collect all connected inputs into an array
+                const collectedInputs = [];
+                
+                for (let i = 0; i < this.inputs.length; i++) {
+                    if (this.inputs[i] && this.inputs[i].link !== null) {
+                        const inputData = this.getInputData(i);
+                        if (inputData !== undefined && inputData !== null) {
+                            // Avoid processing our own inputData
+                            if (inputData === this.inputData) {
+                                continue;
+                            }
+                            
+                            // If input is already an array/list, spread it
+                            if (Array.isArray(inputData)) {
+                                collectedInputs.push(...inputData);
+                            } else {
+                                collectedInputs.push(inputData);
+                            }
+                        }
+                    }
+                }
+                
+                // Store the collected inputs for the Python side
+                if (collectedInputs.length > 0) {
+                    this.inputData = collectedInputs;
+                }
+                
+                if (origOnExecute) {
+                    return origOnExecute.apply(this, arguments);
+                }
+            };
+            
+            // Simplified getInputData override
+            const origGetInputData = nodeType.prototype.getInputData;
+            nodeType.prototype.getInputData = function(slot) {
+                // Prevent recursive calls during graph loading
+                if (this._gettingInputData) {
+                    return null;
+                }
+                
+                // Only override slot 0 when we have collected data
+                if (slot === 0 && this.inputData && !this.isProcessing) {
+                    // Return collected data once, then clear it
+                    const data = this.inputData;
+                    this.inputData = null;
+                    return data;
+                }
+                
+                // Use original method for all other cases
+                if (origGetInputData) {
+                    return origGetInputData.apply(this, arguments);
+                }
+                
+                // Fallback to default behavior
+                if (this.inputs && this.inputs[slot]) {
+                    return this.inputs[slot].link ? 
+                        this.graph.getNodeById(this.graph.links[this.inputs[slot].link].origin_id)
+                            .getOutputData(this.graph.links[this.inputs[slot].link].origin_slot) : 
+                        null;
+                }
+                return null;
+            };
+            
+            // Override onSerialize to save the dynamic inputs
+            const origOnSerialize = nodeType.prototype.onSerialize;
+            nodeType.prototype.onSerialize = function(o) {
+                if (origOnSerialize) {
+                    origOnSerialize.apply(this, arguments);
+                }
+                
+                // Save the number of inputs
+                o.dynamicInputCount = this.inputs ? this.inputs.length : 1;
+            };
+            
+            // Override onConfigure to restore dynamic inputs
+            const origOnConfigure = nodeType.prototype.onConfigure;
+            nodeType.prototype.onConfigure = function(o) {
+                // Clear any existing state
+                this.isProcessing = false;
+                this.cleanupScheduled = false;
+                this.inputData = null;
+                
+                // Restore the correct number of inputs
+                if (o.dynamicInputCount && o.dynamicInputCount > 1) {
+                    // Clear existing inputs
+                    while (this.inputs && this.inputs.length > 0) {
+                        this.removeInput(this.inputs.length - 1);
+                    }
+                    
+                    // Add the saved number of inputs
+                    for (let i = 0; i < Math.min(o.dynamicInputCount, 20); i++) { // Limit to 20 inputs
+                        if (i === 0) {
+                            this.addInput("context", "*");
+                        } else {
+                            this.addInput(`context_${i}`, "*");
+                        }
+                    }
+                }
+                
+                if (origOnConfigure) {
+                    origOnConfigure.apply(this, arguments);
+                }
+                
+                // Schedule cleanup after loading
+                this.scheduleCleanup();
+            };
+            
+            // Add cleanup on node removal
+            const origOnRemoved = nodeType.prototype.onRemoved;
+            nodeType.prototype.onRemoved = function() {
+                // Clear all state
+                this.inputData = null;
+                this.isProcessing = false;
+                this.cleanupScheduled = false;
+                
+                if (origOnRemoved) {
+                    origOnRemoved.apply(this, arguments);
+                }
+            };
+        }
+    }
+});

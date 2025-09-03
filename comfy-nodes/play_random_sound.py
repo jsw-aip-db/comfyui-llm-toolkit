@@ -70,7 +70,7 @@ class PlayRandomSound:
     OUTPUT_IS_LIST = ()   # no data outputs
     OUTPUT_NODE = True
     RETURN_TYPES = ()
-    CATEGORY = "llm_toolkit/utils/audio"
+    CATEGORY = "🔗llm_toolkit/utils/audio"
 
     # ------------------------------------------------------------------
     @classmethod
@@ -184,5 +184,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "PlayRandomSound": "Play Random Sound (LLMToolkit)",
+    "PlayRandomSound": "Play Random Sound (🔗LLMToolkit)",
 } 

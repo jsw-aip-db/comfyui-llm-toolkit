@@ -153,7 +153,7 @@ class StylePromptGenerator:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "system_prompt")
     FUNCTION = "generate_prompt"
-    CATEGORY = "llm_toolkit/prompt"
+    CATEGORY = "🔗llm_toolkit/prompt"
 
     def generate_prompt(self, style: str, output_as_text: bool = False, context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], str]:
         """
@@ -220,5 +220,5 @@ NODE_CLASS_MAPPINGS = {
     "StylePromptGenerator": StylePromptGenerator
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "StylePromptGenerator": "Style Prompt Generator (LLMToolkit)"
+    "StylePromptGenerator": "Style Prompt Generator (🔗LLMToolkit)"
 }

@@ -4,14 +4,10 @@ import logging
 import tempfile
 from typing import Any, Dict, Optional, Tuple
 
-import torch
 import requests
-import torchaudio
 import json
 import urllib.parse
 from io import BytesIO
-import numpy as np
-from PIL import Image
 import folder_paths
 import time
 
@@ -65,7 +61,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "credits")
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
     OUTPUT_NODE = True
 
     # ---------------------------------------------------------------------
@@ -106,6 +102,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
                             out_f.write(chunk)
 
             # Load waveform via torchaudio
+            import torchaudio
             waveform, sample_rate = torchaudio.load(tmp_path)
 
             # Clean up temp file (when not persisting)
@@ -118,6 +115,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             return {"waveform": waveform, "sample_rate": sample_rate}
         except Exception as e:
             logger.error("Failed to download or decode audio: %s", e, exc_info=True)
+            import torch
             return {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
 
     def _download_image_to_tensor(self, image_url: str, dest_dir: Optional[str] = None, filename: Optional[str] = None):
@@ -137,6 +135,10 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
                     f.write(img_bytes)
 
             # Convert to tensor
+            from PIL import Image
+            import numpy as np
+            import torch
+            
             img = Image.open(BytesIO(img_bytes)).convert("RGB")
             img_np = np.array(img).astype(np.float32) / 255.0  # scale to 0-1
             img_tensor = torch.from_numpy(img_np)
@@ -145,6 +147,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             return img_tensor
         except Exception as e:
             logger.error("Failed to download or process image: %s", e, exc_info=True)
+            import torch
             return torch.zeros((1, 64, 64, 3))  # placeholder small black image
 
     # ---------------------------------------------------------------------
@@ -163,6 +166,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             err = f"GenerateMusic node supports only provider 'suno'. Received '{llm_provider}'."
             logger.error(err)
             context["error"] = err
+            import torch
             placeholder = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
             credits_resp = run_async(get_suno_remaining_credits(api_key=api_key))
             credits_str = str(credits_resp.get("data")) if isinstance(credits_resp, dict) else ""
@@ -183,6 +187,7 @@ class GenerateMusic:  # noqa: N801 – follow existing naming pattern
             err = "Missing Suno API key. Please set SUNO_API_KEY environment variable or pass via ProviderSelector."
             logger.error(err)
             context["error"] = err
+            import torch
             placeholder = {"waveform": torch.zeros((1, 1, 44100)), "sample_rate": 44100}
             credits_resp = run_async(get_suno_remaining_credits(api_key=api_key))
             credits_str = str(credits_resp.get("data")) if isinstance(credits_resp, dict) else ""
@@ -305,7 +310,7 @@ class GenerateLyrics:  # noqa: N801
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "lyrics")
     FUNCTION = "generate_lyrics"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
     OUTPUT_NODE = True
 
     def generate_lyrics(self, prompt: str, context: Optional[Dict[str, Any]] = None):
@@ -361,6 +366,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "GenerateMusic": "Generate Music (LLMToolkit)",
-    "GenerateLyrics": "Generate Lyrics (LLMToolkit)",
+    "GenerateMusic": "Generate Music (🔗LLMToolkit)",
+    "GenerateLyrics": "Generate Lyrics (🔗LLMToolkit)",
 } 

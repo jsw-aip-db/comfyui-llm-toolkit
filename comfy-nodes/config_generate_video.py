@@ -37,7 +37,7 @@ class ConfigGenerateVideo:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/video"
+    CATEGORY = "🔗llm_toolkit/config/video"
 
     def configure(
         self,
@@ -80,4 +80,4 @@ class ConfigGenerateVideo:
         return (out_ctx,)
 
 NODE_CLASS_MAPPINGS = {"ConfigGenerateVideo": ConfigGenerateVideo}
-NODE_DISPLAY_NAME_MAPPINGS = {"ConfigGenerateVideo": "Configure Video Generation (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"ConfigGenerateVideo": "Configure Video Generation (🔗LLMToolkit)"} 

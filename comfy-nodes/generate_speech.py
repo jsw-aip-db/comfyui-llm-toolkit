@@ -53,7 +53,7 @@ class GenerateSpeech:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "audio_path")
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
 
     def _save_wav(self, pcm_bytes: bytes, file_path: Path, channels: int = 1, rate: int = 24000, sample_width: int = 2):
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -185,4 +185,4 @@ class GenerateSpeech:
 
 
 NODE_CLASS_MAPPINGS = {"GenerateSpeech": GenerateSpeech}
-NODE_DISPLAY_NAME_MAPPINGS = {"GenerateSpeech": "Generate Speech (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"GenerateSpeech": "Generate Speech (🔗LLMToolkit)"} 

@@ -49,7 +49,7 @@ class ConfigGenerateSpeech:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/speech"
+    CATEGORY = "🔗llm_toolkit/config/speech"
 
     def configure(
         self,
@@ -89,5 +89,5 @@ class ConfigGenerateSpeech:
 
 NODE_CLASS_MAPPINGS = {"ConfigGenerateSpeech": ConfigGenerateSpeech}
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateSpeech": "Configure Speech Generation (LLMToolkit)",
+    "ConfigGenerateSpeech": "Configure Speech Generation (🔗LLMToolkit)",
 } 

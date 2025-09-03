@@ -47,7 +47,7 @@ class ConfigGenerateVideoKlingI2VPro:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/video/kling"
+    CATEGORY = "🔗llm_toolkit/config/video/kling"
 
     def configure(
         self,
@@ -91,5 +91,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateVideoKlingI2VPro": ConfigGenerateVideoKlingI2VPro
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateVideoKlingI2VPro": "Configure Kling 2.1 I2V Pro (LLMToolkit)"
+    "ConfigGenerateVideoKlingI2VPro": "Configure Kling 2.1 I2V Pro (🔗LLMToolkit)"
 } 

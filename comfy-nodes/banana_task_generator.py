@@ -104,7 +104,7 @@ class BananaTaskGenerator:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "system_prompt")
     FUNCTION = "generate_prompt"
-    CATEGORY = "llm_toolkit/prompt"
+    CATEGORY = "🔗llm_toolkit/prompt"
 
     def generate_prompt(self, task: str, output_as_text: bool = False, context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], str]:
         # Prepare context copy / init
@@ -148,16 +148,19 @@ class BananaTaskGenerator:
             output_context["prompt_config"] = prompt_config
             logger.info(f"BananaTaskGenerator: Generated prompt for task '{task}' as text output.")
         else:
-            # When switch is OFF (default): use the normal system_message approach
-            provider_config = output_context.get("provider_config", {})
-            if not isinstance(provider_config, dict):
-                provider_config = {}
-            provider_config["system_message"] = system_prompt
+            # When switch is OFF (default): use a dedicated banana_config to avoid conflicts
+            banana_config = output_context.get("banana_config", {})
+            if not isinstance(banana_config, dict):
+                banana_config = {}
+            
+            banana_config["system_message"] = system_prompt
+            
             # Optionally add meta like num_instructions
             if task_data.get("num_instructions"):
-                provider_config["num_instructions"] = task_data["num_instructions"]
-            output_context["provider_config"] = provider_config
-            logger.info(f"BananaTaskGenerator: Generated prompt for task '{task}' as system message.")
+                banana_config["num_instructions"] = task_data["num_instructions"]
+            
+            output_context["banana_config"] = banana_config
+            logger.info(f"BananaTaskGenerator: Generated prompt for task '{task}' into banana_config.")
 
         return (output_context, system_prompt)
 
@@ -167,7 +170,7 @@ NODE_CLASS_MAPPINGS = {
     "BananaTaskGenerator": BananaTaskGenerator,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "BananaTaskGenerator": "Banana System Prompt text (LLMToolkit)",
+    "BananaTaskGenerator": "Banana System Prompt text (🔗LLMToolkit)",
 }
 
 

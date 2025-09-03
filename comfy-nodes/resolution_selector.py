@@ -211,6 +211,39 @@ class ResolutionSelector:
             "UltraWide":  {"HQ": (1792, 768), "MQ": (1536, 640), "LQ": (1280, 544)},
             "UltraTall":  {"HQ": (768, 1792), "MQ": (640, 1536), "LQ": (544, 1280)},
         },
+        "GPT_IMAGE_1": {
+            "Square":   {"HQ": (1024, 1024), "MQ": (1024, 1024), "LQ": (1024, 1024)},
+            "Portrait": {"HQ": (1024, 1536), "MQ": (1024, 1536), "LQ": (1024, 1536)},
+            "Landscape":{"HQ": (1536, 1024), "MQ": (1536, 1024), "LQ": (1536, 1024)},
+        },
+        "GEMINI_IMAGEN": {
+            "Square (1:1)":      {"HQ": (1024, 1024), "MQ": (1024, 1024), "LQ": (1024, 1024)},
+            "Portrait (3:4)":    {"HQ": (896, 1200),  "MQ": (768, 1024),  "LQ": (672, 896)},
+            "Landscape (4:3)":   {"HQ": (1200, 896),  "MQ": (1024, 768),  "LQ": (896, 672)},
+            "Portrait (9:16)":   {"HQ": (864, 1536),  "MQ": (720, 1280), "LQ": (576, 1024)},
+            "Landscape (16:9)":  {"HQ": (1536, 864),  "MQ": (1280, 720), "LQ": (1024, 576)},
+        },
+        "BFL": {
+            "1:1":   {"HQ": (1024, 1024), "MQ": (768, 768), "LQ": (512, 512)},
+            "3:4":   {"HQ": (768, 1024), "MQ": (512, 682), "LQ": (384, 512)},
+            "4:3":   {"HQ": (1024, 768), "MQ": (682, 512), "LQ": (512, 384)},
+            "9:16":  {"HQ": (720, 1280), "MQ": (576, 1024), "LQ": (405, 720)},
+            "16:9":  {"HQ": (1280, 720), "MQ": (1024, 576), "LQ": (720, 405)},
+            "21:9":  {"HQ": (1536, 658), "MQ": (1280, 548), "LQ": (1024, 438)},
+            "9:21":  {"HQ": (658, 1536), "MQ": (548, 1280), "LQ": (438, 1024)},
+        },
+    }
+    # Create NANO_BANANA as an alias for GEMINI_IMAGEN
+    RESOLUTIONS["NANO_BANANA"] = RESOLUTIONS["GEMINI_IMAGEN"]
+    # Add FLUX_DEV as an alias for IMG
+    RESOLUTIONS["FLUX_DEV"] = RESOLUTIONS["IMG"]
+
+    ASPECT_RATIO_STRING_MAP = {
+        "Square (1:1)": "1:1",
+        "Portrait (3:4)": "3:4",
+        "Landscape (4:3)": "4:3",
+        "Portrait (9:16)": "9:16",
+        "Landscape (16:9)": "16:9",
     }
 
     @classmethod
@@ -235,17 +268,25 @@ class ResolutionSelector:
                 "quality": (["HQ", "MQ", "LQ"], {"default": "HQ"}),
             },
             "optional": {
+                "context": ("*", {}),
                 "enable_radial_attention": ("BOOLEAN", {"default": False, "tooltip": "Enable radial attention compatibility"}),
                 "block_size": ([128, 64], {"default": 128, "tooltip": "Radial attention block size"}),
             }
         }
 
-    RETURN_TYPES = ("INT", "INT")
-    RETURN_NAMES = ("width", "height")
+    RETURN_TYPES = ("INT", "INT", "STRING", "*")
+    RETURN_NAMES = ("width", "height", "size_string", "context")
     FUNCTION = "get_resolution"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "🔗llm_toolkit/utils"
 
-    def get_resolution(self, mode, aspect_ratio, quality, enable_radial_attention=False, block_size=128):
+    def get_resolution(self, mode, aspect_ratio, quality, context=None, enable_radial_attention=False, block_size=128):
+        # Initialize or copy the context
+        if context is None:
+            output_context = {}
+        else:
+            # Simple shallow copy is fine here
+            output_context = context.copy()
+            
         try:
             # Check if the aspect ratio is valid for this mode
             if aspect_ratio not in self.RESOLUTIONS[mode]:
@@ -260,11 +301,34 @@ class ResolutionSelector:
             # Apply radial attention compatibility if enabled (always prefer higher values)
             if enable_radial_attention:
                 w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size)
+
+            # Determine the string output based on the mode
+            if mode in ["GEMINI_IMAGEN", "NANO_BANANA"]:
+                size_string = self.ASPECT_RATIO_STRING_MAP.get(aspect_ratio, f"{w}x{h}")
+            elif mode == "BFL":
+                size_string = aspect_ratio
+            else:
+                size_string = f"{w}x{h}"
             
-            return (w, h)
+            # --- Update context ---
+            generation_config = output_context.get("generation_config", {})
+            if not isinstance(generation_config, dict):
+                generation_config = {}
+
+            generation_config["size"] = f"{w}x{h}"
+            
+            if mode in ["GEMINI_IMAGEN", "NANO_BANANA"]:
+                 generation_config["aspect_ratio"] = self.ASPECT_RATIO_STRING_MAP.get(aspect_ratio)
+            elif mode == "BFL":
+                 generation_config["aspect_ratio"] = aspect_ratio
+
+            output_context["generation_config"] = generation_config
+            # --- End Update context ---
+
+            return (w, h, size_string, output_context)
         except KeyError:
             # fallback default
-            return (832, 480)
+            return (832, 480, "832x480", output_context)
 
 
 NODE_CLASS_MAPPINGS = {
@@ -272,7 +336,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ResolutionSelector": "Resolution Selector (LLMToolkit)",
+    "ResolutionSelector": "Resolution Selector (🔗LLMToolkit)",
 }
 
 # Export for potential JavaScript access

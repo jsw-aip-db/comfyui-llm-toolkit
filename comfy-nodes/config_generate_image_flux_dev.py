@@ -35,7 +35,7 @@ class ConfigGenerateImageFluxDev:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/wavespeed"
+    CATEGORY = "🔗llm_toolkit/config/image/wavespeed"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImageFluxDev executing...")
@@ -56,14 +56,14 @@ class ConfigGenerateImageFluxDev:
         if not isinstance(generation_config, dict):
             generation_config = {}
 
-        # Add Flux Dev parameters
-        generation_config['n'] = kwargs.get('n', 1)
-        generation_config['size'] = kwargs.get('size', '1024x1024')
-        generation_config['num_inference_steps'] = kwargs.get('num_inference_steps', 28)
-        generation_config['guidance_scale'] = kwargs.get('guidance_scale', 2.5)
-        generation_config['enable_safety_checker'] = kwargs.get('enable_safety_checker', True)
+        # Add Flux Dev parameters - context values take precedence
+        generation_config['n'] = generation_config.get('n', kwargs.get('n', 1))
+        generation_config['size'] = generation_config.get('size', kwargs.get('size', '1024x1024'))
+        generation_config['num_inference_steps'] = generation_config.get('num_inference_steps', kwargs.get('num_inference_steps', 28))
+        generation_config['guidance_scale'] = generation_config.get('guidance_scale', kwargs.get('guidance_scale', 2.5))
+        generation_config['enable_safety_checker'] = generation_config.get('enable_safety_checker', kwargs.get('enable_safety_checker', True))
         
-        seed_val = kwargs.get('seed', -1)
+        seed_val = generation_config.get('seed', kwargs.get('seed', -1))
         if seed_val != -1:
             generation_config['seed'] = seed_val
 
@@ -77,5 +77,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImageFluxDev": ConfigGenerateImageFluxDev
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageFluxDev": "Configure Image Generation - Flux Dev (LLMToolkit)"
+    "ConfigGenerateImageFluxDev": "Configure Image Generation - Flux Dev (🔗LLMToolkit)"
 } 

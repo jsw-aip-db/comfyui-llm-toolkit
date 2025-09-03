@@ -2,9 +2,6 @@ import os
 import logging
 from typing import Tuple, Optional, List
 
-import torch
-import numpy as np
-
 # ComfyUI utility for temp/output directories (if available)
 try:
     import folder_paths  # type: ignore
@@ -50,10 +47,13 @@ class PreviewImageLogic:
     RETURN_NAMES = ("image",)
     FUNCTION = "preview"
     OUTPUT_NODE = False
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
     # ------------------------------------------------------------------
-    def _make_blank(self, width: int, height: int, color: str) -> torch.Tensor:
+    def _make_blank(self, width: int, height: int, color: str):
+        import torch
+        import numpy as np
+        
         r, g, b = _hex_to_rgb_floats(color)
         arr = np.stack([
             np.full((height, width), r, dtype=np.float32),
@@ -63,9 +63,10 @@ class PreviewImageLogic:
         arr = arr[np.newaxis, ...]  # (1,H,W,3)
         return torch.from_numpy(arr)
 
-    def _save(self, img_tensor: torch.Tensor, name_prefix: str) -> str:
+    def _save(self, img_tensor, name_prefix: str) -> str:
         # Lazy import PIL only when saving
         from PIL import Image  # type: ignore
+        import numpy as np
 
         # Accept (B,H,W,3) or (B,3,H,W). Convert to (H,W,3) for PIL.
         if img_tensor.ndim != 4:
@@ -93,8 +94,10 @@ class PreviewImageLogic:
         height: int,
         color: str,
         file_name: str = "logic_preview",
-        image: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor]:
+        image=None,
+    ):
+        import torch
+        
         try:
             # Handle ComfyUI IMAGE formats: could be torch.Tensor, list[torch.Tensor], or None
             if image is None:
@@ -118,6 +121,7 @@ class PreviewImageLogic:
         except Exception as e:
             logger.error("PreviewImageLogic: %s", e, exc_info=True)
             # On catastrophic error, return blank 1x1 black to keep graph alive
+            import torch
             fallback = torch.zeros((1, 3, 1, 1), dtype=torch.float32)
             return (fallback,)
 
@@ -128,5 +132,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "PreviewImageLogic": "Preview Image Logic (LLMToolkit)",
+    "PreviewImageLogic": "Preview Image Logic (🔗LLMToolkit)",
 } 

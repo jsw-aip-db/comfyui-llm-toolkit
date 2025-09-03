@@ -1,5 +1,5 @@
 # comfy-nodes/load_audio_from_path.py
-"""Load Audio From Path (LLMToolkit)
+"""Load Audio From Path (🔗LLMToolkit)
 
 Utility node that takes a string path to an audio file, loads it,
 previews it in the UI, and returns an `AUDIO` object for use with other
@@ -64,7 +64,7 @@ class LoadAudioFromPath(SaveAudio if SaveAudio is not object else object):
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
-    CATEGORY = "llm_toolkit/utils/audio"
+    CATEGORY = "🔗llm_toolkit/utils/audio"
 
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "audio_path")
@@ -113,4 +113,4 @@ class LoadAudioFromPath(SaveAudio if SaveAudio is not object else object):
 
 
 NODE_CLASS_MAPPINGS = {"LoadAudioFromPath": LoadAudioFromPath}
-NODE_DISPLAY_NAME_MAPPINGS = {"LoadAudioFromPath": "Load Audio From Path (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"LoadAudioFromPath": "Load Audio From Path (🔗LLMToolkit)"} 

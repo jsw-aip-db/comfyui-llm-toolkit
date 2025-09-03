@@ -1424,6 +1424,33 @@ def get_models(engine, base_ip, port, api_key):
             logger.error(f"Error fetching Groq models: {exc}")
             return []
 
+    elif engine == "anthropic":
+        if not api_key or api_key == "1234":
+            print("Warning: Invalid Anthropic API key. Cannot fetch models.")
+            return []
+        
+        headers = {
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json"
+        }
+        api_url = "https://api.anthropic.com/v1/models"
+        try:
+            response = requests.get(api_url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            models = [model["id"] for model in data.get("data", [])]
+            print(f"Successfully fetched {len(models)} models from Anthropic API")
+            return models
+        except Exception as e:
+            print(f"Failed to fetch models from Anthropic: {e}")
+            if isinstance(e, requests.exceptions.RequestException):
+                resp = getattr(e, "response", None)
+                if resp is not None:
+                    print(f"Response status code: {resp.status_code}")
+                    print(f"Response content: {resp.text}")
+            return []
+
     else:
         print(f"Unsupported engine - {engine}")
         return []

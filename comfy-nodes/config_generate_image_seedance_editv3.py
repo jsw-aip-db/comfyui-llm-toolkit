@@ -32,7 +32,7 @@ class ConfigGenerateImageSeedanceEditV3:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/wavespeed"
+    CATEGORY = "🔗llm_toolkit/config/image/wavespeed"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """
@@ -73,5 +73,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImageSeedanceEditV3": ConfigGenerateImageSeedanceEditV3
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageSeedanceEditV3": "Configure Image Generation - SeedEdit v3 (LLMToolkit)"
+    "ConfigGenerateImageSeedanceEditV3": "Configure Image Generation - SeedEdit v3 (🔗LLMToolkit)"
 } 

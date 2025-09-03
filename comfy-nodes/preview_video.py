@@ -1,5 +1,5 @@
 # comfy-nodes/preview_video.py
-"""Preview Video (LLMToolkit)
+"""Preview Video (🔗LLMToolkit)
 
 A node that displays a video from a given file path without re-encoding or
 saving a new version. It's designed to preview videos that already exist on
@@ -54,7 +54,7 @@ class PreviewVideo:
     RETURN_NAMES = ("video", "video_path")
     FUNCTION = "preview"
     OUTPUT_NODE = True
-    CATEGORY = "llm_toolkit/utils/video"
+    CATEGORY = "🔗llm_toolkit/utils/video"
 
     def preview(self, video_path: str):
         if not video_path or not os.path.exists(video_path):
@@ -124,4 +124,4 @@ class PreviewVideo:
 
 
 NODE_CLASS_MAPPINGS = {"PreviewVideo": PreviewVideo}
-NODE_DISPLAY_NAME_MAPPINGS = {"PreviewVideo": "Preview Video Form Path (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"PreviewVideo": "Preview Video Form Path (🔗LLMToolkit)"} 

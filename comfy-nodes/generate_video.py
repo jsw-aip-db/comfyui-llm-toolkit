@@ -49,7 +49,7 @@ class GenerateVideo:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "video_paths")
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
 
     # ------------------------------------------------------------------
     def _save_videos(self, client, videos: List[Any], out_dir: Path, base_name: str) -> List[str]:
@@ -247,7 +247,7 @@ class GenerateVideo:
                                 logger.error("Failed downloading video %s – %s", url, dl_exc, exc_info=True)
 
                         ctx["generated_video_paths"] = paths if paths else outputs
-                        logger.info("GenerateVideo (LLMToolkit): saved %d video(s)", len(paths))
+                        logger.info("GenerateVideo (🔗LLMToolkit): saved %d video(s)", len(paths))
                         return (
                             ctx,
                             paths[0] if len(paths) == 1 and paths else "|".join(paths if paths else outputs),
@@ -377,4 +377,4 @@ class GenerateVideo:
 
 
 NODE_CLASS_MAPPINGS = {"GenerateVideo": GenerateVideo}
-NODE_DISPLAY_NAME_MAPPINGS = {"GenerateVideo": "Generate Video (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"GenerateVideo": "Generate Video (🔗LLMToolkit)"} 

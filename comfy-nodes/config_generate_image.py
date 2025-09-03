@@ -94,7 +94,7 @@ class ConfigGenerateImage:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/all"
+    CATEGORY = "🔗llm_toolkit/config/image/all"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """
@@ -178,5 +178,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImage": ConfigGenerateImage
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImage": "[LEGACY] Configure Image Generation - All Providers (LLMToolkit)"
+    "ConfigGenerateImage": "[LEGACY] Configure Image Generation - All Providers (🔗LLMToolkit)"
 } 

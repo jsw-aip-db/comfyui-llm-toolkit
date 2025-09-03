@@ -53,7 +53,7 @@ class FramesToSeconds:
         "frames",
     )
     FUNCTION = "convert"
-    CATEGORY = "llm_toolkit/utils/audio"
+    CATEGORY = "🔗llm_toolkit/utils/audio"
 
     # ------------------------------------------------------------------
     # Core logic
@@ -97,5 +97,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "FramesToSeconds": "Frames → Seconds (LLMToolkit)",
+    "FramesToSeconds": "Frames → Seconds (🔗LLMToolkit)",
 } 

@@ -3,7 +3,7 @@ import { ComfyWidgets } from "/scripts/widgets.js";
 
 /* ------------------------------------------------------------------
    Extension: Comfy.GenerateTextNode
-   Adds a read‑only multiline STRING widget to the "Generate Text (LLMToolkit)"
+   Adds a read‑only multiline STRING widget to the "Generate Text (🔗LLMToolkit)"
    node that displays the LLM response directly on the node.  The node still
    outputs the normal "context" so it can be connected to an external
    Display Text node as before.

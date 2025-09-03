@@ -1,7 +1,5 @@
 import logging
 from typing import Tuple
-import torch
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ class BlankImage:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "create"
-    CATEGORY = "llm_toolkit/utils/image"
+    CATEGORY = "🔗llm_toolkit/utils/image"
 
     # ------------------------------------------------------------------
     # Core logic
@@ -41,6 +39,9 @@ class BlankImage:
         return r / 255.0, g / 255.0, b / 255.0
 
     def create(self, width: int, height: int, color: str):
+        import torch
+        import numpy as np
+        
         try:
             r, g, b = self._hex_to_rgb(color)
             arr = np.stack([
@@ -62,5 +63,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "BlankImage": "Blank Image (LLMToolkit)",
+    "BlankImage": "Blank Image (🔗LLMToolkit)",
 } 

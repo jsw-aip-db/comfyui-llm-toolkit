@@ -33,28 +33,50 @@ import textwrap
 
 import torch
 
-# Transformers is an optional dependency for the toolkit – guard the import
-try:
-    from transformers import (
-        AutoModelForCausalLM,
-        AutoTokenizer,
-        TextIteratorStreamer,
-    )
+# Lazy loading for transformers - don't import at module level
+TRANSFORMERS_AVAILABLE = None
+AutoModelForCausalLM = None
+AutoTokenizer = None
+TextIteratorStreamer = None
+Qwen2_5OmniForConditionalGeneration = None
+Qwen2_5OmniProcessor = None
 
-    # Optional – might not exist in every transformers release.  We import them
-    # in a nested try so failure does *not* disable the whole provider.
+def _ensure_transformers():
+    """Lazy-load transformers only when actually needed."""
+    global TRANSFORMERS_AVAILABLE, AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+    global Qwen2_5OmniForConditionalGeneration, Qwen2_5OmniProcessor
+    
+    if TRANSFORMERS_AVAILABLE is not None:
+        return TRANSFORMERS_AVAILABLE
+    
     try:
         from transformers import (
-            Qwen2_5OmniForConditionalGeneration,  # type: ignore
-            Qwen2_5OmniProcessor,  # type: ignore
+            AutoModelForCausalLM as _AutoModelForCausalLM,
+            AutoTokenizer as _AutoTokenizer,
+            TextIteratorStreamer as _TextIteratorStreamer,
         )
-    except (ImportError, AttributeError):  # pragma: no cover
-        Qwen2_5OmniForConditionalGeneration = None  # type: ignore
-        Qwen2_5OmniProcessor = None  # type: ignore
-
-    TRANSFORMERS_AVAILABLE = True
-except Exception as _e:  # pragma: no cover – keep ComfyUI boot-time lightweight
-    TRANSFORMERS_AVAILABLE = False  # Will raise later when used
+        AutoModelForCausalLM = _AutoModelForCausalLM
+        AutoTokenizer = _AutoTokenizer
+        TextIteratorStreamer = _TextIteratorStreamer
+        
+        # Optional – might not exist in every transformers release
+        try:
+            from transformers import (
+                Qwen2_5OmniForConditionalGeneration as _Qwen2_5OmniForConditionalGeneration,
+                Qwen2_5OmniProcessor as _Qwen2_5OmniProcessor,
+            )
+            Qwen2_5OmniForConditionalGeneration = _Qwen2_5OmniForConditionalGeneration
+            Qwen2_5OmniProcessor = _Qwen2_5OmniProcessor
+        except (ImportError, AttributeError):
+            pass
+        
+        TRANSFORMERS_AVAILABLE = True
+        logger.info("Transformers library loaded successfully")
+    except Exception as e:
+        TRANSFORMERS_AVAILABLE = False
+        logger.warning(f"Transformers library not available: {e}")
+    
+    return TRANSFORMERS_AVAILABLE
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +138,7 @@ async def _ensure_model_loaded(
     Returns a dict with keys *model*, *tokenizer*, and optionally *processor* (for Qwen-Omni).
     Calls are thread-safe (asyncio).
     """
-    if not TRANSFORMERS_AVAILABLE:
+    if not _ensure_transformers():
         raise RuntimeError(
             "transformers_api – HuggingFace transformers not installed.  Please `pip install transformers`"
         )
@@ -283,7 +305,7 @@ async def send_transformers_request(
 
     Returns an *OpenAI-style* dict so the rest of the toolkit can remain provider-agnostic.
     """
-    if not TRANSFORMERS_AVAILABLE:
+    if not _ensure_transformers():
         return {
             "choices": [
                 {"message": {"content": "Transformers not installed.  Please `pip install transformers`."}}]
@@ -460,7 +482,7 @@ async def send_transformers_request_stream(
     **kwargs,
 ):
     """Async generator that yields text chunks as they are generated."""
-    if not TRANSFORMERS_AVAILABLE:
+    if not _ensure_transformers():
         yield "[Transformers not installed]"
         return
 

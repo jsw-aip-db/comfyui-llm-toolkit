@@ -40,7 +40,7 @@ class ConfigGenerateImageBFL:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/bfl"
+    CATEGORY = "🔗llm_toolkit/config/image/bfl"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         """
@@ -67,14 +67,14 @@ class ConfigGenerateImageBFL:
         if not isinstance(generation_config, dict):
             generation_config = {}
 
-        # Add BFL parameters
-        generation_config['aspect_ratio'] = kwargs.get('aspect_ratio', '1:1')
-        generation_config['prompt_upsampling'] = kwargs.get('prompt_upsampling', False)
-        generation_config['safety_tolerance'] = kwargs.get('safety_tolerance', 2)
-        generation_config['output_format_bfl'] = kwargs.get('output_format', 'png')
+        # Add BFL parameters - context values take precedence
+        generation_config['aspect_ratio'] = generation_config.get('aspect_ratio', kwargs.get('aspect_ratio', '1:1'))
+        generation_config['prompt_upsampling'] = generation_config.get('prompt_upsampling', kwargs.get('prompt_upsampling', False))
+        generation_config['safety_tolerance'] = generation_config.get('safety_tolerance', kwargs.get('safety_tolerance', 2))
+        generation_config['output_format_bfl'] = generation_config.get('output_format_bfl', kwargs.get('output_format', 'png'))
         
         # Seed handling
-        seed_val = kwargs.get('seed', -1)
+        seed_val = generation_config.get('seed', kwargs.get('seed', -1))
         if seed_val != -1:
             generation_config['seed'] = seed_val
 
@@ -92,5 +92,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImageBFL": ConfigGenerateImageBFL
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageBFL": "Configure Image Generation - BFL (LLMToolkit)"
+    "ConfigGenerateImageBFL": "Configure Image Generation - BFL (🔗LLMToolkit)"
 } 

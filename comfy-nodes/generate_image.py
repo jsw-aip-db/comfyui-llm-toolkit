@@ -21,6 +21,8 @@ try:
     from api.gemini_image_api import send_gemini_image_generation_unified
     # Import new WaveSpeed image generation functions
     from api.wavespeed_image_api import send_wavespeed_image_edit_request
+    # Import OpenRouter image generation
+    from api.openrouter_api import send_openrouter_image_generation_request
 except ImportError:
     logger = logging.getLogger(__name__)
     logger.error("Failed relative imports in generate_image.py. Check file structure and __init__.py.")
@@ -78,7 +80,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
     RETURN_TYPES = ("*", "IMAGE",) # Keep IMAGE for direct use/preview
     RETURN_NAMES = ("context", "image",)
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
     OUTPUT_NODE = True
 
     def generate(self, prompt: str, mode: str = "generate", context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], Any]:
@@ -99,6 +101,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
         provider_config = context.get("provider_config", {})
         prompt_config = context.get("prompt_config", {})
         generation_config = context.get("generation_config", {})
+        banana_config = context.get("banana_config", {}) # Extract banana_config
 
         # Debug logging
         logger.debug(f"Provider config: {provider_config}")
@@ -148,13 +151,14 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
         # If API key is missing or placeholder, attempt automatic resolution via utils.get_api_key
         if (
             not api_key or api_key in {"1234", "", None}
-        ) and llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"}:
+        ) and llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed", "openrouter"}:
             env_var_name = {
                 "openai": "OPENAI_API_KEY",
                 "bfl": "BFL_API_KEY", 
                 "gemini": "GEMINI_API_KEY",
                 "google": "GEMINI_API_KEY",
                 "wavespeed": "WAVESPEED_API_KEY",
+                "openrouter": "OPENROUTER_API_KEY",
             }.get(llm_provider, "")
             
             if env_var_name:
@@ -168,7 +172,7 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                     logger.warning("GenerateImage: get_api_key failed – %s", _e)
 
         # After retries, ensure we have a usable key for providers that need one
-        if llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed"} and (not api_key or api_key == "1234"):
+        if llm_provider in {"openai", "bfl", "gemini", "google", "wavespeed", "openrouter"} and (not api_key or api_key == "1234"):
             logger.error(f"GenerateImage: Missing API key for provider '{llm_provider}'.")
             placeholder_img, _ = process_images_for_comfy(None)
             context["error"] = f"Missing API key for {llm_provider}"
@@ -188,8 +192,19 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
             return {"ui": ui_dict, "result": (context, placeholder_img,)}
 
         # --- Get Prompt Details ---
+        # Get system message from banana_config
+        system_message = banana_config.get("system_message", "")
+
         # Choose the prompt text: prefer context's prompt_config if present, otherwise use the direct node input
-        prompt_text = prompt_config.get("text") or prompt
+        user_prompt = prompt_config.get("text") or prompt
+
+        # Combine system message and user prompt
+        if system_message:
+            prompt_text = f"{system_message.strip()}\\n\\n{user_prompt.strip()}"
+            logger.info("GenerateImage: Combined system message from banana_config with user prompt.")
+        else:
+            prompt_text = user_prompt
+        
         image_b64 = prompt_config.get("image_base64", None) # From PromptManager
         mask_b64 = prompt_config.get("mask_base64", None)   # From PromptManager
 
@@ -427,6 +442,41 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                     error_message = "Gemini/Imagen API response did not contain expected image data."
                     logger.error("%s Response: %s", error_message, raw_api_response)
 
+            elif llm_provider == "openrouter":
+                # ------------------------------------------------------------------
+                #  OpenRouter Provider (via chat completions)
+                # ------------------------------------------------------------------
+                logger.info(f"Calling OpenRouter API for image generation (model: {llm_model})")
+
+                # Pass input images to OpenRouter if they exist
+                input_images_to_pass = all_images_b64 if all_images_b64 and all_images_b64[0] else None
+
+                # Collect relevant params from generation_config
+                kwargs = {
+                    "n": generation_config.get("n", 1),
+                    "size": generation_config.get("size"),
+                    "seed": generation_config.get("seed"),
+                }
+                # Filter out None values
+                kwargs = {k: v for k, v in kwargs.items() if v is not None}
+
+                raw_api_response = run_async(
+                    send_openrouter_image_generation_request(
+                        api_key=api_key,
+                        model=llm_model,
+                        prompt=prompt_text,
+                        input_image_base64=input_images_to_pass,
+                        **kwargs
+                    )
+                )
+
+                if raw_api_response and raw_api_response.get("data"):
+                    logger.info(f"GenerateImage: Processing OpenRouter API response with {len(raw_api_response['data'])} image(s)")
+                    output_image_tensor, _ = process_images_for_comfy(raw_api_response)
+                else:
+                    error_message = "OpenRouter API response did not contain expected image data."
+                    logger.error("%s Response: %s", error_message, raw_api_response)
+
             elif llm_provider == "wavespeed":
                 # ------------------------------------------------------------------
                 #  WaveSpeed Provider (various models)
@@ -623,5 +673,5 @@ NODE_CLASS_MAPPINGS = {
     "GenerateImage": GenerateImage
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "GenerateImage": "Generate Image (LLMToolkit)"
+    "GenerateImage": "Generate Image (🔗LLMToolkit)"
 } 

@@ -10,11 +10,11 @@ from typing import List, Union, Optional, Dict, Any
 from api.ollama_api import send_ollama_request, create_ollama_embedding
 from api.openai_api import (
     send_openai_request,
+    send_openai_responses_request,
     generate_image,
     generate_image_variations,
     edit_image,
     create_openai_compatible_embedding,
-    send_openai_responses_request,
 )
 from llmtoolkit_utils import convert_images_for_api, ensure_ollama_server, ensure_ollama_model
 
@@ -27,6 +27,13 @@ from api.gemini_api import (
 
 # Groq helpers (OpenAI-compat layer)
 from api.groq_api import send_groq_request
+
+# Anthropic helpers (OpenAI-compat layer)
+from api.anthropic_api import send_anthropic_request
+
+# DeepSeek helpers (OpenAI-compat layer)
+from api.deepseek_api import send_deepseek_request
+
 
 # Optional: folder_paths may be used elsewhere but isn't necessary here —
 # leave a harmless import to keep previous behaviour for callers that expect
@@ -44,11 +51,18 @@ if _comfy_nodes_dir not in sys.path:
 
 from transformers_provider import send_transformers_request  # NEW: local HF models
 # NEW: vLLM local provider
-from vllm_provider import send_vllm_request
+#from vllm_provider import send_vllm_request
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def is_gpt5_model(model: str) -> bool:
+    """Check if the model is a GPT-5 variant"""
+    if not model:
+        return False
+    model_lower = model.lower()
+    return model_lower.startswith('gpt-5') or model_lower.startswith('gpt5')
 
 def run_async(coroutine):
     """Helper function to run coroutines in a new event loop if necessary"""
@@ -300,9 +314,9 @@ async def send_request(
 
                 return {"images": result_imgs}
 
-            # Regular chat models
-            # GPT-5 family uses the Responses API; older models use chat/completions
-            if str(llm_model).startswith("gpt-5"):
+            # Check if this is a GPT-5 model and route to Responses API
+            if is_gpt5_model(llm_model) and llm_api_key:
+                logger.info(f"Detected GPT-5 model: {llm_model}, using Responses API")
                 try:
                     return await send_openai_responses_request(
                         api_url="https://api.openai.com/v1/responses",
@@ -312,36 +326,32 @@ async def send_request(
                         user_message=user_message,
                         messages=messages or [],
                         api_key=llm_api_key,
-                        # GPT-5 does not support temperature/top_p with Responses API
+                        temperature=temperature,
                         max_tokens=max_tokens,
-                        top_p=None,
+                        top_p=top_p,
                     )
                 except Exception as e:
-                    logger.warning(f"GPT-5 Responses API failed ({e}), falling back to Chat Completions API")
-                    # Fallback to chat/completions for GPT-5
-                    api_url = "https://api.openai.com/v1/chat/completions"
-                    return await send_openai_request(
-                        api_url, formatted_images, llm_model, system_message, user_message, messages,
-                        llm_api_key, seed, temperature, max_tokens, top_p, repeat_penalty
-                    )
-            else:
-                api_url = "https://api.openai.com/v1/chat/completions"
-                return await send_openai_request(
-                    api_url=api_url,
-                    base64_images=formatted_images,
-                    model=llm_model,
-                    system_message=system_message,
-                    user_message=user_message,
-                    messages=messages or [],
-                    api_key=llm_api_key,
-                    seed=seed if random else None,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                    repeat_penalty=repeat_penalty,
-                    tools=None,
-                    tool_choice=None,
-                )
+                    logger.warning(f"GPT-5 Responses API failed: {e}, falling back to Chat Completions")
+                    # Fall through to regular OpenAI handling
+
+            # Regular chat models (including GPT-5 fallback)
+            api_url = "https://api.openai.com/v1/chat/completions"
+            return await send_openai_request(
+                api_url=api_url,
+                base64_images=formatted_images,
+                model=llm_model,
+                system_message=system_message,
+                user_message=user_message,
+                messages=messages or [],
+                api_key=llm_api_key,
+                seed=seed if random else None,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                repeat_penalty=repeat_penalty,
+                tools=None,
+                tool_choice=None,
+            )
 
         # ------------------------------------------------------------------
         #  Local HuggingFace Transformers (offline)
@@ -364,7 +374,7 @@ async def send_request(
         # ------------------------------------------------------------------
         #  Local vLLM Provider (offline)
         # ------------------------------------------------------------------
-        if llm_provider == "vllm":
+        '''if llm_provider == "vllm":
             return await send_vllm_request(
                 base64_images=formatted_images,
                 base64_audio=[],
@@ -376,7 +386,7 @@ async def send_request(
                 max_tokens=max_tokens,
                 top_p=top_p,
                 repeat_penalty=repeat_penalty,
-            )
+            )'''
 
         # ------------------------------------------------------------------
         #  Groq (OpenAI-compatible) – chat completions (vision handled later)
@@ -395,6 +405,44 @@ async def send_request(
                 max_tokens=max_tokens,
                 top_p=top_p,
                 reasoning_format=reasoning_format,
+                repeat_penalty=repeat_penalty,
+                tools=None,
+                tool_choice=None,
+            )
+
+        # ------------------------------------------------------------------
+        #  Anthropic (Claude)
+        # ------------------------------------------------------------------
+        if llm_provider == "anthropic":
+            return await send_anthropic_request(
+                api_url=None,
+                model=llm_model,
+                system_message=system_message,
+                user_message=user_message,
+                messages=messages or [],
+                api_key=llm_api_key or "",
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                stop=stop,
+            )
+
+        # ------------------------------------------------------------------
+        #  DeepSeek (OpenAI-compatible)
+        # ------------------------------------------------------------------
+        if llm_provider == "deepseek":
+            return await send_deepseek_request(
+                api_url=None,
+                base64_images=formatted_images,
+                model=llm_model,
+                system_message=system_message,
+                user_message=user_message,
+                messages=messages or [],
+                api_key=llm_api_key or "",
+                seed=seed if random else None,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
                 repeat_penalty=repeat_penalty,
                 tools=None,
                 tool_choice=None,

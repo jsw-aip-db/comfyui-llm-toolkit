@@ -88,7 +88,6 @@ async def send_openai_responses_request(
     temperature: float = 0.7,
     max_tokens: int = 1024,
     top_p: float = 0.9,
-    use_chat_completions_fallback: bool = True,
 ) -> Dict[str, Any]:
     """Call OpenAI Responses API and return a legacy-compatible dict with choices/message/content.
 
@@ -105,25 +104,28 @@ async def send_openai_responses_request(
         "Content-Type": "application/json",
     }
 
-    # Build base body; GPT-5 does not support temperature/top_p
+    # Build base body
     body: Dict[str, Any] = {"model": model}
-    if not str(model).startswith("gpt-5"):
+    if str(model).startswith("gpt-5"):
+        # GPT-5 specific parameters
+        body["reasoning"] = {"effort": "minimal"}
+        body["text"] = {"verbosity": "medium"}
+    else:
+        # Parameters for other models
         body["temperature"] = temperature
         body["top_p"] = top_p
+        
     if max_tokens is not None:
-        # New Responses API param name
-        body["max_output_tokens"] = max_tokens
-
-    # Add GPT-5 specific parameters only if not causing issues
-    # Comment out for now as they might be causing the timeout
-    # body["reasoning"] = {"effort": "minimal"}  # Use minimal for faster responses
-    # body["text"] = {"verbosity": "medium"}     # Medium verbosity as default
+        # Use new param name for Responses API, fallback to old name for others
+        param_name = "max_output_tokens" if str(model).startswith("gpt-5") else "max_tokens"
+        body[param_name] = max_tokens
 
     body.update(_build_responses_input(base64_images, system_message, user_message, messages))
 
     try:
-        # Create session with timeout
-        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        # Create session with timeout - longer for GPT-5 models
+        timeout_seconds = 60 if str(model).startswith("gpt-5") else 30
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(endpoint, headers=headers, json=body) as response:
                 if response.status != 200:
@@ -162,45 +164,8 @@ async def send_openai_responses_request(
                     # Fallback to raw data string
                     text = json.dumps(data)
                 return {"choices": [{"message": {"content": text}}]}
-    except asyncio.TimeoutError:
-        logger.error("OpenAI Responses API timeout after 30 seconds")
-        if use_chat_completions_fallback:
-            logger.info("Falling back to Chat Completions API due to timeout")
-            # Use Chat Completions API as fallback
-            return await send_openai_request(
-                api_url="https://api.openai.com/v1/chat/completions",
-                base64_images=base64_images,
-                model=model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages,
-                api_key=api_key,
-                seed=None,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                repeat_penalty=1.0
-            )
-        return {"choices": [{"message": {"content": "OpenAI Responses API timeout - please try again or use a different model"}}]}
     except Exception as e:
         logger.error(f"Exception during OpenAI Responses API call: {e}", exc_info=True)
-        if use_chat_completions_fallback and "400" not in str(e):
-            logger.info("Falling back to Chat Completions API due to error")
-            # Use Chat Completions API as fallback
-            return await send_openai_request(
-                api_url="https://api.openai.com/v1/chat/completions",
-                base64_images=base64_images,
-                model=model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages,
-                api_key=api_key,
-                seed=None,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                repeat_penalty=1.0
-            )
         return {"choices": [{"message": {"content": f"Exception during OpenAI Responses API call: {str(e)}"}}]}
 
 async def send_openai_responses_stream(
@@ -223,7 +188,7 @@ async def send_openai_responses_stream(
     if not api_key:
         yield "[OpenAI Responses stream error: API key missing]"
         return
-
+    
     endpoint = api_url or "https://api.openai.com/v1/responses"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -231,22 +196,24 @@ async def send_openai_responses_stream(
     }
 
     body: Dict[str, Any] = {"model": model, "stream": True}
-    if not str(model).startswith("gpt-5"):
+    if str(model).startswith("gpt-5"):
+        # GPT-5 specific parameters
+        body["reasoning"] = {"effort": "minimal"}
+        body["text"] = {"verbosity": "medium"}
+    else:
         body["temperature"] = temperature
         body["top_p"] = top_p
-    if max_tokens is not None:
-        body["max_output_tokens"] = max_tokens
 
-    # Add GPT-5 specific parameters only if not causing issues
-    # Comment out for now as they might be causing the timeout
-    # body["reasoning"] = {"effort": "minimal"}  # Use minimal for faster responses
-    # body["text"] = {"verbosity": "medium"}     # Medium verbosity as default
+    if max_tokens is not None:
+        param_name = "max_output_tokens" if str(model).startswith("gpt-5") else "max_tokens"
+        body[param_name] = max_tokens
 
     body.update(_build_responses_input(base64_images, system_message, user_message, messages))
 
     try:
-        # Create session with timeout
-        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout instead of default 5 minutes
+        # Create session with timeout - longer for GPT-5 models
+        timeout_seconds = 60 if str(model).startswith("gpt-5") else 30
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(endpoint, headers=headers, json=body) as response:
                 if response.status != 200:
@@ -280,6 +247,10 @@ async def send_openai_responses_stream(
                     # Expect event types like response.output_text.delta; handle other shapes too
                     evt_type = evt.get("type") or evt.get("event")
                     text_emitted = False
+                    
+                    # Debug logging
+                    logger.debug(f"GPT-5 streaming event: type={evt_type}, keys={evt.keys()}")
+                    
                     if evt_type and ("output_text.delta" in evt_type or evt_type == "response.delta"):
                         delta = evt.get("delta") or evt.get("text_delta") or evt.get("content")
                         if isinstance(delta, str) and delta:
@@ -300,12 +271,9 @@ async def send_openai_responses_stream(
                                     text_emitted = True
                     if evt_type and (evt_type.endswith(".completed") or evt_type == "response.completed"):
                         break
-    except asyncio.TimeoutError:
-        logger.error("OpenAI Responses API timeout after 30 seconds")
-        yield "[OpenAI Responses stream timeout - falling back to Chat Completions API]"
     except Exception as e:
         logger.error(f"OpenAI Responses streaming error: {e}", exc_info=True)
-        yield f"[OpenAI Responses stream error: {e}]"
+        yield f"[Error: OpenAI Responses streaming failed: {e}]"
 
 async def create_openai_compatible_embedding(api_base: str, model: str, input: Union[str, List[str]], api_key: Optional[str] = None) -> List[float]:
     """

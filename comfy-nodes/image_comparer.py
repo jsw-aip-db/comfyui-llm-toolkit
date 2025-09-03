@@ -20,7 +20,7 @@ class ImageComparer(PreviewImage):
 
     RETURN_TYPES = ()
     FUNCTION = "compare_images"
-    CATEGORY = "llm_toolkit/utils"
+    CATEGORY = "🔗llm_toolkit/utils"
     OUTPUT_NODE = True
 
     def compare_images(self,
@@ -45,5 +45,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageComparer": "Image Comparer (LLMToolkit)",
+    "ImageComparer": "Image Comparer (🔗LLMToolkit)",
 }

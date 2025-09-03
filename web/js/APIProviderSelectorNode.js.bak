@@ -1,0 +1,153 @@
+/**
+ * API Provider Selector Node - Simple model list updates
+ * Updates model dropdown when provider changes using hardcoded lists
+ */
+
+import { app } from "../../../scripts/app.js";
+
+// Hardcoded model lists (must match Python node exactly)
+const PROVIDER_MODELS = {
+    "openai": [
+        "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo",
+        "dall-e-3", "dall-e-2", "o1-preview", "o1-mini",
+        // Add more OpenAI models as needed
+    ],
+    "gemini": [
+        "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-pro",
+        "gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation",
+        "imagen-4.0-generate-001", "imagen-4.0-ultra-generate-001", "imagen-3.0-generate-002",
+        "gemini-pro", "gemini-pro-vision",
+        // Add more Gemini models as needed
+    ],
+    "groq": [
+        "llama-3.3-70b-versatile", "llama-3.2-90b-vision-preview", "llama-3.2-11b-vision-preview",
+        "llama-3.2-3b-preview", "llama-3.2-1b-preview", "llama3-groq-70b-8192-tool-use-preview",
+        "llama3-groq-8b-8192-tool-use-preview", "llama-3.1-70b-versatile", "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768", "gemma2-9b-it",
+        // Add more Groq models as needed
+    ],
+    "anthropic": [
+        "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", 
+        "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307",
+    ],
+    "mistral": [
+        "mistral-large-latest", "mistral-medium-latest", "mistral-small-latest", 
+        "mistral-tiny-latest", "codestral-latest", "pixtral-12b-latest",
+        "open-mixtral-8x22b", "open-mixtral-8x7b", "open-mistral-7b",
+    ],
+    "bfl": ["flux-kontext-max"],
+    "suno": ["V3_5", "V4", "V4_5"],
+    "wavespeed": [
+        "wavespeed-ai/flux-kontext-dev-ultra-fast", "wavespeed-ai/flux-kontext-dev/multi-ultra-fast",
+        "bytedance/portrait", "bytedance/seededit-v3",
+        // Add video models
+        "minimax/hailuo-02/t2v-standard", "minimax/hailuo-02/t2v-pro",
+        "minimax/hailuo-02/i2v-pro", "minimax/hailuo-02/i2v-standard",
+        "kwaivgi/kling-v2.1-i2v-standard", "kwaivgi/kling-v2.1-i2v-pro", "kwaivgi/kling-v2.1-i2v-master",
+        "google/veo3-fast", "wavespeed-ai/veo2-t2v", "wavespeed-ai/veo2-i2v",
+    ],
+};
+
+app.registerExtension({
+    name: "ComfyLLMToolkit.APIProviderSelector",
+    
+    async nodeCreated(node) {
+        if (node.comfyClass !== "APIProviderSelectorNode") return;
+        
+        // Find the widgets
+        const providerWidget = node.widgets?.find(w => w.name === "provider");
+        const modelWidget = node.widgets?.find(w => w.name === "llm_model");
+        
+        if (!providerWidget || !modelWidget) {
+            console.warn("APIProviderSelectorNode: Required widgets not found");
+            return;
+        }
+        
+        // Function to update model list based on provider
+        const updateModelList = (provider) => {
+            // Get models from local list or fetch from server
+            const models = PROVIDER_MODELS[provider] || ["No models available"];
+            
+            // Update the widget options
+            modelWidget.options.values = models;
+            
+            // Set to first model if current selection is invalid
+            if (!models.includes(modelWidget.value)) {
+                modelWidget.value = models[0];
+            }
+            
+            // Mark node as dirty to trigger re-render
+            node.setDirtyCanvas(true);
+            
+            console.log(`APIProviderSelector: Updated models for ${provider}: ${models.length} models`);
+        };
+        
+        // Store original callback
+        const originalProviderCallback = providerWidget.callback;
+        
+        // Override provider widget callback
+        providerWidget.callback = function() {
+            // Call original callback if it exists
+            if (originalProviderCallback) {
+                originalProviderCallback.apply(this, arguments);
+            }
+            
+            // Update model list when provider changes
+            updateModelList(providerWidget.value);
+        };
+        
+        // Initial model list update
+        updateModelList(providerWidget.value);
+        
+        // Try to fetch latest models from server on creation
+        const fetchLatestModels = async (provider) => {
+            try {
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+                
+                const response = await fetch(`/ComfyLLMToolkit/get_provider_models?provider=${provider}`, {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.models && data.models.length > 0) {
+                        // Update local cache with server data
+                        PROVIDER_MODELS[provider] = data.models;
+                        updateModelList(provider);
+                        console.log(`APIProviderSelector: Fetched ${data.models.length} models for ${provider} from server`);
+                    }
+                }
+            } catch (err) {
+                // Silently fail - use hardcoded list
+                console.debug(`APIProviderSelector: Using hardcoded models for ${provider}`);
+            }
+        };
+        
+        // Fetch models for current provider
+        fetchLatestModels(providerWidget.value);
+    },
+    
+    async loadedGraphNode(node) {
+        if (node.comfyClass !== "APIProviderSelectorNode") return;
+        
+        // Re-initialize model list when loading a saved workflow
+        const providerWidget = node.widgets?.find(w => w.name === "provider");
+        const modelWidget = node.widgets?.find(w => w.name === "llm_model");
+        
+        if (providerWidget && modelWidget) {
+            const models = PROVIDER_MODELS[providerWidget.value] || ["No models available"];
+            modelWidget.options.values = models;
+            
+            // Ensure saved model is still valid
+            if (!models.includes(modelWidget.value)) {
+                modelWidget.value = models[0];
+            }
+            
+            console.log(`APIProviderSelector: Restored ${providerWidget.value} with model ${modelWidget.value}`);
+        }
+    }
+});

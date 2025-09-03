@@ -1,7 +1,6 @@
 import sys
 import logging
 from typing import Optional, Any, Tuple
-import torch
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -28,9 +27,9 @@ class CheckImageEmpty:
     RETURN_NAMES = ("is_empty", "status_message")
     FUNCTION = "check_image_empty"
     OUTPUT_NODE = False  # This is a utility node, not an output node
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
-    def check_image_empty(self, image: Optional[torch.Tensor] = None) -> Tuple[bool, str]:
+    def check_image_empty(self, image: Optional[Any] = None) -> Tuple[bool, str]:
         """
         Checks if the provided image is null or empty.
         
@@ -47,6 +46,8 @@ class CheckImageEmpty:
         # Initialize return values
         is_empty = True
         status_message = "Image is empty or null"
+        
+        import torch
         
         try:
             # Check if image is None
@@ -102,5 +103,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "CheckImageEmpty": "Check Image Empty (LLMToolkit)"
+    "CheckImageEmpty": "Check Image Empty (🔗LLMToolkit)"
 } 

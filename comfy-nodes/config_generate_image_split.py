@@ -52,7 +52,7 @@ class ConfigGenerateImageOpenAI:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/openai"
+    CATEGORY = "🔗llm_toolkit/config/image/openai"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImageOpenAI executing...")
@@ -128,7 +128,7 @@ class ConfigGenerateImageGemini:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/gemini"
+    CATEGORY = "🔗llm_toolkit/config/image/gemini"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImageGemini executing...")
@@ -200,7 +200,7 @@ class ConfigGenerateImageBFL:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/bfl"
+    CATEGORY = "🔗llm_toolkit/config/image/bfl"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImageBFL executing...")
@@ -252,7 +252,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageOpenAI": "Configure Image Generation - OpenAI/DALL-E (LLMToolkit)",
-    "ConfigGenerateImageGemini": "Configure Image Generation - Gemini/Imagen (LLMToolkit)",
-    "ConfigGenerateImageBFL": "Configure Image Generation - BFL Flux (LLMToolkit)",
+    "ConfigGenerateImageOpenAI": "Configure Image Generation - OpenAI/DALL-E (🔗LLMToolkit)",
+    "ConfigGenerateImageGemini": "Configure Image Generation - Gemini/Imagen (🔗LLMToolkit)",
+    "ConfigGenerateImageBFL": "Configure Image Generation - BFL Flux (🔗LLMToolkit)",
 } 

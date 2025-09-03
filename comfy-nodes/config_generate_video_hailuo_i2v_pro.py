@@ -45,7 +45,7 @@ class ConfigGenerateVideoHailuoI2VPro:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/video/hailuo"
+    CATEGORY = "🔗llm_toolkit/config/video/hailuo"
 
     def configure(
         self,
@@ -85,5 +85,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateVideoHailuoI2VPro": ConfigGenerateVideoHailuoI2VPro
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateVideoHailuoI2VPro": "Configure Hailuo 02 I2V Pro (LLMToolkit)"
+    "ConfigGenerateVideoHailuoI2VPro": "Configure Hailuo 02 I2V Pro (🔗LLMToolkit)"
 } 

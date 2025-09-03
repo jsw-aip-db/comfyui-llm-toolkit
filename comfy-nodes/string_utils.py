@@ -20,7 +20,7 @@ class JoinStringsMulti:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("string",)
     FUNCTION = "join_strings"
-    CATEGORY = "llm_toolkit/utils/text"
+    CATEGORY = "🔗llm_toolkit/utils/text"
     OUTPUT_NODE = False  # Utility node, not an output node
 
     # ------------------------------------------------------------------
@@ -103,5 +103,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "JoinStringsMulti": "Join Strings Multi (LLMToolkit)",
+    "JoinStringsMulti": "Join Strings Multi (🔗LLMToolkit)",
 } 

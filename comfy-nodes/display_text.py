@@ -55,7 +55,7 @@ class Display_Text:
     OUTPUT_IS_LIST = (False, True, False, False, False) # text_list is the only list output
     FUNCTION = "display_llm_text"
     OUTPUT_NODE = True
-    CATEGORY = "llm_toolkit/utils/text" # Changed category to llm_toolkit
+    CATEGORY = "🔗llm_toolkit/utils/text" # Changed category to llm_toolkit
 
     def display_llm_text(self, context: Any, select: str, hide_thinking: bool):
         # --- Safe conversion for 'select' input string ---
@@ -184,6 +184,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Display_Text": "Display Text (LLMToolkit)" # Renamed display name
+    "Display_Text": "Display Text (🔗LLMToolkit)" # Renamed display name
 }
 # --- End Node Mappings --- 

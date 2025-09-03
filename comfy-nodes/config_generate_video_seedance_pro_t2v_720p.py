@@ -45,7 +45,7 @@ class ConfigGenerateVideoSeedanceProT2V:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/video/seedance"
+    CATEGORY = "🔗llm_toolkit/config/video/seedance"
 
     # ------------------------------------------------------------------
     def configure(
@@ -92,5 +92,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateVideoSeedanceProT2V": ConfigGenerateVideoSeedanceProT2V
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateVideoSeedanceProT2V": "Configure Seedance Pro T2V (LLMToolkit)"
+    "ConfigGenerateVideoSeedanceProT2V": "Configure Seedance Pro T2V (🔗LLMToolkit)"
 } 

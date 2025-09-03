@@ -98,7 +98,8 @@ async def send_gemini_native_image_request(
             # Set up generation config
             config_args = {
                 "temperature": temperature,
-                "response_modalities": ["TEXT", "IMAGE"],  # Critical for image generation!
+                "response_modalities": ["IMAGE", "TEXT"],  # Request both image and text
+                "max_output_tokens": max_tokens,
             }
             
             # Generate a unique seed for each image if seed is provided
@@ -115,13 +116,24 @@ async def send_gemini_native_image_request(
                 config=generation_config
             )
             
+            # Debug logging
+            logger.info(f"Response type: {type(response)}")
+            if hasattr(response, 'candidates'):
+                logger.info(f"Number of candidates: {len(response.candidates) if response.candidates else 0}")
+            
             # Extract images from response
+            image_found = False
             if hasattr(response, 'candidates') and response.candidates:
                 for candidate in response.candidates:
                     if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                        for part in candidate.content.parts:
+                        logger.info(f"Number of parts in candidate: {len(candidate.content.parts)}")
+                        for idx, part in enumerate(candidate.content.parts):
+                            logger.info(f"Part {idx} type: {type(part)}, has inline_data: {hasattr(part, 'inline_data')}")
+                            if hasattr(part, 'text') and part.text:
+                                logger.info(f"Part {idx} contains text: {part.text[:100] if part.text else 'None'}...")
                             # Extract image data
                             if hasattr(part, 'inline_data') and part.inline_data:
+                                image_found = True
                                 try:
                                     # The image data is already in bytes
                                     image_bytes = part.inline_data.data
@@ -143,6 +155,9 @@ async def send_gemini_native_image_request(
                                     
                                 except Exception as e:
                                     logger.error(f"Error processing Gemini image data: {e}")
+            
+            if not image_found:
+                logger.warning(f"No image found in response {i+1}. The model may have returned only text.")
             
             # Add small delay between requests if generating multiple
             if i < n - 1:

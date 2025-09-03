@@ -177,7 +177,7 @@ class ConfigGenerateMusic:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/music"
+    CATEGORY = "🔗llm_toolkit/config/music"
 
     # ------------------------------------------------------------------
     # Execution
@@ -247,4 +247,4 @@ class ConfigGenerateMusic:
 # Node registration maps expected by ComfyUI
 # ------------------------------------------------------------------
 NODE_CLASS_MAPPINGS = {"ConfigGenerateMusic": ConfigGenerateMusic}
-NODE_DISPLAY_NAME_MAPPINGS = {"ConfigGenerateMusic": "Configure Music Generation (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"ConfigGenerateMusic": "Configure Music Generation (🔗LLMToolkit)"} 

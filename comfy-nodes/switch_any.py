@@ -39,7 +39,7 @@ class SwitchAny:
     RETURN_NAMES = ("output",)
     FUNCTION = "switch"
     OUTPUT_NODE = False  # This is a utility node, not an output node
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
     def switch(self, selector: bool, input_a: Any = None, input_b: Any = None) -> Tuple[Any]:
         """
@@ -110,7 +110,7 @@ class SwitchAnyRoute:
     RETURN_NAMES = ("output_true", "output_false")
     FUNCTION = "route"
     OUTPUT_NODE = False
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
     def route(self, selector: bool, input: Any):  # noqa: D401
         logger.info("SwitchAnyRoute executing with selector=%s", selector)
@@ -155,7 +155,7 @@ class SwitchAny_wANY:
     RETURN_NAMES = ("output",)
     FUNCTION = "switch"
     OUTPUT_NODE = False
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
     def switch(self, selector: bool, input_a: Any = None, input_b: Any = None):  # type: ignore[override]
         logger.info(f"SwitchAny_wANY executing with selector={selector}")
@@ -196,7 +196,7 @@ class SwitchAnyRoute_wANY:
     RETURN_NAMES = ("output_true", "output_false")
     FUNCTION = "route"
     OUTPUT_NODE = False
-    CATEGORY = "llm_toolkit/utils/logic"
+    CATEGORY = "🔗llm_toolkit/utils/logic"
 
     def route(self, selector: bool, input: Any):  # type: ignore[override]
         logger.info("SwitchAnyRoute_wANY executing with selector=%s", selector)
@@ -217,8 +217,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SwitchAny": "Switch Any (LLMToolkit)",
-    "SwitchAnyRoute": "Switch Any Route (LLMToolkit)",
-    "SwitchAny_wANY": "Switch Any _wANY (LLMToolkit)",
-    "SwitchAnyRoute_wANY": "Switch Any Route _wANY (LLMToolkit)",
+    "SwitchAny": "Switch Any (🔗LLMToolkit)",
+    "SwitchAnyRoute": "Switch Any Route (🔗LLMToolkit)",
+    "SwitchAny_wANY": "Switch Any _wANY (🔗LLMToolkit)",
+    "SwitchAnyRoute_wANY": "Switch Any Route _wANY (🔗LLMToolkit)",
 } 

@@ -31,7 +31,7 @@ class ConfigGenerateImagePortrait:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/wavespeed"
+    CATEGORY = "🔗llm_toolkit/config/image/wavespeed"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImagePortrait executing...")
@@ -66,5 +66,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImagePortrait": ConfigGenerateImagePortrait
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImagePortrait": "Configure Image Generation - Portrait (LLMToolkit)"
+    "ConfigGenerateImagePortrait": "Configure Image Generation - Portrait (🔗LLMToolkit)"
 } 

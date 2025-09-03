@@ -146,7 +146,7 @@ class LLMToolkitProviderSelector:
     RETURN_NAMES = ("context",)
 
     FUNCTION = "select_provider"
-    CATEGORY = "llm_toolkit/providers"
+    CATEGORY = "🔗llm_toolkit/providers"
 
     @classmethod
     def IS_CHANGED(cls, llm_provider, llm_model, base_ip="localhost", port="11434", context=None):
@@ -226,6 +226,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LLMToolkitProviderSelector": "LLM Provider Selector (LLMToolkit)"
+    "LLMToolkitProviderSelector": "LLM Provider Selector (🔗LLMToolkit)"
 }
 # --- End Node Mappings ---

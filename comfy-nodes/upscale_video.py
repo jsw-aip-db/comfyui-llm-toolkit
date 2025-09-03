@@ -38,7 +38,7 @@ class UpscaleVideo:
     """Node to handle video upscaling via WaveSpeedAI."""
     
     MODEL_ID = "wavespeed-ai/video-upscaler"
-    CATEGORY = "llm_toolkit/utils/video"
+    CATEGORY = "🔗llm_toolkit/utils/video"
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -198,4 +198,4 @@ class UpscaleVideo:
             raise
 
 NODE_CLASS_MAPPINGS = {"UpscaleVideo": UpscaleVideo}
-NODE_DISPLAY_NAME_MAPPINGS = {"UpscaleVideo": "Upscale Video (LLMToolkit)"} 
+NODE_DISPLAY_NAME_MAPPINGS = {"UpscaleVideo": "Upscale Video (🔗LLMToolkit)"} 

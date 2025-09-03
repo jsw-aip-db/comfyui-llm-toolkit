@@ -32,7 +32,7 @@ class TestAPIKeyContext:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("report",)
     FUNCTION = "test_context"
-    CATEGORY = "llm_toolkit/debug"
+    CATEGORY = "🔗llm_toolkit/debug"
     OUTPUT_NODE = True
 
     def test_context(self, context: Optional[Dict[str, Any]] = None) -> Tuple[str]:

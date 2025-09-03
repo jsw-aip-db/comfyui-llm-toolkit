@@ -235,3 +235,105 @@ async def create_gemini_compatible_embedding(
             if data.get("data") and data["data"][0].get("embedding"):
                 return data["data"][0]["embedding"]
             raise ValueError("Unexpected embedding response format") 
+
+async def send_gemini_request_stream(
+    api_key: str,
+    model: str,
+    system_message: str,
+    user_message: str,
+    messages: List[Dict[str, Any]],
+    base64_images: Optional[List[str]] = None,
+    temperature: float = 0.7,
+    max_tokens: int = 2048,
+    top_p: float = 0.9,
+    top_k: int = 40,
+):
+    """Yields text chunks from Gemini API stream."""
+    if not api_key:
+        yield "[Gemini stream error: API key missing]"
+        return
+
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent"
+    headers = {"Content-Type": "application/json"}
+    
+    # Build Gemini-specific payload
+    contents = []
+    if system_message:
+        # Gemini doesn't have a dedicated system role, prepend it to the first user message
+        user_message = f"{system_message}\n\n{user_message}"
+
+    if messages:
+        for msg in messages:
+            role = "user" if msg["role"] == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+    # Add current user message with images
+    user_parts = [{"text": user_message}]
+    if base64_images:
+        for img_b64 in base64_images:
+            user_parts.append({
+                "inline_data": {
+                    "mime_type": "image/jpeg",
+                    "data": img_b64
+                }
+            })
+    contents.append({"role": "user", "parts": user_parts})
+
+    payload = {
+        "contents": contents,
+        "generationConfig": {
+            "temperature": temperature,
+            "topP": top_p,
+            "topK": top_k,
+            "maxOutputTokens": max_tokens,
+        }
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{gemini_url}?key={api_key}", headers=headers, json=payload) as response:
+                response.raise_for_status()
+                async for line in response.content:
+                    if line:
+                        line = line.decode('utf-8').strip()
+                        if line.startswith('data: '):
+                            line = line[6:]
+                        try:
+                            data = json.loads(line)
+                            if "candidates" in data:
+                                candidate = data["candidates"][0]
+                                if "content" in candidate and "parts" in candidate["content"]:
+                                    text = candidate["content"]["parts"][0].get("text", "")
+                                    if text:
+                                        yield text
+                        except json.JSONDecodeError:
+                            logger.warning(f"Could not decode JSON line from Gemini stream: {line}")
+    except aiohttp.ClientError as e:
+        logger.error(f"Gemini streaming error: {e}", exc_info=True)
+        yield f"[Gemini streaming error: {e}]"
+
+
+async def create_openai_compatible_embedding(api_base: str, model: str, input: Union[str, List[str]], api_key: Optional[str] = None) -> List[float]:
+    """
+    Create embeddings using an OpenAI-compatible API asynchronously.
+    """
+    api_base = (api_base or "https://generativelanguage.googleapis.com/v1beta/openai").rstrip("/")
+    if not api_base.endswith("/embeddings"):
+        url = f"{api_base}/embeddings"
+    else:
+        url = api_base
+
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    payload = {"model": model, "input": input, "encoding_format": "float"}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as resp:
+            data = await resp.json()
+            if resp.status != 200:
+                raise RuntimeError(f"Embedding error {resp.status}: {data}")
+            if data.get("data") and data["data"][0].get("embedding"):
+                return data["data"][0]["embedding"]
+            raise ValueError("Unexpected embedding response format") 

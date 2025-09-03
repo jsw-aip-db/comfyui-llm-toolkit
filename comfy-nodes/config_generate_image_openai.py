@@ -59,7 +59,7 @@ class ConfigGenerateImageOpenAI:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure"
-    CATEGORY = "llm_toolkit/config/image/openai"
+    CATEGORY = "🔗llm_toolkit/config/image/openai"
 
     def configure(self, context: Optional[Dict[str, Any]] = None, **kwargs) -> Tuple[Dict[str, Any]]:
         logger.info("ConfigGenerateImageOpenAI executing...")
@@ -80,23 +80,24 @@ class ConfigGenerateImageOpenAI:
         if not isinstance(generation_config, dict):
             generation_config = {}
 
-        # Common
-        generation_config['n'] = kwargs.get('n', 1)
-        generation_config['size'] = kwargs.get('size', '1024x1024')
-        generation_config['response_format'] = kwargs.get('response_format', 'b64_json')
-        if kwargs.get('user', "").strip():
-            generation_config['user'] = kwargs.get('user').strip()
+        # Common - context values take precedence
+        generation_config['n'] = generation_config.get('n', kwargs.get('n', 1))
+        generation_config['size'] = generation_config.get('size', kwargs.get('size', '1024x1024'))
+        generation_config['response_format'] = generation_config.get('response_format', kwargs.get('response_format', 'b64_json'))
+        user = generation_config.get('user', kwargs.get('user', "")).strip()
+        if user:
+            generation_config['user'] = user
 
         # DALL-E 3
-        generation_config['quality_dalle3'] = kwargs.get('quality_dalle3', 'standard')
-        generation_config['style_dalle3'] = kwargs.get('style_dalle3', 'vivid')
+        generation_config['quality_dalle3'] = generation_config.get('quality_dalle3', kwargs.get('quality_dalle3', 'standard'))
+        generation_config['style_dalle3'] = generation_config.get('style_dalle3', kwargs.get('style_dalle3', 'vivid'))
 
         # GPT-Image-1
-        generation_config['quality_gpt'] = kwargs.get('quality_gpt', 'auto')
-        generation_config['background_gpt'] = kwargs.get('background_gpt', 'auto')
-        generation_config['output_format_gpt'] = kwargs.get('output_format_gpt', 'png')
-        generation_config['moderation_gpt'] = kwargs.get('moderation_gpt', 'auto')
-        generation_config['output_compression_gpt'] = kwargs.get('output_compression_gpt', 100)
+        generation_config['quality_gpt'] = generation_config.get('quality_gpt', kwargs.get('quality_gpt', 'auto'))
+        generation_config['background_gpt'] = generation_config.get('background_gpt', kwargs.get('background_gpt', 'auto'))
+        generation_config['output_format_gpt'] = generation_config.get('output_format_gpt', kwargs.get('output_format_gpt', 'png'))
+        generation_config['moderation_gpt'] = generation_config.get('moderation_gpt', kwargs.get('moderation_gpt', 'auto'))
+        generation_config['output_compression_gpt'] = generation_config.get('output_compression_gpt', kwargs.get('output_compression_gpt', 100))
 
         output_context["generation_config"] = generation_config
         logger.info("ConfigGenerateImageOpenAI: Updated context with generation_config.")
@@ -108,5 +109,5 @@ NODE_CLASS_MAPPINGS = {
     "ConfigGenerateImageOpenAI": ConfigGenerateImageOpenAI
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ConfigGenerateImageOpenAI": "Configure Image Generation - OpenAI (LLMToolkit)"
+    "ConfigGenerateImageOpenAI": "Configure Image Generation - OpenAI (🔗LLMToolkit)"
 } 

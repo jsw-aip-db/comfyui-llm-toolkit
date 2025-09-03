@@ -1,1 +1,331 @@
-{"id":"97b2326f-b716-49aa-87b1-0a4d1eb5d1be","revision":0,"last_node_id":23,"last_link_id":49,"nodes":[{"id":8,"type":"PromptManager","pos":[-2688.396484375,303.404052734375],"size":[400.6067810058594,390.09478759765625],"flags":{},"order":4,"mode":0,"inputs":[{"localized_name":"context","name":"context","shape":7,"type":"*","link":48},{"localized_name":"image","name":"image","shape":7,"type":"IMAGE","link":null},{"localized_name":"mask","name":"mask","shape":7,"type":"MASK","link":null},{"localized_name":"video","name":"video","shape":7,"type":"IMAGE","link":null},{"localized_name":"text_prompt","name":"text_prompt","shape":7,"type":"STRING","widget":{"name":"text_prompt"},"link":null},{"localized_name":"audio_path","name":"audio_path","shape":7,"type":"STRING","widget":{"name":"audio_path"},"link":null},{"localized_name":"file_path","name":"file_path","shape":7,"type":"STRING","widget":{"name":"file_path"},"link":null},{"localized_name":"url","name":"url","shape":7,"type":"STRING","widget":{"name":"url"},"link":null}],"outputs":[{"localized_name":"context","name":"context","type":"*","links":[14]}],"properties":{"cnr_id":"llm-toolkit","ver":"a3e39758d7b4758943d8b4c0f1ea39572c8e875d","Node name for S&R":"PromptManager","aux_id":"comfy-deploy/comfyui-llm-toolkit"},"widgets_values":["Render a realistic image of this character:\nBlobby Alien Character Spec Name: Glorptak (or nickname: \"Glorp\")\nVisual Appearance Body Shape: Amorphous and gelatinous. Overall silhouette resembles a teardrop or melting marshmallow, shifting slightly over time. Can squish and elongate when emotional or startled.\nMaterial Texture: Semi-translucent, bio-luminescent goo with a jelly-like wobble. Surface occasionally ripples when communicating or moving quickly.\nColor Palette:\n- Base: Iridescent lavender or seafoam green\n- Accents: Subsurface glowing veins of neon pink, electric blue, or golden yellow\n- Mood-based color shifts (anger = dark red, joy = bright aqua, fear = pale gray)\nFacial Features:\n- Eyes: 3–5 asymmetrical floating orbs inside the blob that rotate or blink independently\n- Mouth: Optional—appears as a rippling crescent on the surface when speaking or emoting\n- No visible nose or ears; uses vibration-sensitive receptors embedded in goo\n- Limbs: None by default, but can extrude pseudopods (tentacle-like limbs) when needed for interaction or locomotion. Can manifest temporary feet or hands.\nMovement & Behavior Locomotion:\n- Slides, bounces, and rolls.\n- Can stick to walls and ceilings via suction. When scared, may flatten and ooze away quickly.\nMannerisms:\n- Constant wiggling or wobbling even at rest\n- Leaves harmless glowing slime trails\n- Tends to absorb nearby small objects temporarily out of curiosity","","",""]},{"id":3,"type":"GenerateImage","pos":[-2260.452880859375,302.0280456542969],"size":[340.20001220703125,340],"flags":{},"order":5,"mode":0,"inputs":[{"localized_name":"context","name":"context","shape":7,"type":"*","link":14},{"localized_name":"prompt","name":"prompt","type":"STRING","widget":{"name":"prompt"},"link":null},{"localized_name":"mode","name":"mode","type":"COMBO","widget":{"name":"mode"},"link":null}],"outputs":[{"localized_name":"context","name":"context","type":"*","links":null},{"localized_name":"image","name":"image","type":"IMAGE","links":[46]}],"properties":{"cnr_id":"llm-toolkit","ver":"a3e39758d7b4758943d8b4c0f1ea39572c8e875d","Node name for S&R":"GenerateImage","aux_id":"comfy-deploy/comfyui-llm-toolkit"},"widgets_values":["generate","generate"]},{"id":20,"type":"SaveImage","pos":[-1895.2686767578125,-94.99240112304688],"size":[689.43212890625,769.5012817382812],"flags":{},"order":6,"mode":0,"inputs":[{"localized_name":"images","name":"images","type":"IMAGE","link":46},{"localized_name":"filename_prefix","name":"filename_prefix","type":"STRING","widget":{"name":"filename_prefix"},"link":null}],"outputs":[],"properties":{"cnr_id":"comfy-core","ver":"0.3.29","Node name for S&R":"SaveImage"},"widgets_values":["ComfyUI"]},{"id":22,"type":"Note","pos":[-2240.656982421875,-78.98782348632812],"size":[298.755126953125,185.69979858398438],"flags":{},"order":0,"mode":0,"inputs":[],"outputs":[],"properties":{},"widgets_values":["OPENAI_API_KEY=<YOUR_API_KEY>\nSet the system environment variable or the .env file inside the root of llm-toolki custom node folder ore set the external api key \n\nOR in Comfy-Deploy set the Machine sectrets\n\ngpt-image-1 \nis only available for verified orgs\nOptional set the machine secrets if you are using Comfy-Deploy\n\n"],"color":"#432","bgcolor":"#653"},{"id":21,"type":"ConfigGenerateImageOpenAI","pos":[-2761.051025390625,56.959781646728516],"size":[469.5191345214844,178],"flags":{},"order":3,"mode":0,"inputs":[{"localized_name":"context","name":"context","shape":7,"type":"*","link":47},{"localized_name":"n","name":"n","shape":7,"type":"INT","widget":{"name":"n"},"link":null},{"localized_name":"size","name":"size","shape":7,"type":"COMBO","widget":{"name":"size"},"link":null},{"localized_name":"response_format","name":"response_format","shape":7,"type":"COMBO","widget":{"name":"response_format"},"link":null},{"localized_name":"user","name":"user","shape":7,"type":"STRING","widget":{"name":"user"},"link":null},{"localized_name":"quality","name":"quality","shape":7,"type":"COMBO","widget":{"name":"quality"},"link":null},{"localized_name":"style","name":"style","shape":7,"type":"COMBO","widget":{"name":"style"},"link":null}],"outputs":[{"localized_name":"context","name":"context","type":"*","links":[48]}],"properties":{"cnr_id":"llm-toolkit","ver":"1.0.2","Node name for S&R":"ConfigGenerateImageOpenAI"},"widgets_values":[4,"1024x1024","b64_json","","standard","vivid"]},{"id":19,"type":"OpenAIProviderNode","pos":[-2717.225830078125,-66.88668060302734],"size":[235.1999969482422,58],"flags":{},"order":2,"mode":0,"inputs":[{"localized_name":"context","name":"context","shape":7,"type":"*","link":null},{"localized_name":"llm_model","name":"llm_model","type":"STRING","widget":{"name":"llm_model"},"link":49}],"outputs":[{"localized_name":"context","name":"context","type":"*","links":[47]}],"properties":{"cnr_id":"llm-toolkit","ver":"a3e39758d7b4758943d8b4c0f1ea39572c8e875d","Node name for S&R":"OpenAIProviderNode","aux_id":"comfy-deploy/comfyui-llm-toolkit","llm_model":"gpt-image-1"},"widgets_values":["gpt-image-1"]},{"id":23,"type":"ComfyUIDeployExternalText","pos":[-3261.697265625,-61.6158561706543],"size":[400,200],"flags":{},"order":1,"mode":0,"inputs":[{"localized_name":"input_id","name":"input_id","type":"STRING","widget":{"name":"input_id"},"link":null},{"localized_name":"default_value","name":"default_value","shape":7,"type":"STRING","widget":{"name":"default_value"},"link":null},{"localized_name":"display_name","name":"display_name","shape":7,"type":"STRING","widget":{"name":"display_name"},"link":null},{"localized_name":"description","name":"description","shape":7,"type":"STRING","widget":{"name":"description"},"link":null}],"outputs":[{"localized_name":"text","name":"text","type":"STRING","links":[49]}],"properties":{"cnr_id":"comfyui-deploy","ver":"089bad55605392860e59476a4c2765bfc772750b","Node name for S&R":"ComfyUIDeployExternalText"},"widgets_values":["llm_model","gpt-image-1","",""]}],"links":[[14,8,0,3,0,"*"],[46,3,1,20,0,"IMAGE"],[47,19,0,21,0,"*"],[48,21,0,8,0,"*"],[49,23,0,19,1,"STRING"]],"groups":[],"config":{},"extra":{"ds":{"scale":0.6727499949325638,"offset":[3180.74640676527,622.0954683481368]},"frontendVersion":"1.17.11","VHS_latentpreview":false,"VHS_latentpreviewrate":0},"version":0.4}
+{
+  "id": "97b2326f-b716-49aa-87b1-0a4d1eb5d1be",
+  "revision": 0,
+  "last_node_id": 27,
+  "last_link_id": 55,
+  "nodes": [
+    {
+      "id": 20,
+      "type": "SaveImage",
+      "pos": [
+        -1895.2686767578125,
+        -94.99240112304688
+      ],
+      "size": [
+        689.43212890625,
+        769.5012817382812
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 46
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.29"
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "Note",
+      "pos": [
+        -2240.656982421875,
+        -78.98782348632812
+      ],
+      "size": [
+        298.755126953125,
+        185.69979858398438
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "OPENAI_API_KEY=<YOUR_API_KEY>\nSet the system environment variable or the .env file inside the root of llm-toolki custom node folder ore set the external api key \n\nOR in Comfy-Deploy set the Machine sectrets\n\ngpt-image-1 \nis only available for verified orgs\nOptional set the machine secrets if you are using Comfy-Deploy\n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 27,
+      "type": "LLMPromptManager",
+      "pos": [
+        -2573.836669921875,
+        410.1473083496094
+      ],
+      "size": [
+        175.29257202148438,
+        155
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": 53
+        },
+        {
+          "name": "context_1",
+          "type": "*",
+          "link": 55
+        },
+        {
+          "name": "context_2",
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            54
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LLMPromptManager"
+      },
+      "dynamicInputCount": 3
+    },
+    {
+      "id": 3,
+      "type": "GenerateImage",
+      "pos": [
+        -2260.452880859375,
+        302.0280456542969
+      ],
+      "size": [
+        315.6308288574219,
+        340
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": 54
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            46
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GenerateImage",
+        "cnr_id": "llm-toolkit",
+        "aux_id": "comfy-deploy/comfyui-llm-toolkit",
+        "ver": "a3e39758d7b4758943d8b4c0f1ea39572c8e875d"
+      },
+      "widgets_values": [
+        "",
+        "generate"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "APIProviderSelectorNode",
+      "pos": [
+        -2767.86328125,
+        -169.6767120361328
+      ],
+      "size": [
+        333.0874938964844,
+        130
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            52
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "APIProviderSelectorNode"
+      },
+      "widgets_values": [
+        "openai",
+        "gpt-image-1",
+        ""
+      ]
+    },
+    {
+      "id": 24,
+      "type": "StringConstantMultiline",
+      "pos": [
+        -3257.775390625,
+        225.18460083007812
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            55
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StringConstantMultiline"
+      },
+      "widgets_values": [
+        "Render a realistic image of this character:\nBlobby Alien Character Spec Name: Glorptak (or nickname: \"Glorp\")\nVisual Appearance Body Shape: Amorphous and gelatinous. Overall silhouette resembles a teardrop or melting marshmallow, shifting slightly over time. Can squish and elongate when emotional or startled.\nMaterial Texture: Semi-translucent, bio-luminescent goo with a jelly-like wobble. Surface occasionally ripples when communicating or moving quickly.\nColor Palette:\n- Base: Iridescent lavender or seafoam green\n- Accents: Subsurface glowing veins of neon pink, electric blue, or golden yellow\n- Mood-based color shifts (anger = dark red, joy = bright aqua, fear = pale gray)\nFacial Features:\n- Eyes: 3–5 asymmetrical floating orbs inside the blob that rotate or blink independently\n- Mouth: Optional—appears as a rippling crescent on the surface when speaking or emoting\n- No visible nose or ears; uses vibration-sensitive receptors embedded in goo\n- Limbs: None by default, but can extrude pseudopods (tentacle-like limbs) when needed for interaction or locomotion. Can manifest temporary feet or hands.\nMovement & Behavior Locomotion:\n- Slides, bounces, and rolls.\n- Can stick to walls and ceilings via suction. When scared, may flatten and ooze away quickly.\nMannerisms:\n- Constant wiggling or wobbling even at rest\n- Leaves harmless glowing slime trails\n- Tends to absorb nearby small objects temporarily out of curiosity",
+        true
+      ]
+    },
+    {
+      "id": 21,
+      "type": "ConfigGenerateImageOpenAI",
+      "pos": [
+        -2767.8759765625,
+        73.74874877929688
+      ],
+      "size": [
+        428.7417907714844,
+        178
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": 52
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            53
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ConfigGenerateImageOpenAI",
+        "cnr_id": "llm-toolkit",
+        "ver": "1.0.2"
+      },
+      "widgets_values": [
+        1,
+        "1024x1024",
+        "b64_json",
+        "",
+        "standard",
+        "natural"
+      ]
+    }
+  ],
+  "links": [
+    [
+      46,
+      3,
+      1,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      52,
+      26,
+      0,
+      21,
+      0,
+      "*"
+    ],
+    [
+      53,
+      21,
+      0,
+      27,
+      0,
+      "*"
+    ],
+    [
+      54,
+      27,
+      0,
+      3,
+      0,
+      "*"
+    ],
+    [
+      55,
+      24,
+      0,
+      27,
+      1,
+      "*"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7400249944258206,
+      "offset": [
+        3318.6797625454565,
+        400.4104885355181
+      ]
+    },
+    "frontendVersion": "1.25.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

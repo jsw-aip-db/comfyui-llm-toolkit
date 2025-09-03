@@ -238,7 +238,7 @@ class LocalTransformersProviderNode:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("context",)
     FUNCTION = "configure_transformers"
-    CATEGORY = "llm_toolkit/providers"
+    CATEGORY = "🔗llm_toolkit/providers"
 
     @classmethod
     def IS_CHANGED(cls, llm_model: str, context=None):
@@ -276,5 +276,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LocalTransformersProviderNode": "Local Transformers Provider (LLMToolkit)",
+    "LocalTransformersProviderNode": "Local Transformers Provider (🔗LLMToolkit)",
 } 

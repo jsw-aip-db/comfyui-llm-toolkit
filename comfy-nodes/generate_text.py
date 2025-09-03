@@ -38,15 +38,14 @@ if missing_deps:
     logger.warning("Please install missing dependencies: pip install " + " ".join(missing_deps))
 
 # Import utility functions (assuming they exist)
-from send_request import send_request, run_async # Keep non-streaming version if needed
+from send_request import send_request, run_async, is_gpt5_model # Keep non-streaming version if needed
 from api.openai_api import send_openai_responses_stream
+from api.gemini_api import send_gemini_request_stream
 from llmtoolkit_utils import query_local_ollama_models, ensure_ollama_server, ensure_ollama_model, get_api_key
 
-# Local transformers streaming (optional)
-try:
-    from transformers_provider import send_transformers_request_stream
-except ImportError:
-    send_transformers_request_stream = None  # type: ignore
+# Local transformers streaming (optional) - removed unused import
+# The send_transformers_request_stream function was imported but never used
+send_transformers_request_stream = None  # type: ignore
 
 # Payload helper to embed context into a string subclass
 from context_payload import ContextPayload
@@ -161,34 +160,39 @@ async def send_request_stream(
     Sends a streaming request to an LLM provider (Example for Ollama).
     Yields text chunks as they are received.
     """
-    if llm_provider.lower() == "openai":
-        # --- OpenAI Specific Streaming Logic ---
+    provider_lower = llm_provider.lower()
+
+    if provider_lower in ["openai", "openrouter"]:
+        # --- OpenAI & OpenRouter Specific Streaming Logic ---
         if not llm_api_key:
-            logger.error("OpenAI streaming requested but no API key supplied.")
-            async for chunk in send_request_stream(
-                llm_provider="openai_fallback_nonstream",
-                base_ip=base_ip,
-                port=port,
-                llm_model=llm_model,
-                system_message=system_message,
-                user_message=user_message,
-                messages=messages,
-                seed=seed,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                random=random,
-                top_k=top_k,
-                top_p=top_p,
-                repeat_penalty=repeat_penalty,
-                stop=stop,
-                keep_alive=keep_alive,
-                llm_api_key=llm_api_key,
-                base64_images=base64_images,
-            ):
-                yield chunk
+            logger.error(f"{llm_provider} streaming requested but no API key supplied.")
+            yield f"[{llm_provider} Error: API key missing]"
             return
 
-        openai_url = "https://api.openai.com/v1/chat/completions"
+        # Check if this is a GPT-5 model and use Responses API (OpenAI only)
+        if provider_lower == "openai" and is_gpt5_model(llm_model):
+            logger.info(f"Detected GPT-5 model: {llm_model}, using Responses API for streaming")
+            try:
+                async for chunk in send_openai_responses_stream(
+                    api_url="https://api.openai.com/v1/responses",
+                    base64_images=base64_images,
+                    model=llm_model,
+                    system_message=system_message,
+                    user_message=user_message,
+                    messages=messages,
+                    api_key=llm_api_key,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                ):
+                    yield chunk
+                return
+            except Exception as e:
+                logger.warning(f"GPT-5 Responses stream failed: {e}, falling back to Chat Completions")
+                # Fall through to regular OpenAI streaming below
+
+        api_url = "https://openrouter.ai/api/v1/chat/completions" if provider_lower == "openrouter" else "https://api.openai.com/v1/chat/completions"
+        
         headers = {
             "Authorization": f"Bearer {llm_api_key}",
             "Content-Type": "application/json",
@@ -225,7 +229,7 @@ async def send_request_stream(
         # Remove None values
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        logger.info(f"Streaming request to OpenAI: model={llm_model}")
+        logger.info(f"Streaming request to {llm_provider}: model={llm_model}")
         session = None
         try:
             # Create session with custom connector for Windows
@@ -235,7 +239,7 @@ async def send_request_stream(
                 connector=connector
             )
             
-            async with session.post(openai_url, headers=headers, json=payload) as response:
+            async with session.post(api_url, headers=headers, json=payload) as response:
                 response.raise_for_status()
                 async for raw_line in response.content:
                         if not raw_line:
@@ -272,7 +276,28 @@ async def send_request_stream(
                     await asyncio.sleep(0.1)
         return
 
-    if llm_provider.lower() == "ollama":
+    if provider_lower == "gemini":
+        if not llm_api_key:
+            logger.error("Gemini streaming requested but no API key supplied.")
+            yield "[Gemini Error: API key missing]"
+            return
+        
+        async for chunk in send_gemini_request_stream(
+            api_key=llm_api_key,
+            model=llm_model,
+            system_message=system_message,
+            user_message=user_message,
+            messages=messages,
+            base64_images=base64_images,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            top_k=top_k,
+        ):
+            yield chunk
+        return
+
+    if provider_lower == "ollama":
         # --- Ollama Specific Streaming Logic ---
         if not ensure_ollama_server(base_ip, port):
             logger.error("Ollama daemon unavailable and could not be started – aborting stream.")
@@ -448,7 +473,7 @@ async def send_request_stream(
             logger.error(f"An unexpected error occurred during streaming request: {e}", exc_info=True)
             yield f"[Unexpected Error: {e}]"
 
-    if llm_provider.lower() == "groq":
+    if provider_lower == "groq":
         # --- Groq Specific Streaming Logic ---
         if not llm_api_key:
             logger.error("Groq streaming requested but no API key supplied.")
@@ -545,7 +570,7 @@ async def send_request_stream(
         return
 
     # Existing fallback logic for other providers
-    if llm_provider.lower() not in ["ollama", "openai", "transformers", "hf", "local", "groq"]:
+    if provider_lower not in ["ollama", "openai", "openrouter", "transformers", "hf", "local", "groq", "gemini"]:
         logger.warning(f"Streaming not implemented for provider '{llm_provider}'. Falling back to non-streaming.")
         try:
             full_response_data = await send_request(
@@ -561,6 +586,12 @@ async def send_request_stream(
                      if content: yield content
                  elif "response" in full_response_data:
                      if full_response_data["response"]: yield full_response_data["response"]
+                 elif "candidates" in full_response_data and full_response_data.get("candidates"):
+                     try:
+                         content = full_response_data["candidates"][0]["content"]["parts"][0]["text"]
+                         if content: yield content
+                     except (KeyError, IndexError, TypeError):
+                         logger.warning(f"Could not parse Gemini response format: {full_response_data}")
                  else:
                     logger.error(f"Unexpected non-streaming response format: {full_response_data}")
             elif isinstance(full_response_data, str):
@@ -609,7 +640,7 @@ class LLMToolkitTextGenerator:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "text")
     FUNCTION = "generate"
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
     OUTPUT_NODE = True # Keeps the text widget for non-streaming version
 
     def generate(self, prompt, hide_thinking, llm_model=None, context=None):
@@ -880,7 +911,7 @@ class LLMToolkitTextGeneratorStream:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "text")
     FUNCTION = "generate_stream" # <-- Use new function name
-    CATEGORY = "llm_toolkit/generators"
+    CATEGORY = "🔗llm_toolkit/generators"
     OUTPUT_NODE = True # Keep the JS widget logic
 
     def generate_stream(self, prompt, hide_thinking, unique_id, llm_model=None, context=None, **kwargs):
@@ -1071,66 +1102,26 @@ class LLMToolkitTextGeneratorStream:
                 server.send_sync("llmtoolkit.stream.start", {"node": unique_id}, sid=server.client_id)
 
                 # --- Initiate and process the stream ---
-                # Use Responses stream for GPT-5 models, otherwise the provider-specific stream
-                if params["llm_provider"] == "openai" and str(params["llm_model"]).startswith("gpt-5") and params.get("llm_api_key"):
-                    async def _responses_stream_wrapper():
-                        try:
-                            async for chunk in send_openai_responses_stream(
-                                api_url="https://api.openai.com/v1/responses",
-                                base64_images=params.get("images"),
-                                model=params["llm_model"],
-                                system_message=params["system_message"],
-                                user_message=params["user_message"],
-                                messages=params["messages"],
-                                api_key=params.get("llm_api_key"),
-                                # GPT-5 does not support temperature/top_p
-                                max_tokens=params["max_tokens"],
-                                top_p=None,
-                            ):
-                                yield chunk
-                        except (Exception, asyncio.TimeoutError) as e:
-                            if "timeout" in str(e).lower() or isinstance(e, asyncio.TimeoutError):
-                                logger.warning(f"GPT-5 Responses stream timed out, falling back to Chat Completions stream")
-                            else:
-                                logger.warning(f"GPT-5 Responses stream failed ({e}), falling back to Chat Completions stream")
-                            # Fallback to regular OpenAI streaming
-                            async for chunk in send_request_stream(
-                                llm_provider="openai",
-                                base_ip="",  # Not used for OpenAI
-                                port="",     # Not used for OpenAI
-                                llm_model=params["llm_model"],
-                                system_message=params["system_message"],
-                                user_message=params["user_message"],
-                                messages=params["messages"],
-                                temperature=params["temperature"],
-                                max_tokens=params["max_tokens"],
-                                top_p=params["top_p"],
-                                llm_api_key=params.get("llm_api_key"),
-                                base64_images=params.get("images"),
-                            ):
-                                yield chunk
-                    stream_generator = _responses_stream_wrapper()
-                else:
-                    stream_generator = send_request_stream(
-                        llm_provider=params["llm_provider"],
-                        base_ip=params.get("base_ip", "localhost"),
-                        port=params.get("port", "11434"),
-                        llm_model=params["llm_model"],
-                        system_message=params["system_message"],
-                        user_message=params["user_message"],
-                        messages=params["messages"],
-                        seed=params.get("seed"),
-                        temperature=params["temperature"],
-                        max_tokens=params["max_tokens"],
-                        random=params.get("random", False),
-                        top_k=params["top_k"],
-                        top_p=params["top_p"],
-                        repeat_penalty=params["repeat_penalty"],
-                        stop=params.get("stop"),
-                        keep_alive=params.get("keep_alive", True),
-                        llm_api_key=params.get("llm_api_key"),
-                        base64_images=params.get("images"),
-                    )
+                stream_generator = send_request_stream(
+                    llm_provider=params["llm_provider"],
+                    base_ip=params.get("base_ip", "localhost"),
+                    port=params.get("port", "11434"),
+                    llm_model=params["llm_model"],
+                    system_message=params["system_message"],
+                    user_message=params["user_message"],
+                    messages=params["messages"],
+                    seed=params.get("seed"),
+                    temperature=params["temperature"],
+                    max_tokens=params["max_tokens"],
+                    random=params.get("random", False),
+                    top_k=params["top_k"],
+                    top_p=params["top_p"],
+                    repeat_penalty=params["repeat_penalty"],
+                    stop=params.get("stop"),
+                    keep_alive=params.get("keep_alive", True),
+                    llm_api_key=params.get("llm_api_key"),
+                    base64_images=params.get("images"),
+                )
 
                 async for chunk in stream_generator:
                     if chunk:
@@ -1255,6 +1246,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "LLMToolkitTextGenerator": "Generate Text (LLMToolkit)",
-    "LLMToolkitTextGeneratorStream": "Generate Text Stream (LLMToolkit)" # New display name
+    "LLMToolkitTextGenerator": "Generate Text (🔗LLMToolkit)",
+    "LLMToolkitTextGeneratorStream": "Generate Text Stream (🔗LLMToolkit)" # New display name
 }

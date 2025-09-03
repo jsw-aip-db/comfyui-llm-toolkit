@@ -103,7 +103,7 @@ class SystemPromptTaskGenerator:
     RETURN_TYPES = ("*", "STRING")
     RETURN_NAMES = ("context", "system_prompt")
     FUNCTION = "generate_prompt"
-    CATEGORY = "llm_toolkit/prompt"
+    CATEGORY = "🔗llm_toolkit/prompt"
 
     def generate_prompt(self, task: str, output_as_text: bool = False, context: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], str]:
         # Prepare context copy / init
@@ -165,5 +165,5 @@ NODE_CLASS_MAPPINGS = {
     "SystemPromptTaskGenerator": SystemPromptTaskGenerator,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SystemPromptTaskGenerator": "Kontext System Prompt text (LLMToolkit)",
+    "SystemPromptTaskGenerator": "Kontext System Prompt text (🔗LLMToolkit)",
 }
