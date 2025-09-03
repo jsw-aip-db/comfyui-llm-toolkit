@@ -805,38 +805,51 @@ class APIProviderSelectorNode:
 try:
     from server import PromptServer
     from aiohttp import web
-    
-    @PromptServer.instance.routes.post("/ComfyLLMToolkit/get_provider_models")
-    async def get_provider_models_endpoint(request):
-        try:
-            data = await request.json()
-            provider = data.get("provider", "openai")
-            external_api_key = data.get("external_api_key", "")
-            
-            # Use external API key if provided, otherwise get from environment
-            if external_api_key:
-                api_key = external_api_key
-            else:
-                try:
-                    api_key = get_api_key(f"{provider.upper()}_API_KEY", provider)
-                except ValueError:
-                    api_key = None
-            
-            # Get models from server
-            models = get_models(provider, "localhost", "11434", api_key)
-            
-            # Fallback to hardcoded models if fetching fails
-            if not models or len(models) == 0:
-                models = PROVIDER_MODELS.get(provider, ["No models available"])
-            
-            return web.json_response({"models": models})
-            
-        except Exception as e:
-            # Return hardcoded models on error
-            provider = data.get("provider", "openai") if 'data' in locals() else "openai"
-            models = PROVIDER_MODELS.get(provider, ["Error fetching models"])
-            return web.json_response({"models": models})
-    
+
+    # --- Route Registration Check ---
+    if not hasattr(PromptServer.instance, "llm_toolkit_routes"):
+        PromptServer.instance.llm_toolkit_routes = set()
+
+    route_path = "/ComfyLLMToolkit/get_provider_models"
+    route_key = f"POST:{route_path}"
+
+    if route_key not in PromptServer.instance.llm_toolkit_routes:
+        @PromptServer.instance.routes.post(route_path)
+        async def get_provider_models_endpoint_post(request):
+            try:
+                data = await request.json()
+                provider = data.get("provider", "openai")
+                external_api_key = data.get("external_api_key", "")
+
+                # Use external API key if provided, otherwise get from environment
+                if external_api_key:
+                    api_key = external_api_key
+                else:
+                    try:
+                        api_key = get_api_key(f"{provider.upper()}_API_KEY", provider)
+                    except ValueError:
+                        api_key = None
+
+                # Get models from server
+                models = get_models(provider, "localhost", "11434", api_key)
+
+                # Fallback to hardcoded models if fetching fails
+                if not models or len(models) == 0:
+                    models = PROVIDER_MODELS.get(provider, ["No models available"])
+
+                return web.json_response({"models": models})
+
+            except Exception as e:
+                # Return hardcoded models on error
+                provider = data.get("provider", "openai") if 'data' in locals() else "openai"
+                models = PROVIDER_MODELS.get(provider, ["Error fetching models"])
+                return web.json_response({"models": models})
+        
+        PromptServer.instance.llm_toolkit_routes.add(route_key)
+        logger.info(f"LLMToolkit: Registered POST route: {route_path}")
+    else:
+        logger.warning(f"LLMToolkit: POST route {route_path} already registered. Skipping.")
+
 except ImportError:
     print("PromptServer not available. Model fetching route not registered.")
 

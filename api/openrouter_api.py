@@ -44,6 +44,7 @@ async def send_openrouter_image_generation_request(
     payload = {
         "model": model,
         "messages": messages,
+        "modalities": ["image", "text"],
     }
 
     # Add 'n' if it's greater than 1, as some models may support it.
@@ -105,3 +106,38 @@ async def send_openrouter_image_generation_request(
     except Exception as e:
         logger.error(f"Error during OpenRouter API call: {e}", exc_info=True)
         return {"error": str(e), "data": []}
+
+async def send_openrouter_request(
+    api_url: str,
+    model: str,
+    messages: List[Dict[str, Any]],
+    api_key: str,
+    **kwargs,
+) -> Dict[str, Any]:
+    """Generic OpenRouter chat completions handler."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"model": model, "messages": messages, **kwargs}
+    payload = {k: v for k, v in payload.items() if v is not None}
+    
+    # Log sanitized payload
+    log_payload = payload.copy()
+    logger.info(f"Sending request to OpenRouter with payload: {json.dumps(log_payload, indent=2)}")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                api_url, headers=headers, json=payload
+            ) as response:
+                response.raise_for_status()
+                return await response.json()
+    except aiohttp.ClientResponseError as e:
+        logger.error(f"HTTP error from OpenRouter API: {e.status} {e.message}")
+        error_body = await response.text()
+        logger.error(f"Error body: {error_body}")
+        return {"error": f"HTTP error: {e.status} {e.message}. Body: {error_body}"}
+    except Exception as e:
+        logger.error(f"Error during OpenRouter API call: {e}", exc_info=True)
+        return {"error": str(e)}

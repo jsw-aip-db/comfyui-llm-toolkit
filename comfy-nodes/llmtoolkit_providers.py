@@ -71,45 +71,57 @@ try:
     from server import PromptServer
     from aiohttp import web
 
-    # Define the endpoint when the module is imported
-    @PromptServer.instance.routes.post("/ComfyLLMToolkit/get_provider_models")
-    async def get_llmtoolkit_provider_models_endpoint(request):
-        """API endpoint for the frontend to fetch available models for a selected provider."""
-        try:
-            data = await request.json()
-            llm_provider = data.get("llm_provider")
-            base_ip = data.get("base_ip", "localhost")
-            port = data.get("port", "11434")
-            
-            # Enhanced logging for debugging
-            logger.info(f"API /ComfyLLMToolkit/get_provider_models called with provider: {llm_provider}, ip: {base_ip}, port: {port}")
-            print(f"Fetching models for {llm_provider} at {base_ip}:{port}")
+    # --- Route Registration Check ---
+    if not hasattr(PromptServer.instance, "llm_toolkit_routes"):
+        PromptServer.instance.llm_toolkit_routes = set()
 
-            # For local providers, `get_models` doesn't need a real key. A placeholder is fine.
-            api_key = "1234"
+    route_path = "/ComfyLLMToolkit/get_provider_models"
+    route_key = f"POST:{route_path}"
 
-            # --- Call get_models from utils ---
-            models = get_models(llm_provider, base_ip, port, api_key)
-            model_count = len(models) if models else 0
-            logger.info(f"Fetched {model_count} models for {llm_provider}.")
-            print(f"Retrieved {model_count} models for {llm_provider}: {models[:5]}{'...' if model_count > 5 else ''}")
-            
-            # Ensure we're returning a valid JSON array
-            if not models or not isinstance(models, list):
-                models = ["No models found"]
-                logger.warning(f"No valid models returned for {llm_provider}, using fallback.")
-            
-            return web.json_response(models)
+    if route_key not in PromptServer.instance.llm_toolkit_routes:
+        @PromptServer.instance.routes.post(route_path)
+        async def get_llmtoolkit_provider_models_endpoint(request):
+            """API endpoint for the frontend to fetch available models for a selected provider."""
+            try:
+                data = await request.json()
+                llm_provider = data.get("llm_provider")
+                base_ip = data.get("base_ip", "localhost")
+                port = data.get("port", "11434")
+                
+                # Enhanced logging for debugging
+                logger.info(f"API /ComfyLLMToolkit/get_provider_models called with provider: {llm_provider}, ip: {base_ip}, port: {port}")
+                print(f"Fetching models for {llm_provider} at {base_ip}:{port}")
 
-        except Exception as e:
-            logger.error(f"Error in /ComfyLLMToolkit/get_provider_models endpoint: {str(e)}", exc_info=True)
-            print(f"Error in get_llmtoolkit_provider_models_endpoint: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return web.json_response(["Error fetching models"], status=500)
+                # For local providers, `get_models` doesn't need a real key. A placeholder is fine.
+                api_key = "1234"
+
+                # --- Call get_models from utils ---
+                models = get_models(llm_provider, base_ip, port, api_key)
+                model_count = len(models) if models else 0
+                logger.info(f"Fetched {model_count} models for {llm_provider}.")
+                print(f"Retrieved {model_count} models for {llm_provider}: {models[:5]}{'...' if model_count > 5 else ''}")
+                
+                # Ensure we're returning a valid JSON array
+                if not models or not isinstance(models, list):
+                    models = ["No models found"]
+                    logger.warning(f"No valid models returned for {llm_provider}, using fallback.")
+                
+                return web.json_response(models)
+
+            except Exception as e:
+                logger.error(f"Error in /ComfyLLMToolkit/get_provider_models endpoint: {str(e)}", exc_info=True)
+                print(f"Error in get_llmtoolkit_provider_models_endpoint: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return web.json_response(["Error fetching models"], status=500)
+        
+        PromptServer.instance.llm_toolkit_routes.add(route_key)
+        logger.info(f"LLMToolkit: Registered POST route: {route_path}")
+    else:
+        logger.warning(f"LLMToolkit: POST route {route_path} already registered. Skipping.")
 
     # Print startup confirmation
-    logger.info("ComfyUI-LLM-Toolkit API routes registered!")
+    logger.info("ComfyUI-LLM-Toolkit API routes checked/registered!")
 
 except (ImportError, AttributeError) as e:
     logger.warning(f"ComfyUI PromptServer or aiohttp not available. Dynamic model fetching from UI will not work. Error: {e}")

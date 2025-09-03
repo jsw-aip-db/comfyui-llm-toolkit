@@ -87,7 +87,6 @@ profile_default/
 ipython_config.py
 
 # Model lists
-model_lists_output/
 test_import.py
 test_js_integration.py
 test_lazy_loading.py

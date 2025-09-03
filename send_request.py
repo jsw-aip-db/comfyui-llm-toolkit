@@ -34,6 +34,9 @@ from api.anthropic_api import send_anthropic_request
 # DeepSeek helpers (OpenAI-compat layer)
 from api.deepseek_api import send_deepseek_request
 
+# OpenRouter (OpenAI-compat)
+from api.openrouter_api import send_openrouter_request
+
 
 # Optional: folder_paths may be used elsewhere but isn't necessary here —
 # leave a harmless import to keep previous behaviour for callers that expect
@@ -446,6 +449,25 @@ async def send_request(
                 repeat_penalty=repeat_penalty,
                 tools=None,
                 tool_choice=None,
+            )
+
+        # ------------------------------------------------------------------
+        #  OpenRouter (OpenAI-compatible)
+        # ------------------------------------------------------------------
+        if llm_provider == "openrouter":
+            return await send_openrouter_request(
+                api_url="https://openrouter.ai/api/v1/chat/completions",
+                model=llm_model,
+                messages=messages
+                or [
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message},
+                ],
+                api_key=llm_api_key or "",
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                seed=seed if random else None,
             )
 
         return {"error": f"Unsupported llm_provider '{llm_provider}'"}

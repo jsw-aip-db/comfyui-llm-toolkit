@@ -538,6 +538,7 @@ app.registerExtension({
         // Find the widgets safely
         const providerWidget = node.widgets?.find(w => w.name === "provider");
         const modelWidget = node.widgets?.find(w => w.name === "llm_model");
+        const apiKeyWidget = node.widgets?.find(w => w.name === "external_api_key");
         
         if (!providerWidget || !modelWidget) {
             console.warn("APIProviderSelector: Required widgets not found");
@@ -573,17 +574,27 @@ app.registerExtension({
         // Fetch models from JSON files or hardcoded fallback
         const updateLLMModels = async () => {
             const provider = providerWidget.value;
+            const external_api_key = apiKeyWidget ? apiKeyWidget.value : "";
             
             try {
-                // Use GET request to fetch from JSON files
-                const response = await fetch(`/ComfyLLMToolkit/get_provider_models?provider=${encodeURIComponent(provider)}`);
+                // Use POST request to fetch from the dynamic endpoint
+                const response = await fetch('/ComfyLLMToolkit/get_provider_models', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        provider: provider,
+                        external_api_key: external_api_key
+                    }),
+                });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log(`APIProviderSelector: Loaded models from ${data.source}:`, data);
+                console.log(`APIProviderSelector: Loaded models via POST:`, data);
 
                 if (data.models && Array.isArray(data.models) && data.models.length > 0) {
                     // Update both the cache and widget
@@ -596,17 +607,19 @@ app.registerExtension({
                     }
                     
                     node.setDirtyCanvas(true);
-                    console.log(`APIProviderSelector: Updated ${data.models.length} models for ${provider} from ${data.source}`);
+                    console.log(`APIProviderSelector: Updated ${data.models.length} models for ${provider}`);
                 } else {
-                    throw new Error("No models available");
+                    throw new Error("No models available from provider API");
                 }
             } catch (error) {
-                console.error("Error updating models:", error);
+                console.error("Error updating models via POST:", error);
                 
-                // Use fallback models
-                const models = PROVIDER_MODELS[provider] || ["No models available"];
+                // Fallback to hardcoded models on error
+                const models = PROVIDER_MODELS[provider] || ["No models available (fallback)"];
                 modelWidget.options.values = models;
-                modelWidget.value = models[0];
+                if (!models.includes(modelWidget.value)) {
+                    modelWidget.value = models[0];
+                }
                 node.setDirtyCanvas(true);
             }
         };
