@@ -389,14 +389,14 @@ async def send_gemini_image_generation_unified(
         # Gemini native models (including image generation models)
         # Support for both gemini-2.5-flash-image-preview and gemini-2.0-flash-preview-image-generation
         
-        # Prepare input images for any mode (generate, edit, variation)
+        # Prepare input images for native Gemini (only for edit/variation)
         input_images_for_native = None
-        if input_image_base64:
+        if (edit_mode or variation_mode) and input_image_base64:
             if isinstance(input_image_base64, list):
                 input_images_for_native = input_image_base64
             else:
                 input_images_for_native = [input_image_base64]
-            logger.info(f"Gemini native: Using {len(input_images_for_native)} input images")
+            logger.info(f"Gemini native: Using {len(input_images_for_native)} input images for edit/variation.")
         
         return await send_gemini_native_image_request(
             api_key=api_key,

@@ -57,7 +57,7 @@
     {
         "task": "12 Multi-Panel Montage Storyboard",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Generate multi-panel montages depicting various moments in a reference image's style with Nano Banana AI, ideal for cohesive advertising campaigns. Create a [number]-panel montage showing [theme or sequence of events]. Use the style of the reference image .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Generate multi-panel montages depicting various moments in a reference image's style, ideal for cohesive advertising campaigns. Create a [number]-panel montage showing [theme or sequence of events]. Use the style of the reference image .\n\n"
     },
     {
         "task": "13 Logo-Integrated Ad Short",
@@ -67,7 +67,7 @@
     {
         "task": "14 Single Product Breakdown",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Extract and isolate individual items (e.g., camera, headphones, shoes) from complex scenes with Nano Banana AI for product catalog displays. From the provided image, extract and isolate the following items: [list of items to extract] .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Extract and isolate individual items (e.g., camera, headphones, shoes) from complex scenes for product catalog displays. From the provided image, extract and isolate the following items: [list of items to extract] .\n\n"
     },
     {
         "task": "15 High-Angle View",
@@ -77,7 +77,7 @@
     {
         "task": "16 First-Person POV + Background Blur",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Shift to a first-person perspective (POV) and apply background blur with Nano Banana AI for immersive gaming or cinematic shots. Change the camera angle to a first-person POV showing [subject/scene description from first-person view] with a blurred background .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Shift to a first-person perspective (POV) and apply background blur for immersive gaming or cinematic shots. Change the camera angle to a first-person POV showing [subject/scene description from first-person view] with a blurred background .\n\n"
     },
     {
         "task": "17 Macro Photography",
@@ -87,7 +87,7 @@
     {
         "task": "18 Storyboard/B-Roll Sequence",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Build visual story sequences through multi-frame prompts with Nano Banana AI for film world-building or b-roll footage. Provide a [number]-frame sequence of [subject/topic], with the following scenes: [scene 1], [scene 2], [scene 3], etc. .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Build visual story sequences through multi-frame prompts for film world-building or b-roll footage. Provide a [number]-frame sequence of [subject/topic], with the following scenes: [scene 1], [scene 2], [scene 3], etc. .\n\n"
     },
     {
         "task": "19 Pose Adjustment (Redirection)",
@@ -97,12 +97,12 @@
     {
         "task": "20 DSLR-Style Photo Upgrade: Low-Res to Simulated SLR Quality",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Elevate low-quality photos to mimic professional DSLR shots with Nano Banana AI for polished results. Make this image look like a shot taken from [any top DSLR details] .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Elevate low-quality photos to mimic professional DSLR shots for polished results. Make this image look like a shot taken from [any top DSLR details] .\n\n"
     },
     {
         "task": "21 Instagram, Xiaohongshu, or Moments Nine-Grid Layout",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Integrate a core image into a grid layout and auto-generate matching images with Nano Banana AI for seamless content planning. Place the main image in a social media grid and generate complementary images based on [theme or style description] to complete the grid .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Integrate a core image into a grid layout and auto-generate matching images for seamless content planning. Place the main image (IMAGE_1) in a social media grid. For all newly generated complementary images, the highest priority is to maintain the exact facial features and likeness of the subject from IMAGE_1. Generate these new images based on [theme or style description] to complete the grid, showing the subject in different poses or settings that fit the theme.\n\n"
     },
     {
         "task": "22 YouTube Thumbnail Creation",
@@ -132,12 +132,12 @@
     {
         "task": "27 Generate a Set of Character Designs/Storybook",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create comprehensive design boards covering proportions, views, expressions, poses, and outfits with Nano Banana AI. Generate character design for me (Character Design) Proportion settings (height comparisons, head-to-body ratios, etc.) Three views (front, side, back) Expression Sheet → like the one you sent Pose Sheet → various common poses Costume Design .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create comprehensive design boards covering proportions, views, expressions, poses, and outfits. Generate character design for me (Character Design) Proportion settings (height comparisons, head-to-body ratios, etc.) Three views (front, side, back) Expression Sheet → like the one you sent Pose Sheet → various common poses Costume Design .\n\n"
     },
     {
         "task": "28 Character Design Sheet (Template)",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create comprehensive design boards covering proportions, views, expressions, poses, and outfits with Nano Banana AI. Generate a character design sheet for [character description], including: [list of required elements, e.g., front/side/back views, expression sheet, pose sheet, costume design] .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create comprehensive design boards covering proportions, views, expressions, poses, and outfits. Generate a character design sheet for [character description], including: [list of required elements, e.g., front/side/back views, expression sheet, pose sheet, costume design] .\n\n"
     },
     {
         "task": "29 Sci-Fi Landscape Concept Art",
@@ -167,7 +167,7 @@
     {
         "task": "34 Old Photo Restoration and Enhancement",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Crop, repair, colorize, and upscale vintage photos effortlessly with Nano Banana AI for archival or personal use. Help me process this photo with these requirements: 1. Crop only the photo content, remove desktop background and borders 2. Repair stains in the photo 3. Colorize the photo 4. Upscale the photo to high definition .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Crop, repair, colorize, and upscale vintage photos effortlessly for archival or personal use. Help me process this photo with these requirements: 1. Crop only the photo content, remove desktop background and borders 2. Repair stains in the photo 3. Colorize the photo 4. Upscale the photo to high definition .\n\n"
     },
     {
         "task": "35 Professional-Level Photo Retouching",
@@ -177,12 +177,12 @@
     {
         "task": "36 3D Model Product Marketing",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Transform character photos into custom 3D toy figurines and product visuals with Nano Banana AI, upgrading GPT-4o-era models for more realistic, marketable personalized items. From the provided character photo, generate [type of product, e.g., a custom 3D toy figurine, a product visual] for monetization .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Transform character photos into custom 3D toy figurines and product visuals, upgrading GPT-4o-era models for more realistic, marketable personalized items. From the provided character photo, generate [type of product, e.g., a custom 3D toy figurine, a product visual] for monetization .\n\n"
     },
     {
         "task": "37 Image Counting & Modification",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Accurately count elements, perform calculations, and incorporate results into new images with Nano Banana AI—great for educational or interactive visuals. In the provided image, [perform a count and/or calculation], then [describe the modification to the new image based on the result] .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Accurately count elements, perform calculations, and incorporate results into new images—great for educational or interactive visuals. In the provided image, [perform a count and/or calculation], then [describe the modification to the new image based on the result] .\n\n"
     },
     {
         "task": "38 Game Manual & Character Sheet",
@@ -190,9 +190,9 @@
         "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create a game manual page for a character class, including illustrations, descriptions, and abilities. Generate a manual page for the following character: **Class Name:** [Character Class], **Subtitle:** [Character Subtitle], **Visual Description:** [Detailed description of the character's appearance for the main illustration and pixel sprite], **Class Overview:** [Paragraph describing the character's role, playstyle, and background], **Key Abilities:** [List of key abilities or stats], **Action Scene:** [Description of an in-game action scene featuring the character] .\n\n"
     },
     {
-        "task": "39 Strategy Guide Page",
+        "task": "39 Strategy Guide Page (Character/Item/Quest)",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create a high-quality strategy guide page with ornate borders and a vintage manual aesthetic. The page should feature detailed character illustrations and in-game screenshots with HUD elements. Generate a strategy guide page for the following subject: **Guide Subject:** [e.g., Character Profile, Boss Strategy, Quest Walkthrough], **Title:** [Title of the page], **Overview:** [Detailed overview of the subject], **Abilities/Skills:** [List and description of relevant abilities], **Equipment/Loadout:** [Description of equipment and items], **Strategy Tips:** [Bulleted list of strategic advice], **Illustration Style:** [Description of the main character/subject illustration], **In-Game Screenshot Description:** [Description of an in-game action scene to be depicted as a screenshot, including HUD elements] .\n\n"
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Create a high-quality strategy guide page. The page's border, background pattern, and overall aesthetic should be consistent with the provided BACKGROUND image and the specified manual style. The page should feature detailed character illustrations and in-game screenshots with HUD elements. Generate a strategy guide page for the following subject: **Guide Subject:** [e.g., Character Profile, Boss Strategy, Quest Walkthrough], **Title:** [Title of the page], **Manual Style:** [specify style, e.g., vintage, modern, sci-fi], **Overview:** [Detailed overview of the subject], **Abilities/Skills:** [List and description of relevant abilities], **Equipment/Loadout:** [Description of equipment and items], **Strategy Tips:** [Bulleted list of strategic advice], **Illustration Style:** [Description of the main character/subject illustration], **In-Game Screenshot Description:** [Description of an in-game action scene to be depicted as a screenshot, including HUD elements] .\n\n"
     },
     {
         "task": "40 Character Card Rotation (4-View Sequence)",
@@ -218,5 +218,65 @@
         "task": "44 Retro Magazine Cover Illustration",
         "num_instructions": 1,
         "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS for style, background, or other elements. Create a vibrant, retro-style magazine cover by compositing the SUBJECT from IMAGE_1 with stylistic elements from the REF images. Generate a magazine cover with the following details: **Magazine Title:** [Title of the magazine], **Main Subject:** [Describe the subject from IMAGE_1 and how they should be featured], **Style & Element Integration:** [Specify what to take from the REF images, e.g., 'use the background from IMAGE_2', 'use the font style from IMAGE_3'], **Cover Text & Headlines:** [List all text/headlines to be placed on the cover], **Overall Aesthetic:** [e.g., 90s video game magazine, Y2K K-pop zine, retro fashion publication] .\n\n"
+    },
+    {
+        "task": "45 Anamorphic Foreshortening Portrait",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. The highest priority is to maintain the exact facial features and likeness of the subject in IMAGE_1. Create a new portrait of the same person in a new pose that captures extreme foreshortening, as if shot with an anamorphic ultra-wide-angle lens. The final image should have the look of a Fujifilm film simulation. \n\n"
+    },
+    {
+        "task": "46 Time Traveler Photoshoot (Decades)",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features, likeness, and composition of the subject in IMAGE_1. Change the hair, clothing, accessories, and background to match the style of a specific decade. **Style:** [Specify decade, e.g., 1950s, 1970s, 1990s].\n\n"
+    },
+    {
+        "task": "47 Impossible Selfies",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1. Place the person into a new, impossible scene, changing clothing and background to match. **Scene Description:** [Describe the impossible scene, e.g., 'Posing with a realistic alien holding bubble guns', 'In a room filled with a hundred puppies'].\n\n"
+    },
+    {
+        "task": "48 AI Hair Styler",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1, without changing clothing or background. Style the subject's hair. **Hair Style:** [Describe target hair style, e.g., 'a short hairstyle', 'wavy hair', 'a vibrant pink mohawk']. **Hair Color:** [Optional: Specify one or two hair colors, e.g., 'black', or 'blonde and light brown'].\n\n"
+    },
+    {
+        "task": "49 Professional Headshots",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1. Transform the image into a professional headshot against a clean, neutral, out-of-focus studio background. **Outfit:** [Describe the outfit, e.g., 'a dark business suit with a crisp white shirt', 'a dark turtleneck']. **Pose:** [e.g., 'facing forward towards the camera', 'at a slight angle to the camera']. **Expression:** [e.g., 'Friendly Smile', 'Confident Look'].\n\n"
+    },
+    {
+        "task": "50 '80s Mall Photoshoot",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1. Transform the image into a photo from a 1980s mall photoshoot with a consistent style. **Overall Photoshoot Style:** [Describe the overall style, e.g., 'retro 80s studio background with laser beams and neon shapes']. **Pose for this photo:** [Describe the specific pose, e.g., 'a friendly, smiling pose', 'looking back over their shoulder'].\n\n"
+    },
+    {
+        "task": "51 High-Fashion Style Lookbook",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1. Transform the image into a high-fashion lookbook photo. **Overall Fashion Style:** [Specify the lookbook's theme, e.g., 'Streetwear', '90s Grunge', 'Cyberpunk']. **Shot Description:** [Describe the specific shot, e.g., 'a full-body shot, standing', 'a close-up shot focusing on accessories'].\n\n"
+    },
+    {
+        "task": "52 Miniature Me Figurines",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT. Maintain the exact facial features and likeness of the subject in IMAGE_1. Transform the person into a miniature figurine and place it in a realistic environment, as if it were a real photograph. **Figurine Description:** [Describe the figurine and its setting, e.g., 'A realistic bobblehead figure on a wooden desk', 'A retro 1980s-style action figure in a dynamic stance'].\n\n"
+    },
+    {
+        "task": "53 Dungeon Map & Navigation Guide",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is an optional art style REF for the location; the LAST image is the BACKGROUND for the page border/style. Create a dungeon or level map page for a strategy guide. The page's border and background pattern should match the provided BACKGROUND image and the specified manual style. **Location Name:** [Name of the dungeon, level, or area], **Manual Style:** [specify style, e.g., ancient tome, futuristic datapad], **Map Style:** [e.g., Top-down schematic, Isometric 3D view, Hand-drawn annotated map], **Key Areas & Points of Interest:** [List of important rooms, landmarks, treasure chests, save points], **Navigation & Connectors:** [Describe paths, doors, secret passages, and how they connect the key areas].\n\n"
+    },
+    {
+        "task": "54 Character Moveset & Combos",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is the main SUBJECT/character; the LAST image is the BACKGROUND for the page border/style. Create a character moveset page for a strategy guide. The page's border and background pattern should match the provided BACKGROUND image and the specified manual style. **Character:** [Name of the character from IMAGE_1], **Manual Style:** [specify style, e.g., ancient tome, futuristic datapad], **Moveset Focus:** [e.g., Basic Attacks, Special Moves, Magic Spells], **Move List & Descriptions:** [List each move with a name, input command (e.g., Down, Forward, Punch), and a brief description], **Combo Examples:** [Provide a few example combos, listing the sequence of moves], **Illustration Style:** [Describe how the character should be illustrated, e.g., 'Dynamic poses for each special move'].\n\n"
+    },
+    {
+        "task": "55 Strategy Guide - Character Profile & Bio",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is the main SUBJECT/character; the LAST image is the BACKGROUND for the page border/style. Create a character profile page for a strategy guide. The page's border and background pattern should match the provided BACKGROUND image and the specified manual style. **Character:** [Name of the character from IMAGE_1], **Manual Style:** [specify style, e.g., ancient tome, futuristic datapad], **Biography:** [A paragraph detailing the character's backstory and personality], **Design Elements:** [List of key visual features to highlight, e.g., 'three views (front, side, back)', 'expression sheet', 'costume details'], **Illustration Style:** [Describe how the character should be illustrated on the page].\n\n"
+    },
+    {
+        "task": "56 Strategy Guide - Storybook Page",
+        "num_instructions": 1,
+        "prompt": "Image Order: IMAGE_1 is an optional REF for the story's subject or style; the LAST image is the BACKGROUND for the page border/style. Create a storybook-style page for a strategy guide. The page's border and background pattern should match the provided BACKGROUND image and the specified manual style. **Story Title:** [Title for the story or lore entry], **Manual Style:** [specify style, e.g., ancient tome, futuristic datapad], **Narrative Text:** [The paragraph of story or lore to be displayed on the page], **Illustration Description:** [Describe the illustration that should accompany the text, e.g., 'A dramatic scene showing the hero confronting the dragon', 'A quiet moment of the character reading a book'].\n\n"
     }
 ]

@@ -1,8 +1,8 @@
 {
   "id": "a277eea5-14e2-4695-8172-2182587aaac4",
   "revision": 0,
-  "last_node_id": 147,
-  "last_link_id": 222,
+  "last_node_id": 149,
+  "last_link_id": 225,
   "nodes": [
     {
       "id": 89,
@@ -55,7 +55,7 @@
         286
       ],
       "flags": {},
-      "order": 7,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -138,7 +138,7 @@
         270
       ],
       "flags": {},
-      "order": 14,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
@@ -169,7 +169,7 @@
         336
       ],
       "flags": {},
-      "order": 6,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
@@ -238,90 +238,8 @@
         "0, 0, 0",
         "center",
         2,
-        "cpu"
-      ]
-    },
-    {
-      "id": 85,
-      "type": "LoadImage",
-      "pos": [
-        3275.426025390625,
-        -1204.14404296875
-      ],
-      "size": [
-        274.080078125,
-        314
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            127
-          ]
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadImage",
-        "cnr_id": "comfy-core",
-        "ver": "0.3.43"
-      },
-      "widgets_values": [
-        "e3500ca3-9e05-4d0f-bab2-2dcf2f307222.jpg",
-        "image"
-      ]
-    },
-    {
-      "id": 131,
-      "type": "BananaTaskGenerator",
-      "pos": [
-        3898.952392578125,
-        -1339.345458984375
-      ],
-      "size": [
-        373.5562438964844,
-        102
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "context",
-          "shape": 7,
-          "type": "*",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "context",
-          "type": "*",
-          "links": []
-        },
-        {
-          "name": "system_prompt",
-          "type": "STRING",
-          "links": [
-            207
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "BananaTaskGenerator"
-      },
-      "widgets_values": [
-        "VII.3 Illustration to Commercialized 1/7-Scale Figurine",
-        false
+        "cpu",
+        "<tr><td>Output: </td><td><b>1</b> x <b>864</b> x <b>1152 | 11.39MB</b></td></tr>"
       ]
     },
     {
@@ -336,7 +254,7 @@
         46
       ],
       "flags": {},
-      "order": 11,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
@@ -365,46 +283,6 @@
       "widgets_values": []
     },
     {
-      "id": 94,
-      "type": "ComfyUIDeployExternalText",
-      "pos": [
-        3468.291015625,
-        -1459.2178955078125
-      ],
-      "size": [
-        395.5683898925781,
-        190
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "text",
-          "type": "STRING",
-          "links": [
-            202
-          ]
-        }
-      ],
-      "title": "PROMPT",
-      "properties": {
-        "Node name for S&R": "ComfyUIDeployExternalText",
-        "cnr_id": "comfyui-deploy",
-        "ver": "b889f79baf9e099d5e54bd20bab4aa1e7c3296c0",
-        "widget_ue_connectable": {}
-      },
-      "widgets_values": [
-        "ACTION_MANUAL_PROMPT",
-        "",
-        "MANUA_PROMPT ",
-        "IF there is no OPENAI_API_KEY on the machine secrets. You will need to enter your full prompt and delete the AI_SYSTEM_PROMPT  \n\nOtherwise you can use this to add a The Task to be preform by the model for example \"replace the cat from image1 with the dog on image2\" \n\nshe is wearing the same clothes but it has the logo on the swimsuit make sure it looks well integrated and part of the same material with the fabric and not just an overlay the logo should wrap with the swinsuit to the body of the model "
-      ],
-      "color": "#232",
-      "bgcolor": "#353"
-    },
-    {
       "id": 143,
       "type": "PreviewAny",
       "pos": [
@@ -416,7 +294,7 @@
         88
       ],
       "flags": {},
-      "order": 8,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
@@ -443,7 +321,7 @@
         89.62671661376953
       ],
       "flags": {},
-      "order": 9,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
@@ -470,7 +348,7 @@
         130
       ],
       "flags": {},
-      "order": 4,
+      "order": 1,
       "mode": 0,
       "inputs": [
         {
@@ -510,7 +388,7 @@
         258
       ],
       "flags": {},
-      "order": 15,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -528,6 +406,154 @@
       "widgets_values": []
     },
     {
+      "id": 120,
+      "type": "GenerateImage",
+      "pos": [
+        4420.8466796875,
+        -856.208984375
+      ],
+      "size": [
+        426.96319580078125,
+        340
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": 222
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            178,
+            179
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GenerateImage",
+        "cnr_id": "llm-toolkit",
+        "ver": "1.0.2"
+      },
+      "widgets_values": [
+        "",
+        "generate"
+      ]
+    },
+    {
+      "id": 130,
+      "type": "LLMPromptManager",
+      "pos": [
+        4156.09716796875,
+        -896.6332397460938
+      ],
+      "size": [
+        175.29257202148438,
+        126
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": 200
+        },
+        {
+          "name": "context_1",
+          "type": "*",
+          "link": 224
+        },
+        {
+          "name": "context_2",
+          "type": "*",
+          "link": 202
+        },
+        {
+          "name": "context_3",
+          "type": "*",
+          "link": 205
+        },
+        {
+          "name": "context_4",
+          "type": "*",
+          "link": 216
+        },
+        {
+          "name": "context_5",
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": [
+            221
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LLMPromptManager"
+      },
+      "widgets_values": [],
+      "dynamicInputCount": 6
+    },
+    {
+      "id": 85,
+      "type": "LoadImage",
+      "pos": [
+        3275.426025390625,
+        -1204.14404296875
+      ],
+      "size": [
+        274.080078125,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            127
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43"
+      },
+      "widgets_values": [
+        "268577cd918cd1fc7952da4a8164f773.jpg",
+        "image"
+      ]
+    },
+    {
       "id": 69,
       "type": "ResolutionSelector",
       "pos": [
@@ -539,7 +565,7 @@
         214
       ],
       "flags": {},
-      "order": 5,
+      "order": 3,
       "mode": 0,
       "inputs": [
         {
@@ -596,15 +622,99 @@
       ]
     },
     {
-      "id": 120,
-      "type": "GenerateImage",
+      "id": 148,
+      "type": "BananaTaskGenerator",
       "pos": [
-        4420.8466796875,
-        -856.208984375
+        3908.712158203125,
+        -1362.925537109375
       ],
       "size": [
-        426.96319580078125,
-        340
+        373.5562438964844,
+        102
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": []
+        },
+        {
+          "name": "system_prompt",
+          "type": "STRING",
+          "links": [
+            224
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BananaTaskGenerator"
+      },
+      "widgets_values": [
+        "33 Illustration to Commercialized 1/7-Scale Figurine",
+        false
+      ]
+    },
+    {
+      "id": 94,
+      "type": "ComfyUIDeployExternalText",
+      "pos": [
+        3468.291015625,
+        -1459.2178955078125
+      ],
+      "size": [
+        395.5683898925781,
+        190
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            202
+          ]
+        }
+      ],
+      "title": "PROMPT",
+      "properties": {
+        "Node name for S&R": "ComfyUIDeployExternalText",
+        "cnr_id": "comfyui-deploy",
+        "ver": "b889f79baf9e099d5e54bd20bab4aa1e7c3296c0",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "ACTION_MANUAL_PROMPT",
+        "\"IMPACTFRAMES\" is printed on the box",
+        "MANUA_PROMPT ",
+        "IF there is no OPENAI_API_KEY on the machine secrets. You will need to enter your full prompt and delete the AI_SYSTEM_PROMPT  \n\nOtherwise you can use this to add a The Task to be preform by the model for example \"replace the cat from image1 with the dog on image2\" \n\nshe is wearing the same clothes but it has the logo on the swimsuit make sure it looks well integrated and part of the same material with the fabric and not just an overlay the logo should wrap with the swinsuit to the body of the model "
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 147,
+      "type": "ConfigGenerateImageOpenRouter",
+      "pos": [
+        4376.265625,
+        -1064.466064453125
+      ],
+      "size": [
+        464.6246032714844,
+        106
       ],
       "flags": {},
       "order": 13,
@@ -614,116 +724,16 @@
           "name": "context",
           "shape": 7,
           "type": "*",
-          "link": 222
-        }
-      ],
-      "outputs": [
-        {
-          "name": "context",
-          "type": "*",
-          "links": null
-        },
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [
-            178,
-            179
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "GenerateImage",
-        "cnr_id": "llm-toolkit",
-        "ver": "1.0.2"
-      },
-      "widgets_values": [
-        "",
-        "generate"
-      ]
-    },
-    {
-      "id": 130,
-      "type": "LLMPromptManager",
-      "pos": [
-        4156.09716796875,
-        -896.6332397460938
-      ],
-      "size": [
-        175.29257202148438,
-        126
-      ],
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "context",
-          "shape": 7,
-          "type": "*",
-          "link": 200
-        },
-        {
-          "name": "context_1",
-          "type": "*",
-          "link": 207
-        },
-        {
-          "name": "context_2",
-          "type": "*",
-          "link": 202
-        },
-        {
-          "name": "context_3",
-          "type": "*",
-          "link": 205
-        },
-        {
-          "name": "context_4",
-          "type": "*",
-          "link": 216
-        },
-        {
-          "name": "context_5",
-          "type": "*",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "context",
-          "type": "*",
-          "links": [
-            221
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LLMPromptManager"
-      },
-      "widgets_values": [],
-      "dynamicInputCount": 6
-    },
-    {
-      "id": 147,
-      "type": "ConfigGenerateImageOpenRouter",
-      "pos": [
-        4354.9482421875,
-        -1063.2818603515625
-      ],
-      "size": [
-        464.6246032714844,
-        106
-      ],
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "context",
-          "shape": 7,
-          "type": "*",
           "link": 221
+        },
+        {
+          "name": "seed",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 225
         }
       ],
       "outputs": [
@@ -740,9 +750,45 @@
       },
       "widgets_values": [
         1,
-        -1,
+        931990909816074,
         "randomize"
       ]
+    },
+    {
+      "id": 149,
+      "type": "ComfyUIDeployExternalNumberInt",
+      "pos": [
+        4395.90185546875,
+        -1356.9892578125
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "INT",
+          "links": [
+            225
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ComfyUIDeployExternalNumberInt"
+      },
+      "widgets_values": [
+        "seed",
+        2147483517,
+        "",
+        ""
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
     }
   ],
   "links": [
@@ -851,14 +897,6 @@
       "*"
     ],
     [
-      207,
-      131,
-      1,
-      130,
-      1,
-      "*"
-    ],
-    [
       216,
       69,
       3,
@@ -897,16 +935,32 @@
       120,
       0,
       "*"
+    ],
+    [
+      224,
+      148,
+      1,
+      130,
+      1,
+      "*"
+    ],
+    [
+      225,
+      149,
+      0,
+      147,
+      1,
+      "INT"
     ]
   ],
   "groups": [],
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.46137720841531865,
+      "scale": 0.6140930644007897,
       "offset": [
-        -3222.844069438056,
-        1878.6448246477132
+        -2847.6172303244625,
+        1459.447649440557
       ]
     },
     "frontendVersion": "1.25.11",

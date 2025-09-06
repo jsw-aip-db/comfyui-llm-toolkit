@@ -81,7 +81,12 @@ class ConfigGenerateImageGemini:
         # Add Gemini/Imagen parameters
         # Context values from upstream nodes (like ResolutionSelector) take precedence
         generation_config['n'] = generation_config.get('n', kwargs.get('n', 1))
-        generation_config['aspect_ratio'] = generation_config.get('aspect_ratio', kwargs.get('aspect_ratio', '1:1'))
+        
+        # Set aspect ratio: prioritize upstream 'aspect_ratio', then allow 'size' to be converted downstream,
+        # and finally use the widget value as a fallback.
+        if 'aspect_ratio' not in generation_config and 'size' not in generation_config:
+            generation_config['aspect_ratio'] = kwargs.get('aspect_ratio', '1:1')
+
         generation_config['person_generation'] = generation_config.get('person_generation', kwargs.get('person_generation', 'allow_adult'))
         generation_config['safety_filter_level'] = generation_config.get('safety_filter_level', kwargs.get('safety_filter_level', 'block_some'))
         

@@ -1,8 +1,8 @@
 {
   "id": "a277eea5-14e2-4695-8172-2182587aaac4",
   "revision": 0,
-  "last_node_id": 131,
-  "last_link_id": 207,
+  "last_node_id": 132,
+  "last_link_id": 208,
   "nodes": [
     {
       "id": 89,
@@ -347,8 +347,7 @@
         "0, 0, 0",
         "center",
         2,
-        "cpu",
-        "<tr><td>Output: </td><td><b>1</b> x <b>402</b> x <b>720 | 3.31MB</b></td></tr>"
+        "cpu"
       ]
     },
     {
@@ -360,7 +359,7 @@
       ],
       "size": [
         175.29257202148438,
-        205
+        106
       ],
       "flags": {},
       "order": 8,
@@ -375,7 +374,7 @@
         {
           "name": "context_1",
           "type": "*",
-          "link": 207
+          "link": 208
         },
         {
           "name": "context_2",
@@ -405,6 +404,7 @@
       "properties": {
         "Node name for S&R": "LLMPromptManager"
       },
+      "widgets_values": [],
       "dynamicInputCount": 5
     },
     {
@@ -495,50 +495,6 @@
       ]
     },
     {
-      "id": 131,
-      "type": "BananaTaskGenerator",
-      "pos": [
-        3898.952392578125,
-        -1339.345458984375
-      ],
-      "size": [
-        373.5562438964844,
-        102
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "context",
-          "shape": 7,
-          "type": "*",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "context",
-          "type": "*",
-          "links": []
-        },
-        {
-          "name": "system_prompt",
-          "type": "STRING",
-          "links": [
-            207
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "BananaTaskGenerator"
-      },
-      "widgets_values": [
-        "VII.3 Illustration to Commercialized 1/7-Scale Figurine",
-        false
-      ]
-    },
-    {
       "id": 94,
       "type": "ComfyUIDeployExternalText",
       "pos": [
@@ -550,7 +506,7 @@
         190
       ],
       "flags": {},
-      "order": 4,
+      "order": 3,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -587,12 +543,19 @@
       ],
       "size": [
         301.4302673339844,
-        174
+        214
       ],
       "flags": {},
-      "order": 5,
+      "order": 4,
       "mode": 0,
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
       "outputs": [
         {
           "name": "width",
@@ -609,6 +572,16 @@
             126,
             130
           ]
+        },
+        {
+          "name": "size_string",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
         }
       ],
       "properties": {
@@ -669,6 +642,50 @@
       "widgets_values": [
         "",
         "generate"
+      ]
+    },
+    {
+      "id": 132,
+      "type": "BananaTaskGenerator",
+      "pos": [
+        3898.952392578125,
+        -1339.345458984375
+      ],
+      "size": [
+        373.5562438964844,
+        102
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "context",
+          "type": "*",
+          "links": null
+        },
+        {
+          "name": "system_prompt",
+          "type": "STRING",
+          "links": [
+            208
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BananaTaskGenerator"
+      },
+      "widgets_values": [
+        "1 Background & Outfit Replace",
+        false
       ]
     }
   ],
@@ -794,8 +811,8 @@
       "*"
     ],
     [
-      207,
-      131,
+      208,
+      132,
       1,
       130,
       1,
@@ -806,10 +823,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.7430526079249437,
+      "scale": 0.7430526079249438,
       "offset": [
-        -3106.7192034918394,
-        1450.6824522916738
+        -3691.3167554977726,
+        1505.7159901127682
       ]
     },
     "frontendVersion": "1.25.11",
