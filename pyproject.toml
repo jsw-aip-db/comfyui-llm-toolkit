@@ -1,7 +1,7 @@
 [project]
 name = "llm-toolkit"
 description = "A custom node collection for integrating various LLM (Large Language Model) providers with ComfyUI."
-version = "1.2.3"
+version = "1.3.0"
 license = {file = "LICENSE"}
 dependencies = [
     "aiohttp>=3.8.0",
@@ -33,3 +33,4 @@ Repository = "https://github.com/comfy-deploy/comfyui-llm-toolkit"
 PublisherId = "comfydeploy"
 DisplayName = "comfyui-llm-toolkit"
 Icon = ""
+
