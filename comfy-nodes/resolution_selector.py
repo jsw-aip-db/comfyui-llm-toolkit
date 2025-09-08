@@ -24,44 +24,55 @@ PREFERED_KONTEXT_RESOLUTIONS = [
     (1568, 672),
 ]
 
-def calculate_radial_compatible_resolution(width, height, mode="closest", block_size=64):
+def calculate_radial_compatible_resolution(width, height, mode="closest", block_size=128, length=None, patch_divisor=16):
     """
-    Calculate radial attention compatible resolution.
+    Calculate radial attention compatible resolution for images or videos.
     
-    For radial attention to work, patches_per_frame must be divisible by block_size:
-    patches_per_frame = (height//8) * (width//8) // 4
+    For images (length=None):
+    (width/patch_divisor * height/patch_divisor) must be divisible by block_size.
+    
+    For videos:
+    (width/patch_divisor * height/patch_divisor * (length+3)/4) must be divisible by block_size.
     
     Args:
         width (int): Original width
         height (int): Original height  
         mode (str): "upscale", "downscale", or "closest"
         block_size (int): Radial attention block size (64 or 128)
+        length (int, optional): Length of video in frames. If None, calculates for an image.
+        patch_divisor (int): The spatial patch size divisor (e.g., 16 or 32).
     
     Returns:
         tuple: (compatible_width, compatible_height)
     """
     
-    def find_compatible_dimension(target_size, mode, block_size):
-        # Start with VAE-aligned size
-        base_size = (target_size // VAE_STRIDE[1]) * VAE_STRIDE[1]
+    if length is not None:
+        if (length + 3) % 4 != 0:
+            print(f"Warning: Radial attention may not work with length {length}. It should be 4k-3 (e.g., 1, 5, ..., 81).")
+            length_factor = 1
+        else:
+            length_factor = (length + 3) // 4
         
-        # Search for a size where patches_per_frame % block_size == 0
-        search_range = range(max(VAE_STRIDE[1], base_size - 64), base_size + 80, VAE_STRIDE[1])
+        common_divisor = math.gcd(length_factor, block_size)
+        target_divisor = block_size // common_divisor
+    else:
+        target_divisor = block_size
+
+    def find_compatible_dimension(target_size, other_dim_patched, mode):
+        base_size = (target_size // patch_divisor) * patch_divisor
+        search_range = range(max(patch_divisor, base_size - 128), base_size + 128 + patch_divisor, patch_divisor)
         
         candidates = []
         for test_size in search_range:
-            lat_dim = test_size // VAE_STRIDE[1]
-            patches_per_frame = (lat_dim * lat_dim) // (PATCH_SIZE[1] * PATCH_SIZE[2])
-            
-            if patches_per_frame % block_size == 0:
+            patched_dim = test_size // patch_divisor
+            if (patched_dim * other_dim_patched) % target_divisor == 0:
                 distance = abs(test_size - target_size)
                 candidates.append((distance, test_size))
         
         if not candidates:
-            # Fallback: just ensure VAE alignment
-            return base_size if base_size >= VAE_STRIDE[1] else VAE_STRIDE[1]
+            return base_size if base_size >= patch_divisor else patch_divisor
         
-        candidates.sort()  # Sort by distance
+        candidates.sort()
         
         if mode == "upscale":
             valid_candidates = [size for dist, size in candidates if size >= target_size]
@@ -71,93 +82,52 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
             return valid_candidates[0] if valid_candidates else candidates[0][1]
         else:  # closest
             return candidates[0][1]
-    
-    # Handle square resolutions specially (both dimensions must work together)
+
     if width == height:
-        # For square resolutions, find size where lat_dim^2 // 4 % block_size == 0
-        target_lat = width // VAE_STRIDE[1]
-        
-        # Always prefer higher values - search upward first
+        target_patched = width // patch_divisor
         candidates = []
         
-        # Search upward for compatible sizes
-        for offset in range(0, 16):  # Search upward from target
-            test_lat = target_lat + offset
-            if test_lat <= 0:
-                continue
-                
-            patches_per_frame = (test_lat * test_lat) // (PATCH_SIZE[1] * PATCH_SIZE[2])
-            if patches_per_frame % block_size == 0:
-                test_size = test_lat * VAE_STRIDE[1]
+        for offset in range(0, 32):
+            test_patched = target_patched + offset
+            if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
+                test_size = test_patched * patch_divisor
                 distance = abs(test_size - width)
                 candidates.append((distance, test_size, test_size >= width))
         
-        # If no upward candidates, search downward
         if not candidates:
-            for offset in range(-1, -16, -1):  # Search downward from target
-                test_lat = target_lat + offset
-                if test_lat <= 0:
-                    continue
-                    
-                patches_per_frame = (test_lat * test_lat) // (PATCH_SIZE[1] * PATCH_SIZE[2])
-                if patches_per_frame % block_size == 0:
-                    test_size = test_lat * VAE_STRIDE[1]
+            for offset in range(-1, -32, -1):
+                test_patched = target_patched + offset
+                if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
+                    test_size = test_patched * patch_divisor
                     distance = abs(test_size - width)
                     candidates.append((distance, test_size, test_size >= width))
         
         if candidates:
-            # Always prefer higher values (>= original size)
-            higher_candidates = [c for c in candidates if c[2]]  # c[2] is "is_higher_or_equal"
+            higher_candidates = [c for c in candidates if c[2]]
             if higher_candidates:
-                # Sort by distance and return the closest higher value
                 higher_candidates.sort(key=lambda x: x[0])
-                return higher_candidates[0][1], higher_candidates[0][1]
+                res = higher_candidates[0][1]
+                return res, res
             else:
-                # Fallback to closest if no higher candidates
                 candidates.sort(key=lambda x: x[0])
-                return candidates[0][1], candidates[0][1]
-        
-        # If no perfect match found, use the original if it's already compatible
-        orig_lat = width // VAE_STRIDE[1]
-        orig_patches = (orig_lat * orig_lat) // 4
-        if orig_patches % block_size == 0:
-            return width, height
+                res = candidates[0][1]
+                return res, res
     
-    # For non-square or fallback, handle dimensions independently
-    compatible_width = find_compatible_dimension(width, mode, block_size)
-    compatible_height = find_compatible_dimension(height, mode, block_size)
+    # For non-square, we can't easily solve for both. Let's adjust one dimension first.
+    # We'll adjust width first, then find a compatible height.
+    base_width = (width // patch_divisor) * patch_divisor
+    base_height = (height // patch_divisor) * patch_divisor
     
-    return compatible_width, compatible_height
+    w_p = base_width // patch_divisor
+    h_p = base_height // patch_divisor
+    
+    if (w_p * h_p) % target_divisor == 0:
+        return base_width, base_height
 
-def update_resolutions_for_radial_attention(resolutions_dict, mode="closest", block_size=64):
-    """
-    Update resolution dictionary to make all resolutions radial attention compatible.
+    # If not compatible, find a new height for the current width
+    compatible_height = find_compatible_dimension(height, w_p, mode)
     
-    Args:
-        resolutions_dict (dict): Original resolutions dictionary
-        mode (str): "upscale", "downscale", or "closest"
-        block_size (int): Radial attention block size (64 or 128)
-    
-    Returns:
-        dict: Updated resolutions dictionary
-    """
-    updated_resolutions = {}
-    
-    for model_type, orientations in resolutions_dict.items():
-        updated_resolutions[model_type] = {}
-        
-        for orientation, qualities in orientations.items():
-            updated_resolutions[model_type][orientation] = {}
-            
-            for quality, (width, height) in qualities.items():
-                new_width, new_height = calculate_radial_compatible_resolution(width, height, mode, block_size)
-                updated_resolutions[model_type][orientation][quality] = (new_width, new_height)
-                
-                # Log changes if resolution was modified
-                if new_width != width or new_height != height:
-                    print(f"Radial Attention (block_size={block_size}): {model_type}-{orientation}-{quality}: {width}x{height} -> {new_width}x{new_height}")
-    
-    return updated_resolutions
+    return base_width, compatible_height
 
 class ResolutionSelector:
     """Select width & height for video/image generation.
@@ -266,20 +236,22 @@ class ResolutionSelector:
                 "mode": (modes, {"default": modes[0], "tooltip": "Generation mode"}),
                 "aspect_ratio": (sorted(list(all_aspect_ratios)), {"default": "Horizontal"}),
                 "quality": (["HQ", "MQ", "LQ"], {"default": "HQ"}),
+                "radial_attention_mode": (["disabled", "image", "video"], {"default": "disabled", "tooltip": "Enable and configure radial attention compatibility"}),
             },
             "optional": {
                 "context": ("*", {}),
-                "enable_radial_attention": ("BOOLEAN", {"default": False, "tooltip": "Enable radial attention compatibility"}),
+                "length": ("INT", {"default": 81, "min": 1, "max": 8192, "step": 4, "tooltip": "Video length in frames (for video radial attention)"}),
+                "patch_divisor": ("INT", {"default": 16, "min": 8, "max": 64, "step": 8, "tooltip": "Spatial patch divisor for radial attention (e.g., 16 or 32)"}),
                 "block_size": ([128, 64], {"default": 128, "tooltip": "Radial attention block size"}),
             }
         }
 
-    RETURN_TYPES = ("INT", "INT", "STRING", "*")
-    RETURN_NAMES = ("width", "height", "size_string", "context")
+    RETURN_TYPES = ("INT", "INT", "INT", "STRING", "*")
+    RETURN_NAMES = ("width", "height", "length", "size_string", "context")
     FUNCTION = "get_resolution"
     CATEGORY = "🔗llm_toolkit/utils"
 
-    def get_resolution(self, mode, aspect_ratio, quality, context=None, enable_radial_attention=False, block_size=128):
+    def get_resolution(self, mode, aspect_ratio, quality, radial_attention_mode, context=None, length=81, patch_divisor=16, block_size=128):
         # Initialize or copy the context
         if context is None:
             output_context = {}
@@ -298,9 +270,11 @@ class ResolutionSelector:
             
             w, h = self.RESOLUTIONS[mode][aspect_ratio][quality]
             
-            # Apply radial attention compatibility if enabled (always prefer higher values)
-            if enable_radial_attention:
-                w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size)
+            # Apply radial attention compatibility if enabled
+            if radial_attention_mode == "video":
+                w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size, length, patch_divisor)
+            elif radial_attention_mode == "image":
+                w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size, None, patch_divisor)
 
             # Determine the string output based on the mode
             if mode in ["GEMINI_IMAGEN", "NANO_BANANA"]:
@@ -325,10 +299,10 @@ class ResolutionSelector:
             output_context["generation_config"] = generation_config
             # --- End Update context ---
 
-            return (w, h, size_string, output_context)
+            return (w, h, length, size_string, output_context)
         except KeyError:
             # fallback default
-            return (832, 480, "832x480", output_context)
+            return (832, 480, length, "832x480", output_context)
 
 
 NODE_CLASS_MAPPINGS = {
@@ -340,48 +314,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 # Export for potential JavaScript access
-WEB_DIRECTORY = "./web"
-
-def get_radial_resolutions(mode="closest", block_size=64):
-    """Get radial attention compatible resolutions."""
-    return update_resolutions_for_radial_attention(ResolutionSelector.RESOLUTIONS, mode, block_size)
-
-if __name__ == "__main__":
-    # Test the calculator
-    print("Testing radial attention compatible resolutions:")
-    
-    for block_size in [64, 128]:
-        print(f"\n=== BLOCK SIZE {block_size} ===")
-        print(f"Original problematic size: 624x624")
-        print("Upscale mode:", calculate_radial_compatible_resolution(624, 624, "upscale", block_size))
-        print("Downscale mode:", calculate_radial_compatible_resolution(624, 624, "downscale", block_size))
-        print("Closest mode:", calculate_radial_compatible_resolution(624, 624, "closest", block_size))
-        
-        print(f"\n--- Resolution Sets (block_size={block_size}) ---")
-        
-        for mode in ["upscale", "downscale", "closest"]:
-            print(f"\n{mode.upper()} MODE:")
-            radial_resolutions = get_radial_resolutions(mode, block_size)
-            
-            # Show squarish resolutions (most affected)
-            print("Squarish resolutions:")
-            for model_type in radial_resolutions:
-                if "Squarish" in radial_resolutions[model_type]:
-                    for quality, (w, h) in radial_resolutions[model_type]["Squarish"].items():
-                        original = ResolutionSelector.RESOLUTIONS[model_type]["Squarish"][quality]
-                        changed = "✓" if (w, h) != original else " "
-                        print(f"  {model_type}-{quality}: {w}x{h} {changed}")
-                        
-            # Test a few other problematic ones
-            print("Other potentially problematic:")
-            test_cases = [
-                ("T2V14B", "Horizontal", "MQ"),  # 1088x832
-                ("IMG", "Cinematic", "LQ"),      # 1024x440
-            ]
-            
-            for model, orient, qual in test_cases:
-                if orient in radial_resolutions[model] and qual in radial_resolutions[model][orient]:
-                    w, h = radial_resolutions[model][orient][qual]
-                    original = ResolutionSelector.RESOLUTIONS[model][orient][qual]
-                    changed = "✓" if (w, h) != original else " "
-                    print(f"  {model}-{orient}-{qual}: {w}x{h} {changed}") 
+WEB_DIRECTORY = "./web" 

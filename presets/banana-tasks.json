@@ -32,27 +32,27 @@
     {
         "task": "7 Background and Outfit Replacement",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Swap scenes and clothing while preserving the subject's identity using Nano Banana AI. Change the background to [your desired background] and the clothes to [your desired clothing style] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Swap scenes and clothing while preserving the subject's identity. Change the background to [your desired background] and the clothes to [your desired clothing style] ."
     },
     {
         "task": "8 Outfit Try-On",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Leverage Nano Banana AI with a selfie and clothing reference to produce multiple on-body effect images, minimizing the need for physical models ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. The priority is to maintain the exact facial features and likeness while replacing clothing to produce an accurate image of the subject wearing on-body effects. This involves following the underlying body structure, ensuring garments fall and fold naturally, and ensuring the subject fits seamlessly with the background, with matching lighting, accurate scale, and perspective images."
     },
     {
         "task": "9 Accessory Swap",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Transform accessory types and add complementary objects that fit the theme and scene via Nano Banana AI, while keeping facial features intact. Swap [original accessory] with [new accessory] and add [complementary object] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Transform accessory types and add complementary objects that fit the theme and scene, while keeping facial features intact. Swap [original accessory] with [new accessory] and add [complementary object] ."
     },
     {
         "task": "10 Single-Hand Holding/Product Placement Consistency",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per. Use Nano Banana AI to add or reposition products with one-arm adjustments, ensuring smooth integration for e-commerce imagery. Have the subject hold [product] with [specific pose/action] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per. to add or reposition products with one-arm adjustments, ensuring smooth integration for e-commerce imagery. Have the subject hold [product] with [specific pose/action] ."
     },
     {
         "task": "11 Item Accessory Replacement",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Replace specific accessories or items, such as phone cases, without disturbing the rest of the image through Nano Banana AI. Replace the [original item] with [new item] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Replace specific accessories or items, such as phone cases, without disturbing the rest of the image. Replace the [original item] with [new item] ."
     },
     {
         "task": "12 Multi-Panel Montage Storyboard",
@@ -62,7 +62,7 @@
     {
         "task": "13 Logo-Integrated Ad Short",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Seamlessly embed brand logos into reference-derived scenes using Nano Banana AI to craft branded narratives. Workflow: Base generation with Ideogram, placement via Nano Banana AI, animation with Runway Gen-4 Turbo ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Seamlessly embed brand logos into reference-derived scenes to craft branded narratives. Workflow: Base generation with Ideogram, placement, animation with Runway Gen-4 Turbo ."
     },
     {
         "task": "14 Single Product Breakdown",
@@ -72,7 +72,7 @@
     {
         "task": "15 High-Angle View",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Produce a high-angle overhead rendition of the original scene using Nano Banana AI for dynamic photography perspectives. Create a high-angle view of this shot ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Produce a high-angle overhead rendition of the original scene for dynamic photography perspectives. Create a high-angle view of this shot ."
     },
     {
         "task": "16 First-Person POV + Background Blur",
@@ -82,7 +82,7 @@
     {
         "task": "17 Macro Photography",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Craft ultra-detailed, realistic images with rich textures via Nano Banana AI, such as hyper-realistic close-ups. Create a hyper-realistic macro photograph of [subject], focusing on [specific details]. The background should be [background description] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Craft ultra-detailed, realistic images with rich textures, such as hyper-realistic close-ups. Create a hyper-realistic macro photograph of [subject], focusing on [specific details]. The background should be [background description] ."
     },
     {
         "task": "18 Storyboard/B-Roll Sequence",
@@ -92,7 +92,7 @@
     {
         "task": "19 Pose Adjustment (Redirection)",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Effortlessly alter subject poses or gaze directions in images using Nano Banana AI. Change the subject's pose to [desired pose or gaze direction] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Effortlessly alter subject poses or gaze directions in images. Change the subject's pose to [desired pose or gaze direction] ."
     },
     {
         "task": "20 DSLR-Style Photo Upgrade: Low-Res to Simulated SLR Quality",
@@ -107,17 +107,17 @@
     {
         "task": "22 YouTube Thumbnail Creation",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Design eye-catching thumbnails by combining characters, text, and elements via Nano Banana AI prompts. Create a YouTube thumbnail with [your theme description]. The text should say '[YOUR TITLE]', [font style description]."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Design eye-catching thumbnails by combining characters, text, and elements prompts. Create a YouTube thumbnail with [your theme description]. The text should say '[YOUR TITLE]', [font style description]."
     },
     {
         "task": "23 Continuous Comic Sequel",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Extend comic panels or chapters in the original art style with straightforward Nano Banana AI prompts. Continue the comic from the provided panel, showing [description of the next scene or action] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Extend comic panels or chapters in the original art style with straightforward prompts. Continue the comic from the provided panel, showing [description of the next scene or action] ."
     },
     {
         "task": "24 Stop-Motion Puppet Style",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Produce handmade stop-motion aesthetics with textured details and lighting through Nano Banana AI. Ultra detailed stop-motion animation frame, scene of [subject and action] interacting on a miniature set, felt and fabric textures, visible stitching, slightly imperfect shapes, handcrafted props, subtle dust and wear for realism, expressions made with sewn buttons and embroidered mouths in the style [specific details about materials, lighting, and style] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Produce handmade stop-motion aesthetics with textured details and lighting . Ultra detailed stop-motion animation frame, scene of [subject and action] interacting on a miniature set, felt and fabric textures, visible stitching, slightly imperfect shapes, handcrafted props, subtle dust and wear for realism, expressions made with sewn buttons and embroidered mouths in the style [specific details about materials, lighting, and style] ."
     },
     {
         "task": "25 Tokusatsu Style Scene",
@@ -127,7 +127,7 @@
     {
         "task": "26 Stick Figure to Character Action",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Convert basic stick figures into dynamic anime scenes with specified characters using Nano Banana AI for pose-based generation. Transform the stick figure into [character description], performing the action [action description], in an anime style ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Convert basic stick figures into dynamic anime scenes with specified characters for pose-based generation. Transform the stick figure into [character description], performing the action [action description], in an anime style ."
     },
     {
         "task": "27 Generate a Set of Character Designs/Storybook",
@@ -142,7 +142,7 @@
     {
         "task": "29 Sci-Fi Landscape Concept Art",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Render intricate, vibrant sci-fi landscapes and alien worlds using Nano Banana AI. Create a hyper-realistic sci-fi landscape of [scene description], including details like [specific elements, e.g., planets, flora, structures] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Render intricate, vibrant sci-fi landscapes and alien worlds. Create a hyper-realistic sci-fi landscape of [scene description], including details like [specific elements, e.g., planets, flora, structures] ."
     },
     {
         "task": "30 Google Street View Annotation",
@@ -152,17 +152,17 @@
     {
         "task": "31 3D Mask Edits & Color Marking",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Apply 3D volume masking, pose edits, and color-coded changes in 2D images via Nano Banana AI for technical visualizations. On the provided figure, apply the following edits: [list of edits, e.g., mask specific parts, change pose, mark moved parts with a light blue color grid, unchanged remain unmarked] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Apply 3D volume masking, pose edits, and color-coded changes in 2D images for technical visualizations. On the provided figure, apply the following edits: [list of edits, e.g., mask specific parts, change pose, mark moved parts with a light blue color grid, unchanged remain unmarked] ."
     },
     {
         "task": "32 Illustration to Figurine",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Convert 2D illustrations into realistic 3D figurines, complete with packaging and modeling scenes, using Nano Banana AI. Turn the illustration into a character figurine, and place it in a scene with [details of the background, packaging, and any other elements like a modeling screen] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Convert 2D illustrations into realistic 3D figurines, complete with packaging and modeling scenes,. Turn the illustration into a character figurine, and place it in a scene with [details of the background, packaging, and any other elements like a modeling screen] ."
     },
     {
         "task": "33 Illustration to Commercialized 1/7-Scale Figurine",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Use Nano Banana AI to create a 1/7-scale commercialized figure of the character in the illustration in a realistic style and environment. Place the figure on a computer desk using a circular transparent acrylic base without any text. On the computer screen, display the ZBrush modeling process of the figure. Next to the computer screen, place a BANDAI-style toy packaging box printed with the original artwork ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. to create a 1/7-scale commercialized figure of the character in the illustration in a realistic style and environment. Place the figure on a computer desk using a circular transparent acrylic base without any text. On the computer screen, display the ZBrush modeling process of the figure. Next to the computer screen, place a BANDAI-style toy packaging box printed with the original artwork ."
     },
     {
         "task": "34 Old Photo Restoration and Enhancement",
@@ -172,7 +172,7 @@
     {
         "task": "35 Professional-Level Photo Retouching",
         "num_instructions": 1,
-        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Achieve pro-grade edits like blemish removal while retaining natural features using Nano Banana AI, bypassing traditional software. Clean the face by removing acne, pimples, blemishes, and temporary spots from the skin (face, nose, forehead, neck, back of the head, throat). Smooth and correct the skin texture for a realistic and natural look. Preserve all permanent marks such as scars, moles, or birthmarks without altering them. [list optional additional edits] ."
+        "prompt": "Image Order: IMAGE_1 is always the main SUBJECT; the LAST image is always the BACKGROUND; any middle images (IMAGE_2..IMAGE_{n-1}) are optional REFS that may represent garment/style/pose/prop or other concepts per user text. Achieve pro-grade edits like blemish removal while retaining natural features, bypassing traditional software. Clean the face by removing acne, pimples, blemishes, and temporary spots from the skin (face, nose, forehead, neck, back of the head, throat). Smooth and correct the skin texture for a realistic and natural look. Preserve all permanent marks such as scars, moles, or birthmarks without altering them. [list optional additional edits] ."
     },
     {
         "task": "36 3D Model Product Marketing",
