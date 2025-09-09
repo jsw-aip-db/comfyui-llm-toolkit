@@ -32,7 +32,8 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
     (width/patch_divisor * height/patch_divisor) must be divisible by block_size.
     
     For videos:
-    (width/patch_divisor * height/patch_divisor * (length+3)/4) must be divisible by block_size.
+    (width/patch_divisor * height/patch_divisor * (length+3)/4) must be divisible by block_size
+    AND the total number of tokens must be a power of two.
     
     Args:
         width (int): Original width
@@ -46,6 +47,9 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         tuple: (compatible_width, compatible_height)
     """
     
+    def is_power_of_two(n):
+        return (n & (n - 1) == 0) and n != 0
+
     if length is not None:
         if (length + 3) % 4 != 0:
             print(f"Warning: Radial attention may not work with length {length}. It should be 4k-3 (e.g., 1, 5, ..., 81).")
@@ -65,7 +69,10 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         candidates = []
         for test_size in search_range:
             patched_dim = test_size // patch_divisor
-            if (patched_dim * other_dim_patched) % target_divisor == 0:
+            total_tokens = patched_dim * other_dim_patched * (length_factor if length is not None else 1)
+            
+            if (patched_dim * other_dim_patched) % target_divisor == 0 and \
+               (length is None or is_power_of_two(total_tokens)):
                 distance = abs(test_size - target_size)
                 candidates.append((distance, test_size))
         
@@ -89,18 +96,24 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         
         for offset in range(0, 32):
             test_patched = target_patched + offset
-            if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
-                test_size = test_patched * patch_divisor
-                distance = abs(test_size - width)
-                candidates.append((distance, test_size, test_size >= width))
+            if test_patched > 0:
+                total_tokens = (test_patched * test_patched) * (length_factor if length is not None else 1)
+                if (test_patched * test_patched) % target_divisor == 0 and \
+                   (length is None or is_power_of_two(total_tokens)):
+                    test_size = test_patched * patch_divisor
+                    distance = abs(test_size - width)
+                    candidates.append((distance, test_size, test_size >= width))
         
         if not candidates:
             for offset in range(-1, -32, -1):
                 test_patched = target_patched + offset
-                if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
-                    test_size = test_patched * patch_divisor
-                    distance = abs(test_size - width)
-                    candidates.append((distance, test_size, test_size >= width))
+                if test_patched > 0:
+                    total_tokens = (test_patched * test_patched) * (length_factor if length is not None else 1)
+                    if (test_patched * test_patched) % target_divisor == 0 and \
+                       (length is None or is_power_of_two(total_tokens)):
+                        test_size = test_patched * patch_divisor
+                        distance = abs(test_size - width)
+                        candidates.append((distance, test_size, test_size >= width))
         
         if candidates:
             higher_candidates = [c for c in candidates if c[2]]
@@ -121,7 +134,10 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
     w_p = base_width // patch_divisor
     h_p = base_height // patch_divisor
     
-    if (w_p * h_p) % target_divisor == 0:
+    total_tokens = w_p * h_p * (length_factor if length is not None else 1)
+    
+    if (w_p * h_p) % target_divisor == 0 and \
+       (length is None or is_power_of_two(total_tokens)):
         return base_width, base_height
 
     # If not compatible, find a new height for the current width
