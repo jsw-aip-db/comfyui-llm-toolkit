@@ -32,8 +32,7 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
     (width/patch_divisor * height/patch_divisor) must be divisible by block_size.
     
     For videos:
-    (width/patch_divisor * height/patch_divisor * (length+3)/4) must be divisible by block_size
-    AND the total number of tokens must be a power of two.
+    (width/patch_divisor * height/patch_divisor * (length+3)/4) must be divisible by block_size.
     
     Args:
         width (int): Original width
@@ -46,9 +45,6 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
     Returns:
         tuple: (compatible_width, compatible_height)
     """
-    
-    def is_power_of_two(n):
-        return (n & (n - 1) == 0) and n != 0
 
     if length is not None:
         if (length + 3) % 4 != 0:
@@ -57,25 +53,33 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         else:
             length_factor = (length + 3) // 4
         
+        # We need (w_p * h_p * length_factor) % block_size == 0
         common_divisor = math.gcd(length_factor, block_size)
         target_divisor = block_size // common_divisor
     else:
+        # We need (w_p * h_p) % block_size == 0
         target_divisor = block_size
 
     def find_compatible_dimension(target_size, other_dim_patched, mode):
         base_size = (target_size // patch_divisor) * patch_divisor
-        search_range = range(max(patch_divisor, base_size - 128), base_size + 128 + patch_divisor, patch_divisor)
+        search_range = range(max(patch_divisor, base_size - 256), base_size + 256 + patch_divisor, patch_divisor)
         
         candidates = []
         for test_size in search_range:
             patched_dim = test_size // patch_divisor
-            total_tokens = patched_dim * other_dim_patched * (length_factor if length is not None else 1)
-            
-            if (patched_dim * other_dim_patched) % target_divisor == 0 and \
-               (length is None or is_power_of_two(total_tokens)):
+            if (patched_dim * other_dim_patched) % target_divisor == 0:
                 distance = abs(test_size - target_size)
                 candidates.append((distance, test_size))
         
+        if not candidates:
+            # Fallback to a wider search if no candidates found initially
+            search_range_wide = range(patch_divisor, 4096, patch_divisor)
+            for test_size in search_range_wide:
+                patched_dim = test_size // patch_divisor
+                if (patched_dim * other_dim_patched) % target_divisor == 0:
+                    distance = abs(test_size - target_size)
+                    candidates.append((distance, test_size))
+
         if not candidates:
             return base_size if base_size >= patch_divisor else patch_divisor
         
@@ -90,30 +94,26 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         else:  # closest
             return candidates[0][1]
 
+    # For square resolutions, we can solve this more elegantly
     if width == height:
         target_patched = width // patch_divisor
         candidates = []
         
-        for offset in range(0, 32):
+        # Search for a patched dimension 'p' such that (p*p) % target_divisor == 0
+        for offset in range(0, 64):
             test_patched = target_patched + offset
-            if test_patched > 0:
-                total_tokens = (test_patched * test_patched) * (length_factor if length is not None else 1)
-                if (test_patched * test_patched) % target_divisor == 0 and \
-                   (length is None or is_power_of_two(total_tokens)):
+            if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
+                test_size = test_patched * patch_divisor
+                distance = abs(test_size - width)
+                candidates.append((distance, test_size, test_size >= width))
+        
+        if not candidates:
+            for offset in range(-1, -64, -1):
+                test_patched = target_patched + offset
+                if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
                     test_size = test_patched * patch_divisor
                     distance = abs(test_size - width)
                     candidates.append((distance, test_size, test_size >= width))
-        
-        if not candidates:
-            for offset in range(-1, -32, -1):
-                test_patched = target_patched + offset
-                if test_patched > 0:
-                    total_tokens = (test_patched * test_patched) * (length_factor if length is not None else 1)
-                    if (test_patched * test_patched) % target_divisor == 0 and \
-                       (length is None or is_power_of_two(total_tokens)):
-                        test_size = test_patched * patch_divisor
-                        distance = abs(test_size - width)
-                        candidates.append((distance, test_size, test_size >= width))
         
         if candidates:
             higher_candidates = [c for c in candidates if c[2]]
@@ -125,25 +125,37 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
                 candidates.sort(key=lambda x: x[0])
                 res = candidates[0][1]
                 return res, res
-    
-    # For non-square, we can't easily solve for both. Let's adjust one dimension first.
-    # We'll adjust width first, then find a compatible height.
-    base_width = (width // patch_divisor) * patch_divisor
-    base_height = (height // patch_divisor) * patch_divisor
-    
-    w_p = base_width // patch_divisor
-    h_p = base_height // patch_divisor
-    
-    total_tokens = w_p * h_p * (length_factor if length is not None else 1)
-    
-    if (w_p * h_p) % target_divisor == 0 and \
-       (length is None or is_power_of_two(total_tokens)):
-        return base_width, base_height
 
-    # If not compatible, find a new height for the current width
-    compatible_height = find_compatible_dimension(height, w_p, mode)
-    
-    return base_width, compatible_height
+    # For non-square resolutions, it's harder to find the "best" pair.
+    # We will iterate and find the closest compatible resolution pair.
+    best_res = (width, height)
+    min_dist = float('inf')
+
+    # Heuristic search area around the original resolution
+    for w_candidate in range(width - 128, width + 128 + patch_divisor, patch_divisor):
+        if w_candidate <= 0: continue
+        w_p = w_candidate // patch_divisor
+        
+        # Find a compatible height for this width
+        h_candidate = find_compatible_dimension(height, w_p, mode)
+        
+        # Check if the found pair is valid
+        h_p = h_candidate // patch_divisor
+        total_tokens = w_p * h_p * (length_factor if length is not None else 1)
+        
+        if total_tokens % block_size == 0:
+            dist = math.sqrt((w_candidate - width)**2 + (h_candidate - height)**2)
+            if dist < min_dist:
+                min_dist = dist
+                best_res = (w_candidate, h_candidate)
+
+    # If the iterative search fails, fallback to the simpler independent dimension adjustment
+    if min_dist == float('inf'):
+        w_base = (width // patch_divisor) * patch_divisor
+        h_base = find_compatible_dimension(height, w_base // patch_divisor, mode)
+        return w_base, h_base
+
+    return best_res
 
 class ResolutionSelector:
     """Select width & height for video/image generation.
