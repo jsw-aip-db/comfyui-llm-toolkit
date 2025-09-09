@@ -9,7 +9,7 @@ A custom node collection for integrating various LLM (Large Language Model) prov
 - True Context-to-Context node connections one-input / one-output design
 <img width="1107" alt="Screenshot 2025-04-28 at 16 51 13" src="https://github.com/user-attachments/assets/6613b013-18c4-4a7d-b40e-6ae025ad21d0" />
 
-- Generators run even if nothing is conected and they are the only node in the workflow 
+- Generators run even if nothing is connected, and they are the only node in the workflow 
 ![imagerun](https://github.com/user-attachments/assets/bac9f8a0-6342-4000-b3ef-66fc45c1bdef)
 
 - Streaming Output directly on the node UI
@@ -35,7 +35,7 @@ A custom node collection for integrating various LLM (Large Language Model) prov
 1. Clone this repository into your ComfyUI custom_nodes directory:
    ```bash
    cd /path/to/ComfyUI/custom_nodes
-   git clone https://github.com/yourusername/comfyui-llm-toolkit.git
+   git clone https://github.com/comfy-deploy/comfyui-llm-toolkit.git
    ```
 
 2. Install the required dependencies:
@@ -106,7 +106,7 @@ This allows you to:
 
 - OpenAI (Default: gpt-4o-mini)
 - Ollama (local)
-- And more... (Comming Soon)
+
 
 ## Troubleshooting
 
@@ -127,3 +127,4 @@ Run the included test script to verify your setup:
 cd /path/to/ComfyUI/custom_nodes/comfyui-llm-toolkit
 python test_js_integration.py
 ```
+
