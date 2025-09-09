@@ -100,10 +100,16 @@ def calculate_radial_compatible_resolution(width, height, mode="closest", block_
         
         if mode == "upscale":
             valid_candidates = [size for dist, size in candidates if size >= target_size]
-            return valid_candidates[0][1] if valid_candidates else candidates[-1][1]
+            if valid_candidates:
+                return valid_candidates[0]
+            else:
+                return max(c[1] for c in candidates)
         elif mode == "downscale":
             valid_candidates = [size for dist, size in candidates if size <= target_size]
-            return valid_candidates[0][1] if valid_candidates else candidates[0][1]
+            if valid_candidates:
+                return valid_candidates[0]
+            else:
+                return min(c[1] for c in candidates)
         else:  # closest
             return candidates[0][1]
 
