@@ -27,161 +27,71 @@ PREFERED_KONTEXT_RESOLUTIONS = [
 def calculate_radial_compatible_resolution(width, height, mode="closest", block_size=128, length=None, patch_divisor=16):
     """
     Calculate radial attention compatible resolution for images or videos.
+    The user-provided 'length' is a fixed constraint and will not be modified.
     
-    For images (length=None):
-    (width/patch_divisor * height/patch_divisor) must be divisible by block_size.
-    
-    For videos:
-    The number of frames must be a multiple of the block size.
-    (num_frame = (length + 3) / 4) % block_size == 0
-    And the total video tokens must also be a multiple of the block size.
+    The function will search for a (width, height) pair that satisfies the divisibility constraints
+    for the given length.
 
     Args:
         width (int): Original width
         height (int): Original height  
         mode (str): "upscale", "downscale", or "closest"
         block_size (int): Radial attention block size (64 or 128)
-        length (int, optional): Length of video in frames. If None, calculates for an image.
+        length (int, optional): Length of video in frames. This value is NOT changed.
         patch_divisor (int): The spatial patch size divisor (e.g., 16 or 32).
     
     Returns:
-        tuple: (compatible_width, compatible_height, compatible_length)
+        tuple: (compatible_width, compatible_height)
     """
-    
-    compatible_length = length
 
     if length is not None:
-        # First, ensure num_frame is a multiple of block_size by adjusting length
-        num_frame = (length + 3) // 4
-        
-        if num_frame % block_size != 0:
-            # Find the closest num_frame that is a multiple of block_size
-            if mode == 'upscale':
-                target_num_frame = math.ceil(num_frame / block_size) * block_size
-            elif mode == 'downscale':
-                target_num_frame = math.floor(num_frame / block_size) * block_size
-            else: # closest
-                target_num_frame = round(num_frame / block_size) * block_size
-            
-            if target_num_frame == 0:
-                target_num_frame = block_size
-
-            # Convert back to a valid length
-            compatible_length = target_num_frame * 4 - 3
-            print(f"Adjusted length from {length} to {compatible_length} for radial attention compatibility.")
-
-        if (compatible_length + 3) % 4 != 0:
-            # This should not happen with the logic above, but as a safeguard
-            raise ValueError(f"Calculated incompatible length {compatible_length}")
-
-        length_factor = (compatible_length + 3) // 4
+        if (length + 3) % 4 != 0:
+            print(f"Warning: Radial attention may not work with length {length}. It should be 4k-3 (e.g., 1, 5, ..., 81).")
+            length_factor = 1
+        else:
+            length_factor = (length + 3) // 4
         
         common_divisor = math.gcd(length_factor, block_size)
         target_divisor = block_size // common_divisor
     else:
         target_divisor = block_size
 
-    def find_compatible_dimension(target_size, other_dim_patched, mode):
-        base_size = (target_size // patch_divisor) * patch_divisor
-        # Increased search range
-        search_range = range(max(patch_divisor, base_size - 512), base_size + 512 + patch_divisor, patch_divisor)
-        
-        candidates = []
-        for test_size in search_range:
-            patched_dim = test_size // patch_divisor
-            if (patched_dim * other_dim_patched) % target_divisor == 0:
-                distance = abs(test_size - target_size)
-                candidates.append((distance, test_size))
-
-        if not candidates:
-            return base_size if base_size >= patch_divisor else patch_divisor
-        
-        candidates.sort()
-        
-        if mode == "upscale":
-            valid_candidates = [size for dist, size in candidates if size >= target_size]
-            if valid_candidates:
-                return valid_candidates[0]
-            else:
-                return max(c[1] for c in candidates)
-        elif mode == "downscale":
-            valid_candidates = [size for dist, size in candidates if size <= target_size]
-            if valid_candidates:
-                return valid_candidates[0]
-            else:
-                return min(c[1] for c in candidates)
-        else:  # closest
-            return candidates[0][1]
-
-    # For square resolutions
-    if width == height:
-        target_patched = width // patch_divisor
-        candidates = []
-        
-        for offset in range(0, 128):
-            test_patched = target_patched + offset
-            if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
-                test_size = test_patched * patch_divisor
-                distance = abs(test_size - width)
-                candidates.append((distance, test_size, test_size >= width))
-        
-        if not candidates:
-            for offset in range(-1, -128, -1):
-                test_patched = target_patched + offset
-                if test_patched > 0 and (test_patched * test_patched) % target_divisor == 0:
-                    test_size = test_patched * patch_divisor
-                    distance = abs(test_size - width)
-                    candidates.append((distance, test_size, test_size >= width))
-        
-        if candidates:
-            higher_candidates = [c for c in candidates if c[2]]
-            if higher_candidates:
-                higher_candidates.sort(key=lambda x: x[0])
-                res = higher_candidates[0][1]
-                return res, res, compatible_length
-            else:
-                candidates.sort(key=lambda x: x[0])
-                res = candidates[0][1]
-                return res, res, compatible_length
-
-    # For non-square resolutions, iterative search
     best_res = (width, height)
     min_dist = float('inf')
 
-    w_p_orig = width // patch_divisor
-    
-    # Heuristic search area
-    for w_p_offset in range(-16, 17):
-        w_p = w_p_orig + w_p_offset
-        if w_p <= 0: continue
-        w_candidate = w_p * patch_divisor
+    # Heuristic search area around the original resolution
+    # Search in a 256-pixel radius, with patch_divisor steps
+    for w_candidate in range(width - 256, width + 256 + patch_divisor, patch_divisor):
+        if w_candidate <= 0: continue
         
-        h_candidate = find_compatible_dimension(height, w_p, mode)
-        h_p = h_candidate // patch_divisor
-        
-        # This check is now primary
-        if (w_p * h_p) % target_divisor == 0:
-            dist = math.sqrt((w_candidate - width)**2 + (h_candidate - height)**2)
+        for h_candidate in range(height - 256, height + 256 + patch_divisor, patch_divisor):
+            if h_candidate <= 0: continue
             
-            # Preference logic based on mode
-            is_preferred = False
-            if mode == 'upscale' and w_candidate >= width and h_candidate >= height:
-                is_preferred = True
-            elif mode == 'downscale' and w_candidate <= width and h_candidate <= height:
-                is_preferred = True
-            elif mode == 'closest':
-                is_preferred = True
+            w_p = w_candidate // patch_divisor
+            h_p = h_candidate // patch_divisor
+            
+            if (w_p * h_p) % target_divisor == 0:
+                dist = math.sqrt((w_candidate - width)**2 + (h_candidate - height)**2)
 
-            if is_preferred and dist < min_dist:
-                min_dist = dist
-                best_res = (w_candidate, h_candidate)
+                is_candidate = False
+                if mode == 'closest':
+                    is_candidate = True
+                elif mode == 'upscale':
+                    if w_candidate >= width and h_candidate >= height:
+                        is_candidate = True
+                elif mode == 'downscale':
+                    if w_candidate <= width and h_candidate <= height:
+                        is_candidate = True
+
+                if is_candidate and dist < min_dist:
+                    min_dist = dist
+                    best_res = (w_candidate, h_candidate)
 
     if min_dist == float('inf'):
-        w_base = (width // patch_divisor) * patch_divisor
-        h_base = find_compatible_dimension(height, w_base // patch_divisor, mode)
-        return w_base, h_base, compatible_length
+        print(f"Warning: Could not find a compatible resolution for {width}x{height} with length {length}. Returning original values.")
+        return width, height
 
-    return best_res[0], best_res[1], compatible_length
+    return best_res
 
 class ResolutionSelector:
     """Select width & height for video/image generation.
@@ -325,10 +235,9 @@ class ResolutionSelector:
             w, h = self.RESOLUTIONS[mode][aspect_ratio][quality]
             
             # Apply radial attention compatibility if enabled
-            if radial_attention_mode == "video":
-                w, h, length = calculate_radial_compatible_resolution(w, h, "upscale", block_size, length, patch_divisor)
-            elif radial_attention_mode == "image":
-                w, h, _ = calculate_radial_compatible_resolution(w, h, "upscale", block_size, None, patch_divisor)
+            if radial_attention_mode in ["video", "image"]:
+                video_length = length if radial_attention_mode == "video" else None
+                w, h = calculate_radial_compatible_resolution(w, h, "upscale", block_size, video_length, patch_divisor)
 
             # Determine the string output based on the mode
             if mode in ["GEMINI_IMAGEN", "NANO_BANANA"]:
