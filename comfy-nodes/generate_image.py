@@ -20,7 +20,7 @@ try:
     # Import new Gemini image generation functions
     from api.gemini_image_api import send_gemini_image_generation_unified
     # Import new WaveSpeed image generation functions
-    from api.wavespeed_image_api import send_wavespeed_image_edit_request
+    from api.wavespeed_image_api import send_wavespeed_image_edit_request, send_wavespeed_seedream_request
     # Import OpenRouter image generation
     from api.openrouter_api import send_openrouter_image_generation_request
 except ImportError:
@@ -32,7 +32,7 @@ except ImportError:
         from send_request import run_async
         from api.openai_api import send_openai_image_generation_request
         from api.gemini_image_api import send_gemini_image_generation_unified
-        from api.wavespeed_image_api import send_wavespeed_image_edit_request
+        from api.wavespeed_image_api import send_wavespeed_image_edit_request, send_wavespeed_seedream_request
     except ImportError:
         logging.error("Failed to import required modules for generate_image.py")
         TENSOR_SUPPORT = False
@@ -541,6 +541,24 @@ A stunning, professional-quality portrait of a character with rainbow-colored sh
                         }
                         logger.info(f"Calling WaveSpeed Flux model ({llm_model}) with mode: {mode}...")
                         raw_api_response = run_async(send_wavespeed_flux_request(**params))
+                elif llm_model.startswith("bytedance/seedream"):
+                    logger.info(f"Calling WaveSpeed Seedream model {llm_model}...")
+                    
+                    is_edit = "edit" in llm_model
+                    if is_edit and not all_images_b64:
+                        error_message = f"WaveSpeed model {llm_model} requires an input image."
+                    else:
+                        raw_api_response = run_async(
+                            send_wavespeed_seedream_request(
+                                api_key=api_key,
+                                model=llm_model,
+                                prompt=prompt_text,
+                                images_base64=all_images_b64 if is_edit else None,
+                                size=generation_config.get("size"),
+                                seed=generation_config.get("seed", -1),
+                                max_images=generation_config.get("n", 1),
+                            )
+                        )
                 else:
                     error_message = f"The WaveSpeed model '{llm_model}' is not supported by the GenerateImage node yet."
 

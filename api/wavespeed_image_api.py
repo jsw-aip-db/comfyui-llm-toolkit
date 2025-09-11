@@ -228,3 +228,113 @@ async def send_wavespeed_flux_request(
                 return {"error": f"Polling failed: {str(e)}"}
 
     return {"error": "Polling timed out after 120 seconds."} 
+
+async def send_wavespeed_seedream_request(
+    api_key: str,
+    model: str,
+    prompt: str,
+    size: Optional[str] = "2048*2048",
+    seed: Optional[int] = -1,
+    images_base64: Optional[list[str]] = None,
+    max_images: Optional[int] = 1,
+    enable_sync_mode: bool = False,
+) -> Dict[str, Any]:
+    """
+    Generic function for Bytedance Seedream V4 models on WaveSpeed.
+    Handles task submission and polling for results.
+    """
+    if not api_key:
+        raise ValueError("WaveSpeed API key is required.")
+
+    # Correct the model path for the API endpoint
+    api_model_path = model
+    if model.startswith("bytedance/seedream-v4-"):
+        suffix = model.replace("bytedance/seedream-v4-", "")
+        api_model_path = f"bytedance/seedream-v4/{suffix}"
+
+    submit_url = f"https://api.wavespeed.ai/api/v3/{api_model_path}"
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    payload = {
+        "enable_sync_mode": enable_sync_mode,
+        "enable_base64_output": True,
+    }
+
+    if "edit" in model:
+        if not images_base64:
+            return {"error": "Edit mode requires at least one image."}
+        payload["images"] = [f"data:image/png;base64,{b64}" for b64 in images_base64]
+        payload["prompt"] = prompt
+    else:
+        payload["prompt"] = prompt
+
+    if size:
+        payload["size"] = size
+        
+    if seed is not None and seed != -1:
+        payload["seed"] = seed
+
+    if "sequential" in model:
+        payload["max_images"] = max_images
+
+    logger.info(f"WaveSpeed Seedream Request: URL={submit_url}, Model={model}")
+    
+    request_id = None
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(submit_url, json=payload, headers=headers)
+            response.raise_for_status()
+            result = response.json()
+            if result.get("data") and result["data"].get("id"):
+                request_id = result["data"]["id"]
+                logger.info(f"Task submitted successfully. Request ID: {request_id}")
+            else:
+                return {"error": "Unexpected submission response format.", "details": result}
+        except httpx.HTTPStatusError as e:
+            return {"error": f"HTTP {e.response.status_code}", "details": e.response.text}
+        except Exception as e:
+            return {"error": str(e)}
+
+        if not request_id:
+            return {"error": "Failed to get a request ID from WaveSpeedAI."}
+
+        result_url = f"https://api.wavespeed.ai/api/v3/predictions/{request_id}/result"
+        polling_headers = {"Authorization": f"Bearer {api_key}"}
+        
+        for attempt in range(120):
+            try:
+                await asyncio.sleep(1)
+                poll_response = await client.get(result_url, headers=polling_headers)
+                poll_response.raise_for_status()
+                
+                poll_result = poll_response.json().get("data", {})
+                status = poll_result.get("status")
+
+                if status == "completed":
+                    logger.info("WaveSpeedAI Seedream task completed.")
+                    outputs = poll_result.get("outputs", [])
+                    if not outputs:
+                        return {"error": "Task completed but no outputs found."}
+                    
+                    b64_jsons = []
+                    for out in outputs:
+                        if "base64," in out:
+                            b64_jsons.append(out.split("base64,")[1])
+                        else:
+                            b64_jsons.append(out)
+                    
+                    return {"data": [{"b64_json": b64} for b64 in b64_jsons]}
+
+                elif status == "failed":
+                    error_msg = poll_result.get("error", "Unknown error.")
+                    return {"error": f"Task failed: {error_msg}"}
+            except httpx.HTTPStatusError as e:
+                return {"error": f"HTTP {e.response.status_code} while polling", "details": e.response.text}
+            except Exception as e:
+                return {"error": f"Polling failed: {str(e)}"}
+
+    return {"error": "Polling timed out after 120 seconds."} 
