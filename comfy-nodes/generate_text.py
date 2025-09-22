@@ -160,10 +160,12 @@ async def send_request_stream(
     Sends a streaming request to an LLM provider (Example for Ollama).
     Yields text chunks as they are received.
     """
+
     provider_lower = llm_provider.lower()
 
-    if provider_lower in ["openai", "openrouter"]:
-        # --- OpenAI & OpenRouter Specific Streaming Logic ---
+    # Add lmstudio as OpenAI-compatible
+    if provider_lower in ["openai", "openrouter", "lmstudio"]:
+        # --- OpenAI, OpenRouter & LM Studio Specific Streaming Logic ---
         if not llm_api_key:
             logger.error(f"{llm_provider} streaming requested but no API key supplied.")
             yield f"[{llm_provider} Error: API key missing]"
@@ -191,8 +193,14 @@ async def send_request_stream(
                 logger.warning(f"GPT-5 Responses stream failed: {e}, falling back to Chat Completions")
                 # Fall through to regular OpenAI streaming below
 
-        api_url = "https://openrouter.ai/api/v1/chat/completions" if provider_lower == "openrouter" else "https://api.openai.com/v1/chat/completions"
-        
+        # Set API URL for each provider
+        if provider_lower == "openrouter":
+            api_url = "https://openrouter.ai/api/v1/chat/completions"
+        elif provider_lower == "lmstudio":
+            api_url = f"http://{base_ip}:{port}/v1/chat/completions"
+        else:
+            api_url = "https://api.openai.com/v1/chat/completions"
+
         headers = {
             "Authorization": f"Bearer {llm_api_key}",
             "Content-Type": "application/json",
@@ -238,7 +246,7 @@ async def send_request_stream(
                 timeout=aiohttp.ClientTimeout(total=timeout),
                 connector=connector
             )
-            
+
             async with session.post(api_url, headers=headers, json=payload) as response:
                 response.raise_for_status()
                 async for raw_line in response.content:
@@ -570,7 +578,7 @@ async def send_request_stream(
         return
 
     # Existing fallback logic for other providers
-    if provider_lower not in ["ollama", "openai", "openrouter", "transformers", "hf", "local", "groq", "gemini"]:
+    if provider_lower not in ["ollama", "openai", "openrouter", "transformers", "hf", "local", "groq", "gemini", "lmstudio"]:
         logger.warning(f"Streaming not implemented for provider '{llm_provider}'. Falling back to non-streaming.")
         try:
             full_response_data = await send_request(

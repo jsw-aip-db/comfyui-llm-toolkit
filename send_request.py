@@ -278,11 +278,21 @@ async def send_request(
                 )
 
         # ------------------------------------------------------------------
-        #  OpenAI (chat + DALL·E)
+
+        #  OpenAI (chat + DALL·E) and LM Studio (OpenAI-compatible)
         # ------------------------------------------------------------------
-        if llm_provider == "openai":
-            if llm_model.startswith("dall-e"):
-                # Image‑generation branches
+        if llm_provider in {"openai", "lmstudio"}:
+            # LM Studio uses a local OpenAI-compatible endpoint
+            if llm_provider == "lmstudio":
+                logger.info(f"Using LM Studio with base_ip: {base_ip}, port: {port}")
+                api_url = f"http://{base_ip}:{port}/v1/chat/completions"
+            else:
+                api_url = "https://api.openai.com/v1/chat/completions"
+
+            logger.info(f"Using API URL: {api_url}")
+
+            if llm_model.startswith("dall-e") and llm_provider == "openai":
+                # Image‑generation branches (OpenAI only)
                 if strategy == "create":
                     result_imgs = await generate_image(
                         prompt=user_message,
@@ -317,8 +327,8 @@ async def send_request(
 
                 return {"images": result_imgs}
 
-            # Check if this is a GPT-5 model and route to Responses API
-            if is_gpt5_model(llm_model) and llm_api_key:
+            # Check if this is a GPT-5 model and route to Responses API (OpenAI only)
+            if llm_provider == "openai" and is_gpt5_model(llm_model) and llm_api_key:
                 logger.info(f"Detected GPT-5 model: {llm_model}, using Responses API")
                 try:
                     return await send_openai_responses_request(
@@ -337,8 +347,7 @@ async def send_request(
                     logger.warning(f"GPT-5 Responses API failed: {e}, falling back to Chat Completions")
                     # Fall through to regular OpenAI handling
 
-            # Regular chat models (including GPT-5 fallback)
-            api_url = "https://api.openai.com/v1/chat/completions"
+            # Regular chat models (including LM Studio and OpenAI fallback)
             return await send_openai_request(
                 api_url=api_url,
                 base64_images=formatted_images,
